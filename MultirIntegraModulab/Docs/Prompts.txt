@@ -1,0 +1,1113 @@
+El projecte que has de desenvolupar consisteix en un procés d'integració de dades de resultats de proves de laboratori. 
+
+Depenent dels resultats, i d´altres factors que plantejarem mes tard, es faran unes accions o unes altres.
+
+En aquest punt ens centrarem unicament en la recollida de les dades.
+
+L´origen de les dades es una base de dades Oracle. Tinc una consulta sql per llegir les dades que s´han de gestionar.
+
+El registres resultat de la consulta tenen els seguents camps:
+
+ETIQUETA_ID : es un identificador del resultat
+PACIENT_SAP : es el identificador del pacient
+AILLAMENT_DESCRIPCIO : es el microorganisme que es vol analitzar
+MECANISME_RESISTENCIA1_ID : es el primer dels mecanismes de resistencia al microorganisme (pot ser null)
+MECANISME_RESISTENCIA2_ID : es el segon dels mecanismes de resistencia al microorganisme (pot ser null) 
+MECANISME_RESISTENCIA3_ID : es el tercer dels mecanismes de resistencia al microorganisme (pot ser null) 
+MECANISME_RESISTENCIA4_ID : es el quart dels mecanismes de resistencia al microorganisme (pot ser null) 
+MECANISME_RESISTENCIA5_ID : es el cinqué dels mecanismes de resistencia al microorganisme (pot ser null) 
+PROVA_DESCRIPCIO : es el tipus de prova que s´ha fet
+MOSTRA_DESCRIPCIO : es el tipus de mostra que s´ha fet servir
+DATA_RESULTAT : es la data del resultat de la prova
+DATA_VALIDACIO : es la data en que s´ha validat la prova (pot ser null si encara no ha estat validada per un professional)
+
+Un resultat de prova pot tenir mes d´un registre dels que llegirem. Tots els registres d´un resultat de una mateixa prova tindran la mateixa ETIQUETA_ID
+
+Vull que implementis la estructura de clases per soportar aquests requeriments.
+
+No vull que facis res mes.
+
+----
+
+Ara anem per la carrega de les dades amb origen la base de dades Oracle. La consulta és:
+
+SELECT
+  PET.ETIQUETA_ID,
+  PA.PACIENT_SAP,
+  REPLACE (A.AILLAMENT_DESCRIPCIO,'''','´'),
+  REPLACE (MR.MECANISME_RESISTENCIA_DESCRIP,'''','´'),
+  REPLACE (MR2.MECANISME_RESISTENCIA_DESCRIP,'''','´'),
+  REPLACE (MR3.MECANISME_RESISTENCIA_DESCRIP,'''','´'),
+  REPLACE (MR4.MECANISME_RESISTENCIA_DESCRIP,'''','´'),
+  REPLACE (MR5.MECANISME_RESISTENCIA_DESCRIP,'''','´'),
+  REPLACE (PR.PROVA_DESCRIPCIO,'''','´'),
+  REPLACE (MOS.MOSTRA_DESCRIPCIO,'''','´'),
+  DETALL.DATA_RESULTAT,
+  DETALL.DATA_VALIDACIO 
+FROM
+  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR,
+  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR2,
+  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR3,
+  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR4,
+  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR5,
+  DWDIMICS.DIM_LAB_AILLAMENT A,
+  DWDIMICS.DIM_LAB_PROVA PR,
+  DWDIMICS.DIM_LAB_PACIENTS_DT PA,
+  DWDIMICS.DIM_LAB_PETICIONS_DT PET,
+  DWDIMICS.V_DIM_LAB_CONTENIDOR_DT CONT,
+  DWDIMICS.V_DIM_LAB_MOSTRA_DT MOS,
+  DWFACTICS.FAC_LAB_PROVES_DT DETALL
+WHERE
+  ( PET.PACIENT_ID = PA.PACIENT_ID(+) AND  PET.ORIGEN = PA.ORIGEN(+)  )
+  AND  ( PET.ORIGEN = DETALL.ORIGEN AND  PET.PETICIO_ID = DETALL.PETICIO_ID  )
+  AND  ( DETALL.ORIGEN = PR.ORIGEN(+) AND  DETALL.PROVA_ID = PR.PROVA_ID(+)  )
+  AND  ( A.ORIGEN(+) = DETALL.ORIGEN AND  A.AILLAMENT_ID(+)=DETALL.AILLAMENT_ID  )
+  AND  ( MR.ORIGEN(+) = DETALL.ORIGEN AND  MR.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA1_ID  )
+  AND  ( MR2.ORIGEN(+) = DETALL.ORIGEN AND  MR2.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA2_ID  )
+  AND  ( MR3.ORIGEN(+) = DETALL.ORIGEN AND  MR3.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA3_ID  )
+  AND  ( MR4.ORIGEN(+) = DETALL.ORIGEN AND  MR4.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA4_ID  )
+  AND  ( MR5.ORIGEN(+) = DETALL.ORIGEN AND  MR5.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA5_ID  )
+  AND  ( CONT.ORIGEN(+) = DETALL.ORIGEN AND  CONT.CONTENIDOR_ID(+) = DETALL.CONTENIDOR_ID )
+  AND  ( MOS.ORIGEN(+) = CONT.ORIGEN AND  MOS.MOSTRA_ID(+) = CONT.MOSTRA_ID )
+  AND  (
+	       ( PA.TIPUS is null )
+		   AND
+	       PET.ORIGEN  =  'DT'
+		   AND
+	       DETALL.TIPUS = 'A'
+		   AND
+		   (DETALL.DATA_VALIDACIO_TRUNC >= trunc(sysdate-1) OR DETALL.DATA_RESULTAT_TRUNC >= trunc(sysdate-1)) 
+      )
+ORDER BY PET.ETIQUETA_ID 
+
+fes els metodes per fer la consulta i per fer la carrega dels resultats en la estructura de clases creada anteriorment
+En la consulta hi ha una part del where per carrerar 1 dia. Vull que sigui un parametre d´entrada al metode de carrega per que puguem carregar mes d´un dia
+ 
+-----
+
+
+
+-----
+
+
+Ara ens començarem a enfocar a la base de dades mysql. En concret amb la taula (ja existent) de microorganismes. 
+
+Els camps que ens interesen són:
+
+ID INT(11)
+CODI VARCHAR(100) 
+DESCRIPCIO VARCHAR(100)
+DT_DELETE TIMESTAMP : si el registre ha estat esborrat tindrà valor
+ACTIU INT(1) : 1 = si, 0 = no
+DIES_VIGENCIA : INT (1) : son els dies que un microorganisme està vigent
+ESPECIAL TINYINT(4) : indica si el microorganisme es especial
+
+Vull que creis el codi per recuperar si un microorganisme es especial o no (ull amb la dt_delete)
+
+En el procés de carrega de dades de oracle, per cada registre, si hi ha microorganisme, recuperarem si el microorganismes és especial o no, i ho afegirem a una nova propietat de resultatprovaregistre
+
+Com que el procés de carrega treballarà amb molts registres, potser seria bo recuperar els microorganismes especials en alguna estructura de memoria per no haver de consultar la base de dades cada cop
+
+
+
+
+----
+
+El registres resultat de la consulta actualment tenen els seguents camps:
+
+ETIQUETA_ID : es un identificador del resultat
+PACIENT_SAP : es el identificador del pacient
+AILLAMENT_DESCRIPCIO : es el microorganisme que es vol analitzar
+MECANISME_RESISTENCIA1_ID : es el primer dels mecanismes de resistencia al microorganisme (pot ser null)
+MECANISME_RESISTENCIA2_ID : es el segon dels mecanismes de resistencia al microorganisme (pot ser null) 
+MECANISME_RESISTENCIA3_ID : es el tercer dels mecanismes de resistencia al microorganisme (pot ser null) 
+MECANISME_RESISTENCIA4_ID : es el quart dels mecanismes de resistencia al microorganisme (pot ser null) 
+MECANISME_RESISTENCIA5_ID : es el cinqué dels mecanismes de resistencia al microorganisme (pot ser null) 
+PROVA_DESCRIPCIO : es el tipus de prova que s´ha fet
+MOSTRA_DESCRIPCIO : es el tipus de mostra que s´ha fet servir
+DATA_RESULTAT : es la data del resultat de la prova
+DATA_VALIDACIO : es la data en que s´ha validat la prova (pot ser null si encara no ha estat validada per un professional)
+
+hem d´afegir nous camps:
+
+CIP : es el CIP del pacient
+COLEGIAT_ID : numero de col·legiat del metge sol·licitant
+NOM_METGE : nom del metge sol·licitant
+CENTRE_DESCRIPCIO : centre on s´ha fet la sol·licitud
+DATA_PETICIO_TRUC : data de la sol·licitud
+MECANISME_RESISTENCIA_DESCRIP : descripció del primer mecanisme de resistència (pot ser null)
+MECANISME_RESISTENCIA_DESCRIP2 : descripció del primer mecanisme de resistència (pot ser null)
+MECANISME_RESISTENCIA_DESCRIP3 : descripció del primer mecanisme de resistència (pot ser null)
+MECANISME_RESISTENCIA_DESCRIP4 : descripció del primer mecanisme de resistència (pot ser null)
+MECANISME_RESISTENCIA_DESCRIP5 : descripció del primer mecanisme de resistència (pot ser null)
+SERVEI_DESCRIPCIO : servei que ha fet la sol·licitud
+
+La consulta de les dades d´origen de Oracle canvia a :
+
+SELECT
+  PET.ETIQUETA_ID,
+  PA.PACIENT_SAP,
+  nvl(PA.CIP,'N/D') CIP,
+  ME.COLEGIAT_ID,
+  REPLACE (ME.NOM_METGE,'''','´'),
+  REPLACE (LTRIM(C.CENTRE_DESCRIPCIO),'''','´') AS CENTRE,
+  PET.DATA_PETICIO_TRUNC,
+  REPLACE (A.AILLAMENT_DESCRIPCIO,'''','´'),
+  DETALL.MECANISME_RESISTENCIA1_ID,
+  REPLACE (MR.MECANISME_RESISTENCIA_DESCRIP,'''','´'),
+  DETALL.MECANISME_RESISTENCIA2_ID,
+  REPLACE (MR2.MECANISME_RESISTENCIA_DESCRIP,'''','´'),
+  DETALL.MECANISME_RESISTENCIA3_ID,
+  REPLACE (MR3.MECANISME_RESISTENCIA_DESCRIP,'''','´'),
+  DETALL.MECANISME_RESISTENCIA4_ID,
+  REPLACE (MR4.MECANISME_RESISTENCIA_DESCRIP,'''','´'),
+  DETALL.MECANISME_RESISTENCIA5_ID,
+  REPLACE (MR5.MECANISME_RESISTENCIA_DESCRIP,'''','´'),
+  REPLACE (S.SERVEI_DESCRIPCIO,'''','´'),
+  REPLACE (PR.PROVA_DESCRIPCIO,'''','´'),
+  REPLACE (MOS.MOSTRA_DESCRIPCIO,'''','´'),
+  DETALL.DATA_RESULTAT,
+  DETALL.DATA_VALIDACIO 
+FROM
+  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR,
+  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR2,
+  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR3,
+  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR4,
+  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR5,
+  DWDIMICS.DIM_LAB_CENTRE C,
+  DWDIMICS.DIM_LAB_SERVEI S,
+  DWDIMICS.DIM_LAB_AILLAMENT A,
+  DWDIMICS.DIM_LAB_PROVA PR,
+  DWDIMICS.DIM_LAB_METGE ME,
+  DWDIMICS.DIM_LAB_PACIENTS_DT PA,
+  DWDIMICS.DIM_LAB_PETICIONS_DT PET,
+  DWDIMICS.V_DIM_LAB_CONTENIDOR_DT CONT,
+  DWDIMICS.V_DIM_LAB_MOSTRA_DT MOS,
+  DWFACTICS.FAC_LAB_PROVES_DT DETALL
+WHERE
+ 
+( PET.PACIENT_ID = PA.PACIENT_ID(+) AND  PET.ORIGEN = PA.ORIGEN(+)  )
+  AND  ( PET.METGE_ID = ME.METGE_ID AND  PET.ORIGEN = ME.ORIGEN  )
+  AND  ( PET.ORIGEN = S.ORIGEN(+) AND  PET.SERVEI_ID = S.SERVEI_ID(+)  )
+  AND  ( PET.ORIGEN = DETALL.ORIGEN AND  PET.PETICIO_ID = DETALL.PETICIO_ID  )
+  AND  ( DETALL.ORIGEN = PR.ORIGEN(+) AND  DETALL.PROVA_ID = PR.PROVA_ID(+)  )
+  AND  ( A.ORIGEN(+) = DETALL.ORIGEN AND  A.AILLAMENT_ID(+)=DETALL.AILLAMENT_ID  )
+  AND  ( S.ORIGEN = C.ORIGEN(+) AND  S.CENTRE_ID = C.CENTRE_ID(+)  )
+  AND  ( MR.ORIGEN(+) = DETALL.ORIGEN AND  MR.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA1_ID  )
+  AND  ( MR2.ORIGEN(+) = DETALL.ORIGEN AND  MR2.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA2_ID  )
+  AND  ( MR3.ORIGEN(+) = DETALL.ORIGEN AND  MR3.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA3_ID  )
+  AND  ( MR4.ORIGEN(+) = DETALL.ORIGEN AND  MR4.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA4_ID  )
+  AND  ( MR5.ORIGEN(+) = DETALL.ORIGEN AND  MR5.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA5_ID  )
+  AND  ( CONT.ORIGEN(+) = DETALL.ORIGEN AND  CONT.CONTENIDOR_ID(+) = DETALL.CONTENIDOR_ID )
+  AND  ( MOS.ORIGEN(+) = CONT.ORIGEN AND  MOS.MOSTRA_ID(+) = CONT.MOSTRA_ID )
+  AND  (
+       ( PA.TIPUS is null )
+	   AND
+       PET.ORIGEN  =  'DT'
+	   AND
+       DETALL.TIPUS = 'A'
+	   AND
+	   (DETALL.DATA_VALIDACIO_TRUNC >= trunc(sysdate-10) OR DETALL.DATA_RESULTAT_TRUNC >= trunc(sysdate-1)) 
+      )
+ORDER BY PET.ETIQUETA_ID 
+
+-----
+
+Un cop carregades les dades en memoria, començarem el seu tractament. 
+
+Hi haurà comprovacions a nivell global de resultat de la mostra, i altres comprovacions a nivell de registre de resultat.
+
+La primer comprovació que farem serà a nivell global de mostra.
+
+T´ho explico:
+
+Quan incorporem un resultat de prova de Modulab, aquesta vindrà amb dos dates: 
+
+Data Resultat (DATA_RESULTAT) : data en que s´ha generat un resultat a modulab. Data Resultat sempre tindrà valor. 
+Data Validació (DATA_VALIDACIO) : data en que s’ha validat la mostra a modulab. Data Validació pot ser que tingui o no valor, en funció de si la mostra ha estat o no validada. 
+
+Si el resultat de prova no té data de validació, dies mes tard, quan s´hagi validat, en una nova incorporació de dades, l´incorporarem amb la data de validació.
+
+Per veure si el podem incorporar directament, o bé s´ha de fer algun tractament, el primer que haurem de comprovar és si tenim el resultat de prova ja incorporat previament.
+
+Casuístiques que ens podem trobar: 
+
+Casos de nova incorporació (amb data de resultat i opcionalment data de validació) 
+
+Casos ja existents, i ara incorporen la data validació (validats a posteriori) 
+
+Casos repetits (carregues posteriors i tenen les mateixes dates) 
+
+Casos antics (no tenen data de resultat ni data de validació) 
+
+Per comprovar si el cas és de nova incorporació, executarem la consulta a la base de dades mysql: 
+
+SELECT COUNT(*)  
+
+FROM pacients_diagnostics_mostra pdm  
+
+WHERE pdm.etiqueta = 'ETIQUETA_ID' 
+
+AND pdm.dt_delete IS NULL 
+
+
+----
+Revisem els diferents valors de EstatResultat:
+
+Compararem data_resultat i data_validacio de la mostra que estem tractan (oracle), amb les possibles dades que tinguem a pacients_diagnostics_mostra
+
+nova : si no existeix cap registre per l´etiqueta a pacients_diagnostics_mostra
+antiga : si existeixen registres per l´etiqueta a pacients_diagnostics_mostra però no tenen ni data_resultat ni data_validacio
+repetida : si existeixen registres per etiqueta i les data_resultat i data_validacio que arriben coincideixen amb les de pacients_diagnostics_mostra
+desvalidada : si a pacients_diagnostics_mostra hi ha registres per l´etiqueta amb data_resultat i data_validacio i la mostra que ens arriba de oracle no te data_resultat però no té data_validacio
+validada : si a pacients_diagnostics_mostra hi ha registres per l´etiqueta sense data_validacio i la mostra que ens arriba de oracle si te data_validacio
+revalidada : si a pacients_diagnostics_mostra hi ha registres per l´etiqueta amb data_validacio i la mostra que ens arriba de oracle també te data_validacio però són diferents
+
+Actualitza ObtenirEstatResultat per incorporar aquest possibles estats
+
+Actualitza enum TipusIncorporacio a els nous valors i també actualitza ProcessarResultatSegunsTipus amb noves accions per als diferents valors
+
+
+
+A ProcessarResultats, processarresultatsegunstipus executara accions segons el tipus : nova, validada, repetida, ... 
+
+En alguns tipus que ja t´especificaré, un cop feta la acció, es finalitzarà tot el procés per al resultat actual, i es continuarà amb el seguent resultat.
+
+Per altres tipus, un cop feta la acció, continuarà amb un altre procés de recuperació de altres dades, i a continuació altres procesos.
+
+A nivell global el procés que estem fent anirà fent diferentes comprovacions i diferents accions relacionades amb les comprovacions (igual que hem fet segons el tipus)
+
+Les comprovacions i accions es podràn definir a nivell global de resultat o bé a nivell de registre de resultat.
+
+Deixa les extructures de codi preparades per incloure tot això 
+
+
+----
+
+Per deixar un rastre a nivell de base de dades mysql, del que s´ha fet, per cada resultat de la mostra, hi ha una taula que recull les dades que s´han recuperat de oracle, amb un sol mecanisme de resistencia i descripció del mecanisme de resistencia (no son 5)
+A mes a mes hi ha un camp adicional que es diu resultat (varchar(10)) on s´inclourà el codi de la acció que s´ha fet amb el resultat.
+
+Els valors possibles del camp resultat són :
+
+OK	Tot Ok
+NPWS	No es troba pacient al WS
+CNI	Combinació a No Incorporar
+FDBP	Falta alguna dada bàsica (pacient)
+FDBM	Falta alguna dada bàsica (microorganisme)
+TP1N	Tipus de prova amb comportament 1 i resultat negatiu
+NMRCM	No supera comprovació mostra
+DMM	Mostra microorganisme duplicat
+MNI	Mecanisme de resistència a No Incorporar
+EMCR	Estat mostra cas repetit
+EMCD	Estat mostra cas desvalidat
+EMCA	Esta mostra cas antic
+EMERR	Estat Mostra ERRor
+ 
+Cada resultat de una mostra que tractem, deixarà un registre en aquesta taula. Així es podrà visualitzar que ha passat en el procés.
+
+La taula es diu integracio_modulab i té aquests camps:
+
+id
+etiqueta_id
+pacient_sap
+cip
+colegiat_id
+nom_metge
+centre_descripcio
+data_peticio_truc
+aillament_descripcio
+mecanisme_resistencia1_id
+mecanisme_resistencia_descrip
+servei_descripcio
+prova_descripcio
+mostra_descripcio
+dt_create
+data_resultat
+data_validacio
+resultat
+
+Vull que preparis una funció que, com a parametres tingui un resultat de mostra i un codi de resultat (OK, NPWS, CNI, .....) , i faci tants insert com a numero de mecanismes de resistencia tingui el resultat de la mostra
+
+Recorda que el resultat de una mostra pot tenir o no mecanisme de resistencia
+
+Si el resultat de la mostra no te cap mecanisme de resistencia, fara un insert.
+
+Si el resultat de la mostra te, per exemple 3 mecanismes de resistencia, farà 3 inserts
+
+
+----
+
+Ha canviat la nomenclatura que farem anar al aplicatiu:
+
+Fins ara era aquesta : "Un resultat de prova pot tenir mes d´un registre dels que llegirem. Tots els registres d´un resultat de una mateixa prova tindran la mateixa ETIQUETA_ID"
+
+Ara serà aquesta: una mostra pot tenir un o mes d´un resultat. Els resultats son els diferents registres que recuperem de Oracle. Tots els resultats d´una mostra tindran la mateixa ETIQUETA_ID. 
+
+Pots revisar e implementar aquest canvi
+
+---
+
+Has de canviar el procés d´incorporació de resultats de mostres. Fins ara, per cada resultat afegiem un registre.
+
+Un resultat pot tenir fins a 5 mecanismes de resistencia. Són els camps
+
+MECANISME_RESISTENCIA1_ID : es el primer dels mecanismes de resistencia al microorganisme (pot ser null)
+MECANISME_RESISTENCIA2_ID : es el segon dels mecanismes de resistencia al microorganisme (pot ser null) 
+MECANISME_RESISTENCIA3_ID : es el tercer dels mecanismes de resistencia al microorganisme (pot ser null) 
+MECANISME_RESISTENCIA4_ID : es el quart dels mecanismes de resistencia al microorganisme (pot ser null) 
+MECANISME_RESISTENCIA5_ID : es el cinqué dels mecanismes de resistencia al microorganisme (pot ser null) 
+
+Per cada resultat, has de mirar quan mecanismes de resistencia hi ha informats, i per cadasqun, afegir un registre amb totes les dades.
+
+Es a dir, el resultat tindrà un unic mecanisme de resistencia i no 5 com fins ara. 
+
+Has de deixar estadistiques del numero de resultats extra afegits
+
+----
+
+Ara anem a fer una funcio que compari la mostra (de oracle) que estem gestionant, amb la mostra que tenim a mysql 
+
+Unicament compararem les combinacions microorganisme i mecanisme de resistencia
+
+A Oracle, per la mostra actual, recuperarem tots els resultats. De cada resultat mirarem si hi ha o no mecanisme de resistencia. 
+
+Si no hi ha mecanisme de resistencia, ens quedarem amb la combinacio microrganisme i ""
+Si hi ha un o mes mecanismes de resistencia, ens quedarem amb les diferents combinacions microorganisme i mecanisme de resistencia
+
+A MySql, les dades de les mostres estan a la taula pacients_diagnostics_mostra. 
+
+T´explico les diferents taules:
+
+Un pacient pot tenir un o mes diagnostics (microorganisme + [mecanisme de resistencia]). Els diagnostics estan a la taula pacients_diagnostics.
+
+Per cada diagnostic, el pacient pot tenir cero o mes mostres (algunes positives, altres negatives). 
+
+Per això tenim la taula mostra_microorganisme, que te les relacions entre un diagnostic i les diferents mostres. Té els seguents camps:
+
+pacient_diagnostic_id  es id de pacients_diagnostics
+pacient_diagnostic_mostra_id es l´id de pacients_diagnostics_mostra
+
+
+Per obtenir a mysql les combinacions microorganisme i mecanisme de resistencia, filtrarem a pacients_diagnostics_mostra per al camp etiqueta (és la mateixa etiqueta que la mostra que estem gestionant) i ens quedarem amb els ids 
+
+Farem join amb la taula mostra_microorganisme i amb la taula pacients_diagnostics
+
+A la taula pacients_diagnostics, recuperarem els camps: microorganisme i mecanisme 
+
+
+Un cop recuperades les combinacions de la mostra actual i de la mostra a mysql, la funcio revisarà si les combinacions són les mateixes o no. Poden tenir un ordre diferent.
+
+----
+
+En els casos de mostres desvalidades, validades i revalidades, si hi ha hagut canvis (combinacions microorganisme i mecanisme de resistencia), haurem de substituir les dades existents (mysql) per les noves dades que venen de oracle.
+
+Tanmateix aquests canvis en el temps s´han de poder visualitzar. Per una mostra s´ha de poder veure els moviments que ha tingut i que han implicat canvis de contingut. 
+
+Sol interesa visualitzar els moviments en el temps que han implicat canvis en el contingut de la mostra.
+
+No sé quina es la millor opció.
+
+Potser tenir una taula a banda que reculli la etiqueta, el canvi produit i els valors anteriors i els nous 
+
+Potser utilitzar pacients_diagnostics_mostra i esborrar (dt_delete) els registres antics per incorporar els nous registres. Crec que aquesta opció no es optima per que farà creixer el numero de registres amb els esborrats
+
+No sé utilitzar un numero de versió a la taula pacients_diagnostics_mostra
+
+Quina creus que es la millor opció ?
+
+No vull que facis res encara
+
+-----
+
+Has de fer una funció per esborrar registres de pacients_diagnostics_mostra per una etiqueta pasada com a parametre.
+
+Per esborrar els registres de una etiqueta, actualitzarà el camp dt_delete dels registres amb filtre per etiqueta, i que no estiguin esborrats previament
+
+
+----
+
+Revisa la funció GuardarHistorialMostra 
+
+No coincideixen les dades amb les camps que es volen desar.
+
+Et recordo la estructura de la taula d´historial
+
+CREATE TABLE `pacients_diagnostics_mostra_historial` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `etiqueta` varchar(50) NOT NULL,
+  `versio` int(11) NOT NULL,
+  `tipus_canvi` enum('VALIDADA_AMB_CANVIS','REVALIDADA_AMB_CANVIS','DESVALIDADA_AMB_CANVIS') NOT NULL,
+  `combinacions_anteriors` text DEFAULT NULL,
+  `data_resultat_anterior` datetime DEFAULT NULL,
+  `data_validacio_anterior` datetime DEFAULT NULL,
+  `combinacions_noves` text DEFAULT NULL,
+  `data_resultat_nova` datetime DEFAULT NULL,
+  `data_validacio_nova` datetime DEFAULT NULL,
+  `data_canvi` datetime NOT NULL DEFAULT current_timestamp(),
+  `proces_origen` varchar(50) DEFAULT 'IntegracioModulab',
+  PRIMARY KEY (`id`),
+  KEY `idx_etiqueta_versio` (`etiqueta`,`versio`),
+  KEY `idx_data_canvi` (`data_canvi`),
+  KEY `idx_tipus_canvi` (`tipus_canvi`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+A mes a mes, s´han de desar les combinacions_anteriors i les combinacions_noves
+
+
+Veig que no s´estan desant les combinacions_noves ni data_resultat_nova ni data_validacio_nova
+
+---
+
+Si el procés continua endavant (resultatAccio.ContinuarProcessament = true), es el momento de decidir quin tipus de muestra es, respecte als diferents resultat.
+
+T'explico:
+
+Un mostra recuperada de Modulab, es pot composar d’un o més resultats, d´aquests tipus. 
+
+Casuística de resultat: 
+
+Registre amb microorganisme (no especial) sense mecanisme de resistència (pot haver-hi >1 microorganisme). Resultat negatiu
+
+Registre amb microorganisme especial sense mecanisme de resistència (pot haver-hi >1 microorganisme). Resultat positiu 
+
+Registre amb microorganisme (especial o no) amb fins a 5 mecanismes de resistència (pot haver-hi >1 microorganisme). Resultat positiu 
+
+Registre sense microorganisme ni mecanisme. Resultat negatiu 
+
+En resumen:
+
+POSITIVA : si a la mostra surt un microorganisme amb mecanisme de resistència (p.ex. BLEE, VIM, ...), o bé un microorganisme especial (p.ex. Acinetobacter baumannii) 
+
+NEGATIVA : si a la mostra no hi surt res o només surten microorganismes sense mecanisme de resistència i que no són especials. 
+
+
+Casuística de mostra: 
+
+Tindrem els seguents casuistiques de mostra
+
+Mostra amb un sol resultat i aquest es positiu
+Mostra amb un sol resultat i aquest es negatiu
+Mostra amb mes d´un resultat i tots són positius
+Mostra amb mes d´un resultat i tots són negatius
+Mostra amb mes d´un resultat i hi ha positius i negatius
+
+Necesito una funció que clasifiqui la mostra i, per cada mostra ho calculi i enseny al console
+
+-----l
+
+Vull canviar el sistema per veure que està fent el procés. En contes de fer crides al console.writeline, vull que preparis un sistema per deixar aquests missatges a un arxiu .log 
+
+Hauras de crear una carpeta dintre del projecte per deixar aquests arxius log
+
+Els arxius seran per dia. Es a dir, si s´ha d'escriure a l´arxiu i es el primer cop del dia, crearà un arxiu nou amb nomenclatura multir2025-10-02.log
+
+Si ja hi ha un arxiu creat per al dia d´avui, escriurà els missatges al final
+
+El format de les linees de l´arxiu serà:
+
+data hora minut segon actual 
+tipus : INFO, ERROR, ...
+missatge
+
+Un cop ho tinguis, transforma totes les crides console.writeline
+
+
+---
+
+Ara anem a començar el tractament de les mostres i els seus resultats. Et dono informació i no vull que facis res. Ho anirem fent poc a poc. Vull que em proposis els canvis en petits blocs que anirem confirmant.
+
+CLASIFICACIÓ D´UNA MOSTRA 
+
+POSITIVA : si a la mostra surt un microorganisme amb mecanisme de resistència (p.ex. BLEE, VIM, ...), o bé un microorganisme especial (p.ex. Acinetobacter baumannii) 
+
+NEGATIVA : si a la mostra no hi surt res o només surten microorganismes sense mecanisme de resistència i que no són especials. 
+
+ACCIONS SEGONS RESULTAT 
+
+Les mostres poden tenir 1 o més un registre. 
+
+Casuístiques que ens podem trobar: 
+
+Un sol registre: 
+
+Mostra POSITIVA --> Sempre es capta 
+
+Tractament per al propi positiu: 
+
+Si ja existeix un diagnòstic pel mateix Tipus de Mostra + Microorganisme + [Mecanisme de Resistència],  
+
+s´afegeix la mostra positiva a aquest diagnòstic existent. 
+
+Si no existeix un diagnòstic pel mateix Tipus de Mostra + Microorganisme + [Mecanisme de Resistència],  
+
+es crea un nou diagnòstic  Microorganisme + [Mecanisme de Resistència] 
+
+s´afegeix la mostra positiva a aquest nou diagnòstic (!!! Amb el numero d´etiqueta incorporat !!!!!) 
+
+Impacte en altres diagnòstics (negatius per absència): 
+
+S’ha de registrar com a mostra negativa dels altres possibles positius (altres diagnòstics) del mateix tipus de mostra i amb diferent numero d´etiqueta. 
+
+Mostra NEGATIVA --> Depèn del tipus de mostra 
+
+Tipus de captació obligatòria 
+
+Si el tipus de mostra és un dels que tenen comportament 1, es a dir, de tipus especial de captació obligaria (ex. Frotis rectal): Miraria si hi ha un diagnòstic existent d’aquell pacient. Després miraria si aquell diagnòstic té ja una mostra amb el Nº d’etiqueta (de la mostra negativa a incorporar). Si no el té, s’incorpora com a mostra negativa.
+
+S’afegirà com a mostra negativa de tots els diagnòstics existents. 
+ 
+
+Tipus de captació NO obligatòria 
+
+Si el tipus de mostra té un comportament 0 (no captació obligatòria): Miraria si hi ha un diagnòstic existent d’aquell pacient. Després miraria si el tipus de mostra per el diagnòstic coincideix. Després miraria si aquell diagnòstic té ja una mostra amb el Nº d’etiqueta (de la mostra negativa a incorporar). Si no el té, s’incorpora com a mostra negativa. 
+
+Més d´un registre 
+
+Mostra MULTI registre i tots són NEGATIUS 
+
+Aplicar el mateix que a l’apartat anterior (Mostra NEGATIVA --> Depèn del tipus de mostra) per tots els registres.   
+
+ 
+
+Mostra MULTI registre i tots són POSITIUS 
+
+Aplicar el mateix que a l’apartat anterior (Mostra POSITIVA --> Sempre es capta) per tots els registres.   
+
+Mostra MULTI registre i tens NEGATIUS i POSITIUS 
+
+Pels registres POSITIUS aplicar el mateix que a l’apartat anterior (Mostra POSITIVA --> Sempre es capta). 
+
+Pels registres NEGATIUS Aplicar el mateix que a l’apartat anterior (Mostra NEGATIVA --> Depèn del tipus de mostra). 
+
+CASOS D´US 
+
+Mostra 1 à Úlcera. Surt una Klebsiella pneumonie BLEE. Com que s’obté un microorganisme amb mecanisme de resistència (BLEE), es tracta d’una mostra POSITIVA. S’ha de captar i s’ha de iniciar un diagnòstic i s’ha de registrar una mostra positiva.  
+
+Mostra 2 à Úlcera. No surt res. Com que no s’obté un microorganisme amb mecanisme de resistència, ni especial, es tracta de una mostra NEGATIVA. Per tant s’ha de captar i s’ha de registrar una mostra negativa en el diagnòstic del pacient.  
+
+Mostra 3 à Úlcera. Surt una Pseudomona aeruginosa sense mecanisme de resistència. Com que no s’obté un microorganisme amb mecanisme de resistència, ni especial, es tracta de una mostra NEGATIVA. Per tant s’ha de captar i s’ha de registrar una mostra negativa en el diagnòstic del pacient (Mostra 1). 
+
+Mostra 4 à Úlcera. Surt una Klebsiella pneumonie BLEE, una Pseudomona aeruginosa i un Enterococcus faecium Com que s’obté un microorganisme amb mecanisme de resistència (Klebsiella pneumonie BLEE), es tracta d’una mostra POSITIVA. Així que s’ha de registrar una mostra positiva en el diagnòstic que ja existeix (perquè és el mateix microorgansime i el mateix mecanisme de resistència). Els altres registres negatius, es revisarien per el procés com negatius, però tindrien el mateix Nº d’etiqueta que el positiu, per tant no s’incorporarien.   
+
+Mostra 5 à Úlcera. Surt una Pseudomona aeruginosa i un Enterococcus faecium sense mecanisme de resistència. Com que no s’obté un microorganisme amb mecanisme de resistència, ni especial, es tracta de una mostra NEGATIVA. Per tant s’ha de captar i s’ha de registrar una mostra negativa en el diagnòstic del pacient. 
+
+Mostra 6 à Úlcera. Surt un Enterococcus faecium VIM i una Pseudomona aeruginosa Com que s’obté un microorganisme amb mecanisme de resistència (Enterococcus faecium VIM), es tracta d’una mostra POSITIVA. A part, com que és diferent que el positiu que teníem, s’ha de iniciar un nou diagnòstic i s’ha de registrar una mostra positiva. A més a més, com que no ha sortit una Klebsiella pneumonie BLEE i és la mateixa mostra on si havia sortit abans (Mostra 1 i mostra 4), aquesta mostra també és NEGATIVA per el 1er diagnòstic. Així que s’ha de registrar una mostra negativa en el 1er diagnòstic del pacient. 
+
+Mostra 7 à Úlcera. Surt una Pseudomona aeruginosa i un Enterococcus faecium sense mecanisme de resistència. Com que no s’obté un microorganisme amb mecanisme de resistència, ni especial, es tracta de una mostra NEGATIVA. Per tant s’ha de captar i s’ha de registrar una mostra negativa en els dos diagnòstics del pacient (perquè coincideixen el tipus de mostra). 
+
+Mostra 8 à Esput. Surt una Pseudomona aeruginosa i un Enterococcus faecium sense mecanisme de resistència. Com que no s’obté un microorganisme amb mecanisme de resistència, ni especial, es tracta de una mostra NEGATIVA. Aquí s’ha de mirar el tipus de mostra. Com que és un tipus de mostra diferent (ara és Esput i abans úlcera) no s’ha de captar, ja que no hi ha cap positiu anterior amb aquest tipus de mostra.  
+
+Mostra 9 à Esput. Surt una Klebsiella pneumonie BLEE. Com que s’obté un microorganisme amb mecanisme de resistència (BLEE), es tracta d’una mostra POSITIVA. A més, com que aquest diagnòstic ja el tenim (1e diagnòstic). Així que s’ha de registrar una mostra positiva en el diagnòstic que ja existeix (perquè és el mateix microorgansime i el mateix mecanisme de resistència). 
+
+Mostra 10 à Esput. Surt un Acin. Bau., una Pseudomona aeruginosa i un Enterococcus faecium Com que s’obté un microorganisme especial (Acin. Bau.), es tracta d’una mostra POSITIVA. A part, com que és diferent que els positius que teníem, s’ha de iniciar un nou diagnòstic i s’ha de registrar una mostra positiva. A més a més, com que no ha sortit una Klebsiella pneumonie BLEE i és la mateixa mostra on si havia sortit abans (Mostra 9), aquesta mostra també és NEGATIVA per el 1er diagnòstic. 
+
+Mostra 11 à Frotis rectal. No surt res. Com que no s’obté un microorganisme amb mecanisme de resistència, ni especial, es tracta de una mostra NEGATIVA. Com que és un tipus de mostra que s’ha de captar sempre (comportament 1=no mirar el tipus de mostra), es miraria si hi han diagnòstics existents i si coincideix el Nº d’etiqueta. Si no coincideix, s’ha de captar i s’ha de registrar una mostra negativa en els 3 diagnòstics del pacient. 
+
+-----´
+
+Abans de la linea 
+
+var classificacioMostra = ClassificarMostra(mostra); 
+
+farem diferens comprovacions als resultats de la mostra:
+
+La primer comprovació (n´hi haurà més) és la 
+
+COMPROVACIÓ MECANISME RESISTÈNCIA A NO INCORPORAR 
+
+Requisit de comprovacions prèvies, relacionat amb el mecanisme de resistència: 
+
+Si al resultat hi ha mecanisme de resistència, comprovarem si s´ha marcat com a ‘No incorporar’  
+
+Es comprovarà si hi ha un registre a la taula MECANISMES amb incorpora_modulab = 0  
+
+SELECT *  
+FROM mecanismes 
+WHERE UPPER(codi) = UPPER(MECANISME_RESISTENCIAX_ID) AND  
+dt_delete IS NULL AND 
+actiu = 1 AND 
+incorpora_modulab = 0; 
+
+Si això retorna un registre voldrà dir que el Mecanisme de resistència és un dels que no es vol incorporar, la mostra no entra. Inserir log --> MNI (Mecanisme a No Incorporar) . Aquest resultat no el tractarem en procesos posteriors. Continuar amb la resta de resultats de la mostra
+Si hi ha Mecanisme de resistència al resultat, però aquest no existeix a la taula de mecanismes, s'haurà de crear. Per fer-ho cal fer dos altes de registres: 
+ 
+
+Tipus de mecanisme: 
+INSERT INTO tipusmecanismes (codi, descripcio) 
+VALUES (‘ UPPER(MECANISME_RESISTENCIA_DESCRIPX)’, ‘UPPER(MECANISME_RESISTENCIA_DESCRIPX)’); 
+
+
+Mecanisme 
+INSERT INTO mecanismes (codi, descripcio, tipus_mecanisme) 
+VALUES (‘ UPPER(MECANISME_RESISTENCIAX_ID)’,  
+‘UPPER(MECANISME_RESISTENCIA_DESCRIPX)’, 		 
+‘UPPER(MECANISME_RESISTENCIA_DESCRIPX)’); 
+
+
+Un cop fetes les altes, continuar endavant amb la resta de comprovacions. 
+
+ 
+
+Si NO hi ha mecanisme de resistència, continuar endavant 
+
+------
+
+Crec que no t´ho he explicat be. Una mostra te un o mes resultats. 
+
+Hem d´anar resultat per resultat. Si un d´aquests resultats conté un mecanisme de resistencia a no incorporar, farem 
+
+context.MultiRService.InserirAuditoriaIntegracioModulab(context.Mostra, "MNI");
+
+i amb aquest resultat de la mostra no volem fer res mes. Es podria esborrar o marcar d´alguna forma per no tractar-lo després.
+
+En aquest punt unicament volem obviar aquests resultats. Amb la resta, continuarem endavant
+
+----
+
+
+Una mostra te un o mes resultats. Un resultat pot tenir o no microorganisme i pot tenir fins a cinq mecanismes de resistencia.
+
+En alguns llocs de l´aplicatiu es para de prova i hauria de ser mostra. Rectifica-ho per parlar de mostra o mostres, i no de prova o proves
+
+----
+
+Hem de transformar InserirAuditoriaIntegracioModulab . Ara fa un insert per cada mecanisme de resistencia del resultat de la mostra.
+
+En realitat li hauriem de passar com a parametre, a banda del resultatMostra, el mecanisme de resistencia, i sol hauria de fer insert per aquest mecanisme de resistencia.
+
+Pot ser que no se li passi cap mecanisme de resistencia, per que el resultat no en te, però igualment hauria de fer l´insert amb la informació que disposa, i sense mecanisme
+
+-----
+
+Després de fer la comprovació de mecanisme de resistencia a no incorporar, s´ha de fer un altra comprovació, que es molt semblant.
+
+Hi ha combinacions microorganisme i de mecanisme de resistencia que no es volen incorporar.
+
+Les combinacions que no es volen incorporar es poden trobar a la taula microorganisme_mecanisme_no_incorporar
+
+Et paso el DDL de la taula:
+
+CREATE TABLE `microorganisme_mecanisme_no_incorporar` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `microorganisme` varchar(100) DEFAULT NULL,
+  `mecanisme` varchar(100) DEFAULT NULL,
+  `dt_create` timestamp NULL DEFAULT current_timestamp(),
+  `dt_update` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `dt_delete` timestamp NULL DEFAULT NULL,
+  KEY `id` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci ROW_FORMAT=DYNAMIC COMMENT='Combinacions codi microorganisme / codi mecanisme que no es volen incorporar en el procés de integració de Modulab';
+
+
+Tal com has fet amb els mecanismes a no incorporar, has d´anar, dintre d´una mostra, resultat per resultat. A cada resultat hi trobaras un
+microorganisme i fins a 5 mecanismes de resistencia.
+
+Si un d´aquests resultats conté una combinació de microorganisme i mecanisme de resistencia, que no es vol incorporar, farem 
+
+context.MultiRService.InserirAuditoriaIntegracioModulab(context.Mostra, "CNI");
+
+i esborrarem el mecanisme del resultat (no el resultat sencer), igual que s´ha fet amb ExecutarComprovacioMecanismesResistencia.
+
+Com que aquesta comprovació es molt semblant a la de mecanisme de resistencia a no incorporar, estudiar la possibilitat de fer les dues 
+comprovacions en una mateixa rutina
+
+------
+
+A la taula microorganismes es vol tenir unicament els microorganismes que s´han incorporat en alguna de les incorporacions de dades de modulab.
+
+Ara el que volem es que abans de fer les comprovacions de mecanismes de resistencia, s'ha de comprovar si el microorganisme del resultat de la mostra 
+existeix a la taula de microorganismes
+
+SELECT *  
+FROM microorganismes  
+WHERE UPPER(descripcio) = UPPER(microorganisme actual)  
+AND actiu = 1  
+AND dt_delete IS NULL;  
+
+En el cas que no hi hagi un registre, es crearà un nou registre de microorganisme, amb els següents camps basics: 
+
+Codi = microorganisme actual
+
+Descripcio = microorganisme actual
+La resta de camps ja tenen valors per defecte 
+
+-----
+
+Començarem a desenvolupar la funció ProcessarMostraPositiva, es a dir, quan ens arriba una mostra on hi ha un unic positiu:
+
+resultat inclou un microorganisme especial amb o sense mecanismes de resistencia, o be inclou un microorganisme no especial però amb mecanisme de resistencia
+
+per aquest cas, anirem desenvolupant rutines. Algunes les aprofitarem quan fem el desenvolupament de les altres clasificacions de tipus de mostra:
+
+ProcessarMostresPositives, ProcessarMostraNegativa, ....
+
+La primer rutina serà la comprovació i creació, si cal, del pacient
+
+Es comprovarà si el pacient existeix a la nostra bd: 
+
+SELECT * FROM pacients WHERE npat = MODULAB.PACIENT_SAP 
+
+Si Pacient SI existeix 
+
+No cal fer res 
+ 
+
+Si Pacient NO existeix 
+
+Recuperar dades amb un webservice 
+
+http://10.80.160.178/flamma/ws/consultaPacient/consultaPacient.php
+
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:xmethods-delayed-quotes">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <urn:consultaPacient>
+         <centre>DT</centre>
+         <pacient>15486726</pacient>
+         <user>webservice</user>
+         <pwd>wsicsgir</pwd>
+         <sistema>sarch</sistema>
+         <cognom1></cognom1>
+         <cognom2></cognom2>
+         <nom></nom>
+      </urn:consultaPacient>
+   </soapenv:Body>
+</soapenv:Envelope>
+
+on hem de substituir 15486726 per al pacient_sap
+ 
+Del resultat de la crida afegirem un registre a la taula pacients amb aquest ddl
+
+CREATE TABLE `pacients` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `npat` varchar(20) DEFAULT NULL,
+  `nom` varchar(50) DEFAULT NULL,
+  `cognom1` varchar(50) DEFAULT NULL,
+  `cognom2` varchar(50) DEFAULT NULL,
+  `dt_naixement` date DEFAULT NULL,
+  `sexe` varchar(5) DEFAULT NULL,
+  `dt_create` timestamp NULL DEFAULT NULL,
+  `dt_update` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `dt_delete` timestamp NULL DEFAULT NULL,
+  `observacions` varchar(50) DEFAULT NULL,
+  `fitxa` char(1) DEFAULT NULL COMMENT 'hi ha fitxa fisica',
+  `cip` varchar(15) DEFAULT NULL,
+  `bitxo_hg` varchar(50) DEFAULT NULL,
+  `dt_exitus` date DEFAULT NULL COMMENT 'Data èxitus',
+  `abs_referencia` varchar(50) DEFAULT NULL COMMENT 'ABS de referència',
+  `dt_canviws` timestamp NULL DEFAULT NULL,
+  `consolidat` char(1) DEFAULT NULL COMMENT 'registre s’ha consolidat després importació modulab (N=no, NULL=si)',
+  `usuari` varchar(50) DEFAULT NULL COMMENT 'usuari que ha fet alta',
+  PRIMARY KEY (`id`),
+  KEY `npat` (`npat`),
+  KEY `nom_cognom1_cognom2` (`cognom1`,`cognom2`,`nom`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=22534 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+
+amb aquestes dades:
+
+
+Npat MODULAB.PACIENT_SAP 
+Nom WS.nombre 
+Cognom1 WS.apellido1 
+Cognom2 WS.apellido2 
+Dt_naixement WS.dnaix 
+Sexe WS.sexe 
+Dt_create Now() 
+Dt_update Now() 
+Fitxa ‘I’ 
+Cip WS.cip 
+Abs_referencia WS.abs 
+Consolidat ‘N’  
+Usuari ‘MODULAB’  
+
+--- 
+
+Hi ha un error de plantejament a ProcessarPacient
+
+La comprovació de pacient s'ha de fer fent consulta a la base de dades mysql, amb aquesta consulta:
+
+SELECT * FROM pacients WHERE npat = MODULAB.PACIENT_SAP 
+
+Si hi ha un pacient a la taula pacients, no cal fer res mes en aquesta comprovació.
+
+Es en el cas que no es troba un pacient a la taula de pacients, que ha de fer la consulta al webservice
+
+Si el webservice recupera dades, seran aquestes dades les que serviran per crear un nou registre a la taula pacients
+
+--- 
+
+Si la consulta al webservice no retorna dades per al pacient, ha d´inserir a taula log:
+
+multiRService.InserirAuditoriaIntegracioModulab(mostra, "NPWS"); // No es troba el pacient al webservice
+
+i no ha de continuar endavant amb la resta de procesos
+
+----
+
+A la funció ConsultarPacientAsync , responsecontent recupera, per exemple:
+
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="urn:xmethods-delayed-quotes"><SOAP-ENV:Body><ns1:consultaPacientResponse><Result>&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;data&gt;&lt;item&gt;&lt;NHC&gt;0010868726&lt;/NHC&gt;&lt;CIP&gt;BIQU1960609007&lt;/CIP&gt;&lt;APELLIDO1&gt;BIOSCA&lt;/APELLIDO1&gt;&lt;APELLIDO2&gt;QUIÑONES&lt;/APELLIDO2&gt;&lt;NOMBRE&gt;PAULA&lt;/NOMBRE&gt;&lt;DNAIX&gt;1996-06-09&lt;/DNAIX&gt;&lt;SEXE&gt;D&lt;/SEXE&gt;&lt;NASS&gt;171043358287&lt;/NASS&gt;&lt;DNI&gt;41579990S&lt;/DNI&gt;&lt;ADR&gt;CR/ANGEL GUIMERA 70&lt;/ADR&gt;&lt;POBLACIO&gt;PORQUERES&lt;/POBLACIO&gt;&lt;CPO&gt;17834&lt;/CPO&gt;&lt;TELF&gt;606870015&lt;/TELF&gt;&lt;PROVINCIA&gt;17&lt;/PROVINCIA&gt;&lt;ABS&gt;015&lt;/ABS&gt;&lt;DESCR_SEXE&gt;DONA&lt;/DESCR_SEXE&gt;&lt;TIPUS_DOCUMENT&gt;01&lt;/TIPUS_DOCUMENT&gt;&lt;CODI_POBLACIO&gt;1713716&lt;/CODI_POBLACIO&gt;&lt;DESCR_POBLACIO&gt;PORQUERES&lt;/DESCR_POBLACIO&gt;&lt;CAP&gt;015&lt;/CAP&gt;&lt;DESCR_CAP&gt;BANYOLES&lt;/DESCR_CAP&gt;&lt;NACIO&gt;Espanya&lt;/NACIO&gt;&lt;CODI_NACIO&gt;ES&lt;/CODI_NACIO&gt;&lt;/item&gt;&lt;/data&gt;
+</Result></ns1:consultaPacientResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>
+ 
+però després ProcessarResposta no gestiona be el resultat
+
+---
+
+Després de la FASE 1: COMPROVACIÓ I CREACIÓ DEL PACIENT 
+vindrà la segona comprovació: comprovació de pacients_diagnostics
+
+Un pacient té un o mes diagnostics. aquests estan a la taula pacients_diagnostics
+
+ CREATE TABLE `pacients_diagnostics` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `npat` varchar(20) DEFAULT NULL,
+  `data_diagnostic` date DEFAULT NULL,
+  `usuari` varchar(50) DEFAULT NULL,
+  `bitxo` varchar(100) DEFAULT NULL,
+  `dt_create` timestamp NULL DEFAULT current_timestamp(),
+  `dt_update` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `dt_delete` timestamp NULL DEFAULT NULL,
+  `microorganisme` varchar(50) DEFAULT NULL,
+  `mecanisme` varchar(50) DEFAULT NULL COMMENT 'Mecanisme de resistencia',
+  `tipus_mecanisme` varchar(100) DEFAULT NULL COMMENT 'Tipus de mecanisme',
+  `lloc_deteccio` varchar(100) DEFAULT NULL COMMENT 'Lloc de detecció',
+  `adquisicio` varchar(50) DEFAULT NULL COMMENT 'Adquisició',
+  `estat_clinic` varchar(2) DEFAULT NULL COMMENT 'Estat clínic',
+  `localitzacio_infeccio` varchar(150) DEFAULT NULL COMMENT 'Localització de la infecció',
+  `data_ingres` date DEFAULT NULL COMMENT 'Data ingrés',
+  `data_alta` date DEFAULT NULL COMMENT 'Data alta',
+  `servei` varchar(50) DEFAULT NULL COMMENT 'Servei',
+  `unitat` varchar(50) DEFAULT NULL COMMENT 'Unitat',
+  `consolidat` char(1) DEFAULT NULL COMMENT 'registre s’ha consolidat després importació modulab (N=no, NULL=si)',
+  `migrat` char(1) DEFAULT NULL COMMENT 'per controlar si s´ha migrat o no. esborrar un cop feta la migració',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=27266 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+hem de comprovar si el pacient ja te el diagnostic que estem intentant incorporar.
+
+Per comprovar-ho farem la consulta:
+
+SELECT *  
+FROM pacients_diagnostics 
+WHERE npat = MODULAB.PACIENT_SAP  
+    	AND microorganisme =  MICROORGANISME.CODI 
+AND mecanisme = MODULAB.MECANISME_RESISTENCIAX_ID  
+AND tipus_mecanisme = MECANISME.TIPUS_MECANISME 
+AND dt_delete IS NULL;  
+
+
+Si existeix registre a Pacients_Diagnostics , recuperarem el ID PACIENTS_DIAGNOSTICS.ID que després necessitarem per omplir la taula mostra_microorganisme
+
+Continuar endavant amb la resta de procesos
+  
+
+Si NO existeix registre a Pacients_Diagnostics, l´haurem d´inserir amb les seguents dades:
+
+Npat = MODULAB.PACIENT_SAP 
+Data_diagnostic = NULL (S’actualitzarà al final del procés) 
+Usuari = ‘MODULAB’ 
+Bitxo = ‘’
+Dt_create = Now() 
+Dt_update = Now() 
+Microorganisme = MICROORGANISME.CODI 
+Mecanisme = MODULAB.MECANISME_RESISTENCIAX_ID  
+Tipus_mecanisme = MECANISME.TIPUS_MECANISME 
+Consolidat = ‘N’ 
+Data_ingres = 9999-12-31 
+Data_alta = 9999-12-31 
+ 
+
+Fer insert i recuperarem el ID PACIENTS_DIAGNOSTICS.ID que després necessitarem per omplir la taula mostra_microorganisme
+
+Continuar endavant amb la resta de procesos
+
+-----
+
+A la funció ProcessarDiagnosticsPacient dintre del foreach de mecanismes (a continuació del TODOCC), un cop recuperat l´id de pacients_diagnostics, 
+comprobarem la existencia de registre a pacients_diagnostics_mostra
+
+Per fer-ho, farem consulta :
+
+
+SELECT *  
+FROM pacients_diagnostics_mostra 
+WHERE npat = MODULAB.PACIENT_SAP  
+    	AND data_mostra =  MODULAB.DATA_PETICIO_TRUC 
+	AND tipus_mostra _m = MODULAB.MOSTRA_DESCRIPCIO 
+
+Si registre Pacients_Diagnostics_Mostra  SI existeix 
+
+Recuperar ID : PACIENTS_DIAGNOSTICS_MOSTRA.ID 
+
+Continuar endavant amb la resta de procesos
+
+
+Si registre Pacients_Diagnostics_Mostra  NO existeix 
+
+Si no existeix el registre a pacients_diagnostics_mostra , s´ha de crear un registre 
+
+Fer insert a Pacients_Diagnostics_Mostra amb les següents dades:
+
+Npat = MODULAB.PACIENT_SAP 
+Data_diagnostic = NULL
+Data_mostra = MODULAB.DATA_PETICIO_TRUC 
+Tipus_mostra _m = MODULAB.MOSTRA_DESCRIPCIO 
+Usuari = ‘MODULAB’
+Dt_create = Now() 
+Dt_update = Now() 
+Consolidat = ‘N’
+Valoracio =   
+‘2’ Si la mostra es positiva (hi ha mecanisme de resistència o bé el microorganisme és especial) 
+‘1’  Si la mostra es negativa (no hi ha mecanisme de resistència i el microorganisme no és especial) 
+
+Tipus_prova = PROVA_DESCRIPCIO 
+Etiqueta= ETIQUETA_ID 
+Data_resultat = DATA_RESULTAT 
+Data_validacio = DATA_VALIDACIO (* POT SER NULL) 
+Estat_integracio_m= 
+	Si DATA_VALIDACIO <> NULL --> ’V’  
+	Si DATA_VALIDACIO = NULL --> ‘P’   
+
+Fer insert i recuperarem el ID PACIENTS_DIAGNOSTICS_MOSTRA.ID que després necessitarem per omplir la taula mostra_microorganisme
+
+Continuar endavant amb la resta de procesos
+
+------
+
+Revisar la funció ClassificarMostra. Un resultat es positiu si inclou un microorganisme especial amb o sense mecanismes de resistencia, 
+o be inclou un microorganisme no especial però amb mecanisme de resistencia
+
+----
+
+En el resum del tractament de mostres vull incloure estadistiques del numero de mostres segons el tipus de mostra: UnSolResultatPositiu, UnSolResultatNegatiu, ....
+
+--
+
+En la refactorització que has fet m´agradaria canviar la estructura de la solució. No sé si es pot distribuir els arxius en diferents carpetes segons funcionalitat
+
+Em pots fer una proposta 
+
+-- 
+
+Revisar el codi i, on hi hagi un console.writeline justament amb un loggerservice.info, i al console.writeline hi hagi un icono, replicar-ho també al loggerservice.info.
+
+Per exemple:
+
+loggerService.Info($"Carregant mostres dels últims {configService.DiesEndarreraCarrega} dies...");
+Console.WriteLine($"\n🔍 Carregant mostres dels últims {configService.DiesEndarreraCarrega} dies...");
+
+vull que quedi així:
+
+loggerService.Info($"\n🔍 Carregant mostres dels últims {configService.DiesEndarreraCarrega} dies...");
+Console.WriteLine($"\n🔍 Carregant mostres dels últims {configService.DiesEndarreraCarrega} dies...");
+
+---
+
+Anem a completar ProcessarPacientAsync. 
+
+La funcionalitat es la seguent. Un cop feta la validació basica de comprovar que existeix l´identificador de pacient,
+s´ha de comprovar si aquest pacient (mostra.PacientSap) existeix a la base de dades de multir (mysql), taula pacients
+
+Per comprovar-ho farem:
+
+SELECT * FROM pacients WHERE npat = mostra.PacientSap
+
+Si Pacient SI existeix a multir taula pacients, ja no farem mes pasos a processarpacientasync.
+
+Si el pacient no existeix a multir taula pacients, es quan es recuperaran les dades del pacient, a través del _pacientwebservice.
+
+Si el _pacientwebservice retorna dades (pot ser que si o pot ser que no), farem insert a taula pacients de multir (mysql) amb les dades recuperades. Són aquests camps
+
+Npat = mostra.PacientSap
+Nom = _pacientwebservice.nombre 
+Cognom1 = _pacientwebservice.apellido1 
+Cognom2 = _pacientwebservice.apellido2 
+Dt_naixement = _pacientwebservice.dnaix 
+Sexe = _pacientwebservice.sexe 
+Dt_create = Now() 
+Dt_update = Now() 
+Fitxa = ‘I’ 
+Cip = _pacientwebservice.cip 
+Abs_referencia = _pacientwebservice.abs 
+Consolidat = ‘N’  
+Usuari = ‘MODULAB’  
+
+-- 
+
+A ProcessarPacientAsync si dadesPacient retorna null s´ha d´inserir InserirAuditoriaIntegracioModulab amb NPWS i no es continuarà endavant 
+a // FASE 2: PROCESSAR CADA REGISTRE POSITIU de ExecutarAsync
+
+
+
+
+A partir de mostra.pacientsap 
+
+
+----
+
+A la clase Mostra vull refactoritzar Registres a Resultats
+
+-----
+
+Anem a modificar ProcessarResultatPositiu
+
+A _logger.Info($"  Processant resultat: {resultatMostra.AillamentDescripcio ?? "sense microorganisme"}"); hem d´incorporar també els text dels diferents mecanismes de resistencia
+
+
+-----
+A ProcessarResultatPositiu, despres d´ensenyar al log el resultat que s´esta processant, haurem de comprovar si hi ha un registre a pacients_diagnostics.
+
+T´ho explico: Un pacient té un o mes diagnostics (a multir mysql), que estan a la taula pacients_diagnostics
+
+hem de comprovar si el pacient actual ja te el diagnostic a mysql, que estem intentant incorporar.
+
+Per comprovar-ho farem la consulta:
+
+SELECT *  
+FROM pacients_diagnostics 
+WHERE npat = MODULAB.PACIENT_SAP  
+    	AND microorganisme =  MICROORGANISME.CODI 
+AND mecanisme = MODULAB.MECANISME_RESISTENCIAX_ID  
+AND tipus_mecanisme = MECANISME.TIPUS_MECANISME 
+AND dt_delete IS NULL;  
+
+
+Si existeix registre a Pacients_Diagnostics , recuperarem el ID PACIENTS_DIAGNOSTICS.ID 
+
+
+
+que després necessitarem per omplir la taula mostra_microorganisme
+
+Continuar endavant amb la resta de procesos
+  
+
+Si NO existeix registre a Pacients_Diagnostics, l´haurem d´inserir amb les seguents dades:
+
+Npat = MODULAB.PACIENT_SAP 
+Data_diagnostic = NULL (S’actualitzarà al final del procés) 
+Usuari = ‘MODULAB’ 
+Bitxo = ‘’
+Dt_create = Now() 
+Dt_update = Now() 
+Microorganisme = MICROORGANISME.CODI 
+Mecanisme = MODULAB.MECANISME_RESISTENCIAX_ID  
+Tipus_mecanisme = MECANISME.TIPUS_MECANISME 
+Consolidat = ‘N’ 
+Data_ingres = 9999-12-31 
+Data_alta = 9999-12-31 
+ 
+
+Fer insert i recuperarem el ID PACIENTS_DIAGNOSTICS.ID que després necessitarem per omplir la taula mostra_microorganisme
+
+Continuar endavant amb la resta de procesos
+
+
+
+
+
+
+
+
+
