@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- Pots canviar la versió segons el framework que usis -->
+    <!-- Pots canviar la versió segons el framework que facis anar -->
     <OutputType>Exe</OutputType>
     <TargetFramework>net48</TargetFramework>
     <RootNamespace>MultirIntegraModulab</RootNamespace>

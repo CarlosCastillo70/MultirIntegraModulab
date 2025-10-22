@@ -266,7 +266,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     (resultatMostra.MecanismeResistencia2Id, resultatMostra.MecanismeResistenciaDescrip2),
                     (resultatMostra.MecanismeResistencia3Id, resultatMostra.MecanismeResistenciaDescrip3),
                     (resultatMostra.MecanismeResistencia4Id, resultatMostra.MecanismeResistenciaDescrip4),
-                    (resultatMostra.MecanismeResistencia5Id, resultatMostra.MacanismeResistenciaDescrip5)
+                    (resultatMostra.MecanismeResistencia5Id, resultatMostra.MecanismeResistenciaDescrip5)
                 };
 
                 // Per cada mecanisme del resultat...
