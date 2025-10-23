@@ -38,45 +38,93 @@ namespace MultirIntegraModulab.Application.UseCases.ClassificarMostres
             
             foreach (var resultatMostra in mostra.Resultats)
             {
-                if (EsResultatPositiu(resultatMostra))
-                {
-                    resultat.ResultatsPositius++;
-                }
-                else
-                {
-                    resultat.ResultatsNegatius++;
-                }
+                var comptatge = ComptarPositiusINegatius(resultatMostra);
+                resultat.ResultatsPositius += comptatge.Positius;
+                resultat.ResultatsNegatius += comptatge.Negatius;
             }
 
             // Determinar el tipus de mostra : un sol positiu, un sol negatiu, mix, ...
             resultat.TipusMostra = DeterminarTipusMostra(resultat.ResultatsPositius, resultat.ResultatsNegatius);
 
-            _logger.Info($"Mostra {mostra.EtiquetaId} classificada com {resultat.TipusMostra.ToString().ToUpper()}");
+            _logger.Info($"Mostra {mostra.EtiquetaId} classificada com {resultat.TipusMostra.ToString().ToUpper()} ({resultat.ResultatsPositius} positius, {resultat.ResultatsNegatius} negatius)");
 
             return resultat;
         }
 
-        private bool EsResultatPositiu(ResultatMostra registre)
+        /// <summary>
+        /// Compta el nombre de positius i negatius d'un resultat
+        /// </summary>
+        /// <param name="resultatMostra">Resultat a analitzar</param>
+        /// <returns>Tuple amb (Positius, Negatius)</returns>
+        private (int Positius, int Negatius) ComptarPositiusINegatius(ResultatMostra resultatMostra)
         {
-            // Un resultat és positiu si:
-            // 1. Té microorganisme especial
-            if (registre.EsMicroorganismeEspecial == true)
-                return true;
+            int positius = 0;
+            int negatius = 0;
 
-            // 2. Té microorganisme i algun mecanisme de resistència
-            if (!string.IsNullOrWhiteSpace(registre.AillamentDescripcio))
+            // Comprovar si té microorganisme
+            bool teMicroorganisme = !string.IsNullOrWhiteSpace(resultatMostra.AillamentDescripcio);
+
+            if (!teMicroorganisme)
             {
-                if (!string.IsNullOrWhiteSpace(registre.MecanismeResistencia1Id) ||
-                    !string.IsNullOrWhiteSpace(registre.MecanismeResistencia2Id) ||
-                    !string.IsNullOrWhiteSpace(registre.MecanismeResistencia3Id) ||
-                    !string.IsNullOrWhiteSpace(registre.MecanismeResistencia4Id) ||
-                    !string.IsNullOrWhiteSpace(registre.MecanismeResistencia5Id))
+                // Si no hi ha microorganisme, és un negatiu
+                negatius = 1;
+                return (positius, negatius);
+            }
+
+            // Comptar mecanismes de resistència
+            int nombreMecanismes = ComptarMecanismesResistencia(resultatMostra);
+
+            // Si és microorganisme especial
+            if (resultatMostra.EsMicroorganismeEspecial == true)
+            {
+                if (nombreMecanismes == 0)
                 {
-                    return true;
+                    // Microorganisme especial sense mecanismes = 1 positiu
+                    positius = 1;
+                }
+                else
+                {
+                    // Microorganisme especial amb N mecanismes = N positius
+                    positius = nombreMecanismes;
+                }
+            }
+            else
+            {
+                // Microorganisme no especial
+                if (nombreMecanismes == 0)
+                {
+                    // Microorganisme no especial sense mecanismes = 1 negatiu
+                    negatius = 1;
+                }
+                else
+                {
+                    // Microorganisme no especial amb N mecanismes = N positius
+                    positius = nombreMecanismes;
                 }
             }
 
-            return false;
+            return (positius, negatius);
+        }
+
+        /// <summary>
+        /// Compta el nombre de mecanismes de resistència presents en un resultat
+        /// </summary>
+        private int ComptarMecanismesResistencia(ResultatMostra resultatMostra)
+        {
+            int nombre = 0;
+
+            if (!string.IsNullOrWhiteSpace(resultatMostra.MecanismeResistencia1Id))
+                nombre++;
+            if (!string.IsNullOrWhiteSpace(resultatMostra.MecanismeResistencia2Id))
+                nombre++;
+            if (!string.IsNullOrWhiteSpace(resultatMostra.MecanismeResistencia3Id))
+                nombre++;
+            if (!string.IsNullOrWhiteSpace(resultatMostra.MecanismeResistencia4Id))
+                nombre++;
+            if (!string.IsNullOrWhiteSpace(resultatMostra.MecanismeResistencia5Id))
+                nombre++;
+
+            return nombre;
         }
 
         private TipusMostra DeterminarTipusMostra(int positius, int negatius)
