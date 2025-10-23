@@ -961,7 +961,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"🔎 Comprovant / creant diagnostic {microorganisme} [{tipusMecanisme}]");
+                    Logger.Info($"🔎 Comprovant / creant diagnostic {microorganisme} [{mecanisme} - {tipusMecanisme}]");
 
 
                     conn.Open();
@@ -985,7 +985,7 @@ namespace MultirIntegraModulab
                         int diagnosticId = result != null ? Convert.ToInt32(result) : 0;
                         
 
-                        Logger.Info($"  Diagnòstic del pacient {pacientSap} + {microorganisme} + {mecanisme}: {(diagnosticId > 0 ? $"ja existeix (ID: {diagnosticId})" : "no existeix")}");
+                        Logger.Info($"  Diagnòstic del pacient {pacientSap} + {microorganisme} + {mecanisme}: {(diagnosticId > 0 ? $"JA existeix (ID: {diagnosticId})" : "NO existeix")}");
                         return diagnosticId;
                     }
                 }
@@ -1078,7 +1078,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"🔎 Comprovant / creant mostra diagnòstic per pacient {pacientSap} de tipus {tipusMostra}");
+                    Logger.Info($"🔎 Comprovant / creant mostra diagnòstic de tipus '{tipusMostra}'");
 
                     conn.Open();
                     
@@ -1098,7 +1098,7 @@ namespace MultirIntegraModulab
                         var result = cmd.ExecuteScalar();
                         int mostraId = result != null ? Convert.ToInt32(result) : 0;
                         
-                        Logger.Info($"  Mostra diagnòstic per pacient {pacientSap}, data {dataMostra:dd/MM/yyyy}, tipus {tipusMostra}: {(mostraId > 0 ? $"ja existeix (ID: {mostraId})" : "no existeix")}");
+                        Logger.Info($"  Mostra del pacient {pacientSap} + data {dataMostra:dd/MM/yyyy} + tipus '{tipusMostra}': {(mostraId > 0 ? $"JA existeix (ID: {mostraId})" : "NO existeix")}");
                         return mostraId;
                     }
                 }

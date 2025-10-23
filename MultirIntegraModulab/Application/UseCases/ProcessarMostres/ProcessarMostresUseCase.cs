@@ -89,11 +89,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _logger.Info($">>> Processant mostra del pacient {mostra.PacientSap} , amb etiqueta : {mostra.EtiquetaId}");
                     _logger.Info($"------------------------------------");
 
-                    if (mostra.EtiquetaId == "402875401" || mostra.EtiquetaId == "402875592")
+                    if (mostra.EtiquetaId == "402875914" || mostra.EtiquetaId == "402876167" || mostra.EtiquetaId == "402876126" || mostra.EtiquetaId == "402876138")
                     {
 
-                        // 402875592
-
+                        // 402875914 2 MECANISMES RESISTENCIA
+                        // 402876167 3 MECANISMES RESISTENCIA
+                        // 402876126 2 NEGATIUS
+                        // 402876138 3 NEGATIUS
 
                         var revisioDeCasos = 1;
                     }
@@ -115,14 +117,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // Actualitzar resum final segons tipus d'incorporació
                     ActualitzarResumPerTipus(resum, tipusIncorporacio);
 
-                    
-
-                    // FASE 3: Classificar mostra (un sol positiu, múltiples negatius, mixta, ...)
-                    var classificacio = _classificarMostraUseCase.Executar(mostra);
 
 
-
-                    // FASE 4: Comprovar microorganismes
+                    // FASE 3: Comprovar microorganismes
                     var resultatMicroorganismes = _comprovadorMicroorganismesUseCase.Executar(mostra);
                     if (!resultatMicroorganismes.Exitosa)
                     {
@@ -130,7 +127,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
 
-                    // FASE 5: Comprovar mecanismes de resistència
+                    // FASE 4: Comprovar mecanismes de resistència
                     var resultatMecanismes = _comprovadorMecanismesUseCase.Executar(mostra);
                     if (!resultatMecanismes.ContinuarProcessament)
                     {
@@ -138,6 +135,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         resum.MostresAmbError++;
                         continue;
                     }
+
+                    
+                    // FASE 5: Classificar mostra (un sol positiu, múltiples negatius, mixta, ...)
+                    var classificacio = _classificarMostraUseCase.Executar(mostra);
+
 
                     // FASE 6: Processar segons el tipus de mostra
                     await ProcessarPerTipusMostraAsync(mostra, classificacio, resum);

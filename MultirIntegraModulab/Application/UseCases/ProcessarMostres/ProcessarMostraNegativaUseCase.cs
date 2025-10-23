@@ -1,4 +1,5 @@
 using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
+using MultirIntegraModulab.Application.Helpers;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Interfaces;
 using System;
@@ -116,7 +117,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 };
             }
 
-            _logger.Info($"🔄 Processant mostra amb {classificacio.ResultatsNegatius} negatiu/s: {mostra.EtiquetaId}");
+            _logger.Info($"🔄 Processant mostra amb {classificacio.ResultatsNegatius} negatiu/s");
 
             var resultat = new ResultatProcessamentNegatiu();
 
@@ -166,13 +167,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         {
             string microorganisme = resultatMostra.AillamentDescripcio ?? "sense microorganisme";
             
-            _logger.Info($"  Processant resultat negatiu: {microorganisme}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat negatiu: {microorganisme}");
 
             
             // FASE 1: COMPROVACIONS PER DETERMINAR SI CAL INCORPORAR EL NEGATIU
             // ------------------------------------
             
-            _logger.Info($"  🔍 Comprovant si cal incorporar el negatiu per tipus mostra: {resultatMostra.MostraDescripcio}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔍 Comprovant si cal incorporar el negatiu per tipus mostra: {resultatMostra.MostraDescripcio}");
             
             bool calIncorporarNegatiu = false;
             TipusComprovacioNegatiu tipusComprovacio = TipusComprovacioNegatiu.Cap;
@@ -181,13 +182,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             // Comprovació 0: Comprovar si tenim el pacient a la taula de pacients
             // ------------------------------------
             
-            _logger.Info($"   Aplicant Comprovació 0: Verificant existència del pacient {mostra.PacientSap}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 0: Verificant existència del pacient {mostra.PacientSap}");
             
             bool pacientExisteix = _multiRRepository.ExisteixPacient(mostra.PacientSap);
             
             if (!pacientExisteix)
             {
-                _logger.Info($"   ⚠️ Pacient {mostra.PacientSap} no existeix a la taula de pacients");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient {mostra.PacientSap} no existeix a la taula de pacients");
                 
                 // Inserir auditoria amb codi NMRCMC (No supera la comprovació de mostra amb motiu client)
                 bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCMC", resultatMostra);
@@ -201,13 +202,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 return;
             }
             
-            _logger.Info($"   ✔️ Pacient {mostra.PacientSap} existeix a la taula de pacients");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {mostra.PacientSap} existeix a la taula de pacients");
 
 
             // Comprovació 1: Tipus de mostra a incorporar sempre que el pacient tingui algun positiu
             // ------------------------------------
 
-            _logger.Info($"   Aplicant Comprovació 1: Positius vigents per qualsevol tipus de mostra");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 1: Positius vigents per qualsevol tipus de mostra");
 
             // Obtenir el comportament del tipus de mostra
             int? comportament = _multiRRepository.ObtenirComportamentTipusMostra(resultatMostra.MostraDescripcio);
@@ -227,11 +228,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             {
                 if (comportament.HasValue)
                 {
-                    _logger.Info($"   Tipus de mostra amb comportament {comportament.Value} (no aplica comprovació 1)");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus de mostra amb comportament {comportament.Value} (no aplica comprovació 1)");
                 }
                 else
                 {
-                    _logger.Info($"   ⚠️ Tipus de mostra no trobat o sense comportament definit");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Tipus de mostra no trobat o sense comportament definit");
                 }
             }
 			
@@ -261,7 +262,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             
             if (!calIncorporarNegatiu)
             {
-                _logger.Info($"   Resultat negatiu NO cal incorporar segons comprovacions 1 i 2");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Resultat negatiu NO cal incorporar segons comprovacions 1 i 2");
 
                 // Inserir auditoria amb codi NMRCM (No supera la comprovació de mostra)
                 bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCM", resultatMostra);
@@ -279,7 +280,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             // FASE 2: RECUPERAR DIAGNÒSTICS POSITIUS A NEUTRALITZAR
             // ------------------------------------
             
-            _logger.Info($"   ✔️ Resultat negatiu CAL incorporar (via {tipusComprovacio}), recuperant diagnòstics positius...");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Resultat negatiu CAL incorporar (via {tipusComprovacio}), recuperant diagnòstics positius...");
             
 
             // Incrementar comptador segons tipus de comprovació
@@ -312,11 +313,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             if (diagnosticsPositiusANeutralitzar == null || diagnosticsPositiusANeutralitzar.Count == 0)
             {
-                _logger.Info($"   No s'han trobat diagnòstics positius a neutralitzar");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}No s'han trobat diagnòstics positius a neutralitzar");
             }
             else
             {
-                _logger.Info($"   Trobats {diagnosticsPositiusANeutralitzar.Count} diagnòstics positius a neutralitzar");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnosticsPositiusANeutralitzar.Count} diagnòstics positius a neutralitzar");
 
                 // S´han trobat diagnòstics positius a neutralitzar, procedim a crear la mostra diagnòstic per al negatiu
                 // Procedim a crear la mostra diagnòstic per al negatiu (serà la mateixa per a tots els diagnòstics positius)
@@ -364,7 +365,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (diagnosticInfo != null)
                     {
 
-                        _logger.Info($"  🔄 Incorporant el resultat negatiu al diagnòstic {diagnosticId}: {diagnosticInfo.MicroorganismeCodi} + {diagnosticInfo.MecanismeId ?? "(sense mecanisme)"}");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🔄 Incorporant el resultat negatiu al diagnòstic {diagnosticId}: {diagnosticInfo.MicroorganismeCodi} + {diagnosticInfo.MecanismeId ?? "(sense mecanisme)"}");
 
 
                         // Mostra_Microorganisme

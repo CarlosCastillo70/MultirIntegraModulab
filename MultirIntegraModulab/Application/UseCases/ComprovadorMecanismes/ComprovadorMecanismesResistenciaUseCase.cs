@@ -111,11 +111,11 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
             if (!mecanismes.Any())
             {
-                _logger.Info($" ⚠️ Registre sense mecanismes de resistència");
+                _logger.Info($" ⚠️ Registre amb microorganisme '{registre.AillamentDescripcio}' sense mecanismes de resistència");
                 return;
             }
 
-            _logger.Info($"  Comprovant {mecanismes.Count} mecanismes del registre");
+            _logger.Info($"  Registre amb microorganisme '{registre.AillamentDescripcio}' si que té {mecanismes.Count}  mecanismes de resistència. Es comproven");
 
             // Comprovar cada mecanisme
             foreach (var mecanisme in mecanismes)
@@ -164,7 +164,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
             Mostra mostra,
             ResultatComprovacioMecanismes resultat)
         {
-            _logger.Info($"  Comprovant mecanisme: {mecanisme.id}");
+            _logger.Info($"  Comprovant existencia del mecanisme: {mecanisme.id} i combinacions microorganisme / mecanisme, a no incorporar");
 
             // 1. Comprovar si el mecanisme existeix
             var estatMecanisme = _multiRRepository.ComprovarExistenciaMecanisme(mecanisme.id);

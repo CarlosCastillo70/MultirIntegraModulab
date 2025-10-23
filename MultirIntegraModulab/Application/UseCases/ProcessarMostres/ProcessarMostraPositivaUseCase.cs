@@ -1,4 +1,5 @@
 using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
+using MultirIntegraModulab.Application.Helpers;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Enums;
 using MultirIntegraModulab.Domain.Interfaces;
@@ -69,7 +70,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         {
             if (mostra == null)
             {
-                _logger.Warning("Intentant processar mostra positiva amb mostra null");
+                _logger.Warning("Intentant processar resultat positiu amb mostra null");
                 throw new ArgumentNullException(nameof(mostra));
             }
 
@@ -79,7 +80,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 throw new ArgumentNullException(nameof(classificacio));
             }
 
-            _logger.Info($"🔄 Processant mostra amb un sol positiu: {mostra.EtiquetaId}");
+            _logger.Info($"🔄 Processant resultat/s positiu/s de la mostra : {mostra.EtiquetaId}");
 
             var resultat = new ResultatProcessamentPositiu();
 
@@ -93,8 +94,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     return resultat;
                 }
 
-                // FASE 2: PROCESSAR CADA RESULTAT POSITIU
-                // Nota: En una mostra amb un sol resultat positiu, processem tots els resultats
+                // FASE 2: PROCESSAR CADA RESULTAT
                 foreach (var resultatMostra in mostra.Resultats)
                 {
                     ProcessarResultatPositiu(mostra, resultatMostra, resultat);
@@ -129,12 +129,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// </summary>
         private async Task ProcessarPacientAsync(Mostra mostra, ResultatProcessamentPositiu resultat)
         {
-            _logger.Info($"🔎 Comprovant/creant pacient: {mostra.PacientSap}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔎 Comprovant/creant pacient: {mostra.PacientSap}");
 
             // Validació bàsica: comprovar que existeix identificador de pacient
             if (string.IsNullOrWhiteSpace(mostra.PacientSap))
             {
-                _logger.Warning($" ⚠️ Mostra {mostra.EtiquetaId} sense identificador de pacient");
+                _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Mostra {mostra.EtiquetaId} sense identificador de pacient");
                 resultat.Exitosa = false;
                 resultat.Missatge = "La mostra no té identificador de pacient";
                 return;
@@ -145,12 +145,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             if (pacientExisteixMultiR)
             {
-                _logger.Info($"  ✓ Pacient {mostra.PacientSap} ja existeix a MultiR");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✓ Pacient {mostra.PacientSap} ja existeix a MultiR");
                 resultat.PacientCreat = false;
                 return;
             }
 
-            _logger.Info($"  Pacient {mostra.PacientSap} no existeix a MultiR, consultant web service SAP ...");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Pacient {mostra.PacientSap} no existeix a MultiR, consultant web service SAP ...");
 
             // 2. Si el pacient no existeix, intentar recuperar les dades del web service
             if (_pacientWebService != null)
@@ -161,20 +161,16 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     
                     if (dadesPacient != null)
                     {
-                        //_logger.Info($"  ✓ Dades del pacient {mostra.PacientSap} recuperades del web service");
-                        //_logger.Debug($" {dadesPacient}");
-                        
                         // 3. Inserir el pacient a la base de dades MultiR
                         bool pacientInserit = _multiRRepository.InserirPacient(dadesPacient);
                         
                         if (pacientInserit)
                         {
-                            //_logger.Info($"  ✓ Pacient {mostra.PacientSap} inserit correctament a MultiR");
                             resultat.PacientCreat = true;
                         }
                         else
                         {
-                            _logger.Warning($"  ⚠ No s'ha pogut inserir el pacient {mostra.PacientSap} a MultiR");
+                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠ No s'ha pogut inserir el pacient {mostra.PacientSap} a MultiR");
                             resultat.PacientCreat = false;
                             // No fallem el processament, només registrem l'advertència
                         }
@@ -182,20 +178,20 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     else
                     {
                         // Si la consulta al webservice no retorna dades per al pacient
-                        _logger.Info($"  ⚠️ Pacient {mostra.PacientSap} no trobat al web service");
-                        _logger.Info($"  Inserint auditoria amb codi NPWS i aturant processament");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient {mostra.PacientSap} no trobat al web service");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Inserint auditoria amb codi NPWS i aturant processament");
                         
                         // Inserir a taula log amb codi NPWS (No trobat al Web Service de Pacients)
                         bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NPWS");
                         
                         if (auditoriaCreada)
                         {
-                            _logger.Info($"  ✓ Auditoria NPWS creada per mostra {mostra.EtiquetaId}");
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✓ Auditoria NPWS creada per mostra {mostra.EtiquetaId}");
                             resultat.AuditoriasCreades++;
                         }
                         else
                         {
-                            _logger.Warning($"  ⚠ No s'ha pogut crear l'auditoria NPWS");
+                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠ No s'ha pogut crear l'auditoria NPWS");
                         }
                         
                         // Marcar com a no exitós per no continuar endavant
@@ -207,19 +203,19 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 }
                 catch (Exception ex)
                 {
-                    _logger.Warning($"  Error consultant/inserint pacient via web service: {ex.Message}");
-                    _logger.Debug($"  Detall error: {ex}");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Error consultant/inserint pacient via web service: {ex.Message}");
+                    _logger.Debug($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Detall error: {ex}");
                     
                     // Continuar igualment per no bloquejar el processament
-                    _logger.Info($"  Continuant processament malgrat error en gestió del pacient");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Continuant processament malgrat error en gestió del pacient");
                     resultat.PacientCreat = false;
                 }
             }
             else
             {
                 // Web service no configurat
-                _logger.Debug($"  Web service de pacients no configurat");
-                _logger.Info($"  ℹ S'assumeix pacient {mostra.PacientSap} vàlid (sense validació ni inserció)");
+                _logger.Debug($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Web service de pacients no configurat");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}ℹ S'assumeix pacient {mostra.PacientSap} vàlid (sense validació ni inserció)");
                 resultat.PacientCreat = false;
             }
 
@@ -250,7 +246,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             string microorganisme = resultatMostra.AillamentDescripcio ?? "sense microorganisme";
             string textMecanismes = mecanismes.Any() ? $" [{string.Join(", ", mecanismes)}]" : " [sense mecanismes]";
             
-            _logger.Info($"  Processant resultat: {microorganisme}{textMecanismes}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat: {microorganisme}{textMecanismes}");
 
             
             if (!string.IsNullOrWhiteSpace(resultatMostra.AillamentDescripcio))
@@ -444,17 +440,17 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                         if (diagnosticsPositius == null || diagnosticsPositius.Count == 0)
                         {
-                            _logger.Info($" ✔️ No hi ha altres diagnòstics positius per aquest pacient i tipus de mostra");
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✔️ No hi ha altres diagnòstics positius per aquest pacient i tipus de mostra");
                         }
                         else
                         {
-                            _logger.Info($" ⚠️ Trobats {diagnosticsPositius.Count} diagnòstics positius (excloent l'actual)");
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Trobats {diagnosticsPositius.Count} diagnòstics positius (excloent l'actual)");
 
                             var altresDiagnosticsPositius = diagnosticsPositius.ToList();
 
                             if (altresDiagnosticsPositius.Count != 0)
                             {
-                                _logger.Info($" 📋 Creant mostres NEGATIVES per {altresDiagnosticsPositius.Count} diagnòstic(s) diferent(s)...");
+                                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}📋 Creant mostres NEGATIVES per {altresDiagnosticsPositius.Count} diagnòstic(s) diferent(s)...");
 
                                 // Per cada altre diagnòstic positiu, crear una mostra negativa
                                 foreach (int altDiagnosticId in altresDiagnosticsPositius)
@@ -467,11 +463,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                     if (mostraNegativaCreada)
                                     {
                                         resultat.MostresNegativesCreades++;
-                                        _logger.Info($" ✔️ Mostra negativa creada per al diagnòstic #{altDiagnosticId}");
+                                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra negativa creada per al diagnòstic #{altDiagnosticId}");
                                     }
                                     else
                                     {
-                                        _logger.Warning($" ❌ No s'ha pogut crear mostra negativa per diagnòstic #{altDiagnosticId}");
+                                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ No s'ha pogut crear mostra negativa per diagnòstic #{altDiagnosticId}");
                                     }
                                 }
                             }

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Interfaces;
 using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
+using MultirIntegraModulab.Application.Helpers;
 
 namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 {
@@ -48,7 +49,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
 
             _logger.Info($"Processant mostra amb múltiples resultats positius: {mostra.EtiquetaId}");
-            _logger.Info($"  Total registres positius: {classificacio.ResultatsPositius}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Total registres positius: {classificacio.ResultatsPositius}");
 
             try
             {
@@ -107,8 +108,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 throw new ArgumentNullException(nameof(mostra));
             }
 
-            _logger.Info($"Processant mostra amb múltiples resultats negatius: {mostra.EtiquetaId}");
-            _logger.Info($"  Total registres negatius: {classificacio.ResultatsNegatius}");
+            _logger.Info($"🔄 Processant mostra amb múltiples resultats negatius: {mostra.EtiquetaId}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Total registres negatius: {classificacio.ResultatsNegatius}");
 
             try
             {
@@ -164,8 +165,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
 
             _logger.Info($"Processant mostra mixta: {mostra.EtiquetaId}");
-            _logger.Info($"  Registres positius: {classificacio.ResultatsPositius}");
-            _logger.Info($"  Registres negatius: {classificacio.ResultatsNegatius}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registres positius: {classificacio.ResultatsPositius}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registres negatius: {classificacio.ResultatsNegatius}");
 
             var resultat = new ResultatProcessamentPositiu();
 
@@ -175,7 +176,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 // 1. Processar només els registres positius (com una mostra positiva)
                 // 2. Els registres negatius no es processen, només s'auditen
 
-                _logger.Info($"  Processant només els registres positius de la mostra mixta");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant només els registres positius de la mostra mixta");
 
                 // Crear una mostra temporal només amb els registres positius
                 var mostraPositius = CrearMostraAmbRegistresPositius(mostra, classificacio);
@@ -191,7 +192,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 // Auditar els negatius
                 if (classificacio.ResultatsNegatius > 0)
                 {
-                    _logger.Info($"  Auditant {classificacio.ResultatsNegatius} registres negatius");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Auditant {classificacio.ResultatsNegatius} registres negatius");
                     
                     bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
                         mostra,
@@ -200,7 +201,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     if (auditoriaCreada)
                     {
-                        _logger.Info($"  ? Auditoria creada per registres negatius de mostra mixta");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✓ Auditoria creada per registres negatius de mostra mixta");
                     }
                 }
 
