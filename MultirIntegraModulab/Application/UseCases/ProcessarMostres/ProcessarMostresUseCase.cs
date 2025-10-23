@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using MultirIntegraModulab.Application.DTOs;
+using MultirIntegraModulab.Application.Helpers;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Interfaces;
 using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
@@ -105,7 +106,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // FASE 1: Validar mostra (existència dades bàsiques)
                     if (!_validarMostraUseCase.Executar(mostra))
                     {
-                        _logger.Warning($"Mostra {mostra.EtiquetaId} no vàlida - s'omet");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra {mostra.EtiquetaId} no vàlida - s'omet");
                         resum.MostresAmbError++;
                         continue;
                     }
@@ -123,7 +124,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var resultatMicroorganismes = _comprovadorMicroorganismesUseCase.Executar(mostra);
                     if (!resultatMicroorganismes.Exitosa)
                     {
-                        _logger.Warning($" ❌ Error comprovant microorganismes: {resultatMicroorganismes.Missatge}");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Error comprovant microorganismes: {resultatMicroorganismes.Missatge}");
                     }
 
 
@@ -131,7 +132,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var resultatMecanismes = _comprovadorMecanismesUseCase.Executar(mostra);
                     if (!resultatMecanismes.ContinuarProcessament)
                     {
-                        _logger.Warning($" ⚠️ Mostra {mostra.EtiquetaId} descartada: {resultatMecanismes.Missatge}");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra {mostra.EtiquetaId} descartada: {resultatMecanismes.Missatge}");
                         resum.MostresAmbError++;
                         continue;
                     }
@@ -249,7 +250,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     break;
                 default:
                     // Altres tipus
-                    _logger.Warning($"❌ Tipus d'incorporació desconegut (no es gestiona): {tipus.ToString()}");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Tipus d'incorporació desconegut (no es gestiona): {tipus.ToString()}");
                     break;
             }
         }

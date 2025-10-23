@@ -3,6 +3,7 @@ using System.Linq;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Interfaces;
 using MultirIntegraModulab.Domain.Enums;
+using MultirIntegraModulab.Application.Helpers;
 
 namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
 {
@@ -44,7 +45,7 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                 var dataResultatOracle = mostra.DataUltimResultat;
                 var dataValidacioOracle = ObtenirDataValidacioMaxima(mostra);
 
-                _logger.Info($"Mostra {mostra.EtiquetaId}: DataResultat = {dataResultatOracle:dd/MM/yyyy HH:mm}, DataValidacio = {dataValidacioOracle?.ToString("dd/MM/yyyy HH:mm") ?? "null"}");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra {mostra.EtiquetaId}: DataResultat = {dataResultatOracle:dd/MM/yyyy HH:mm}, DataValidacio = {dataValidacioOracle?.ToString("dd/MM/yyyy HH:mm") ?? "null"}");
 
                 // Classificar l'estat comparant amb una possible mostra de MultiR (MySQL)
                 var tipusEstat = _multiRRepository.ClassificarEstatResultat(
@@ -55,7 +56,7 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                 // Convertir TipusEstatResultat a TipusIncorporacio
                 var tipusIncorporacio = ConvertirTipusEstat(tipusEstat);
 
-                _logger.Info($"Mostra {mostra.EtiquetaId} amb tipus d'incorporació {tipusIncorporacio} (estat: {tipusEstat})");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra {mostra.EtiquetaId} amb tipus d'incorporació {tipusIncorporacio} (estat: {tipusEstat})");
 
                 return tipusIncorporacio;
             }
@@ -113,7 +114,7 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                     
                 case TipusEstatResultat.Canviada:
                 default:
-                    _logger.Warning($"TipusEstatResultat.Canviada convertit a TipusIncorporacio.Revalidada");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}TipusEstatResultat.Canviada convertit a TipusIncorporacio.Revalidada");
                     return TipusIncorporacio.Revalidada; // Tractar canvis generals com revalidació
             }
         }

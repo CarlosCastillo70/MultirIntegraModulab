@@ -4,6 +4,7 @@ using System.Linq;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Interfaces;
 using MultirIntegraModulab.Domain.Enums;
+using MultirIntegraModulab.Application.Helpers;
 
 namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
 {
@@ -75,7 +76,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                     return resultat;
                 }
 
-                _logger.Info($"  Trobats {microorganismes.Count} microorganismes únics a comprovar");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Trobats {microorganismes.Count} microorganismes únics a comprovar");
 
                 // Comprovar cada microorganisme
                 foreach (var microorganisme in microorganismes)
@@ -90,7 +91,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 }
                 else
                 {
-                    _logger.Info($"  Comprovació de microorganismes completada per mostra {mostra.EtiquetaId}");
+                    _logger.Info($"Comprovació de microorganismes completada per mostra {mostra.EtiquetaId}");
                     resultat.Missatge = "Tots els microorganismes comprovats correctament";
                 }
 
@@ -131,7 +132,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
             string microorganisme, 
             ResultatComprovacioMicroorganismes resultat)
         {
-            _logger.Info($"  Comprovant microorganisme: {microorganisme}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Comprovant microorganisme: {microorganisme}");
             
             try
             {
@@ -140,7 +141,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 
                 if (!existeixOCreat)
                 {
-                    _logger.Warning($"  No s'ha pogut comprovar/crear el microorganisme: {microorganisme}");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}No s'ha pogut comprovar/crear el microorganisme: {microorganisme}");
                     resultat.MicroorganismesNoCreats.Add(microorganisme);
                     return;
                 }
@@ -151,18 +152,18 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 if (esEspecial.HasValue)
                 {
                     string tipus = esEspecial.Value ? "ESPECIAL" : "normal";
-                    _logger.Info($"  Microorganisme {microorganisme}: {tipus}");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganisme {microorganisme}: {tipus}");
                     resultat.MicroorganismesEspecials[microorganisme] = esEspecial.Value;
                 }
                 else
                 {
-                    _logger.Info($"  Microorganisme {microorganisme}: desconegut (nou a la base de dades)");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganisme {microorganisme}: desconegut (nou a la base de dades)");
                     resultat.MicroorganismesEspecials[microorganisme] = false;
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"  Error comprovant microorganisme {microorganisme}", ex);
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Error comprovant microorganisme {microorganisme}", ex);
                 resultat.MicroorganismesNoCreats.Add(microorganisme);
             }
         }

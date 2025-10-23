@@ -1,5 +1,6 @@
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Interfaces;
+using MultirIntegraModulab.Application.Helpers;
 
 namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 {
@@ -31,21 +32,21 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             // Validació 2: Ha de tenir EtiquetaId
             if (string.IsNullOrWhiteSpace(mostra.EtiquetaId))
             {
-                _logger.Warning($"Validació fallida: mostra sense EtiquetaId");
+                _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Validació fallida: mostra sense EtiquetaId");
                 return false;
             }
 
             // Validació 3: Ha de tenir PacientSap
             if (string.IsNullOrWhiteSpace(mostra.PacientSap))
             {
-                _logger.Warning($"Validació fallida: mostra {mostra.EtiquetaId} sense PacientSap");
+                _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Validació fallida: mostra {mostra.EtiquetaId} sense PacientSap");
                 return false;
             }
 
             // Validació 4: Ha de tenir almenys un resultat
             if (mostra.Resultats == null || mostra.Resultats.Count == 0)
             {
-                _logger.Warning($"Validació fallida: mostra {mostra.EtiquetaId} sense resultats");
+                _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Validació fallida: mostra {mostra.EtiquetaId} sense resultats");
                 return false;
             }
 
@@ -54,7 +55,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             {
                 if (resultat.DataResultat == default)
                 {
-                    _logger.Warning($"Validació fallida: resultat de mostra {mostra.EtiquetaId} sense DataResultat");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Validació fallida: resultat de mostra {mostra.EtiquetaId} sense DataResultat");
                     return false;
                 }
             }

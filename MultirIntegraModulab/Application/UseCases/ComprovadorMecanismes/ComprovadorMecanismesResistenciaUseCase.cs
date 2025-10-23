@@ -4,6 +4,7 @@ using System.Linq;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Interfaces;
 using MultirIntegraModulab.Domain.Enums;
+using MultirIntegraModulab.Application.Helpers;
 
 namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 {
@@ -80,10 +81,10 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
                 if (resultat.MecanismesCreats.Any())
                 {
-                    _logger.Info($"Creats {resultat.MecanismesCreats.Count} mecanismes nous");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Creats {resultat.MecanismesCreats.Count} mecanismes nous");
                 }
 
-                _logger.Info($"  Comprovació de mecanismes completada per mostra {mostra.EtiquetaId}");
+                _logger.Info($"Comprovació de mecanismes completada per mostra {mostra.EtiquetaId}");
                 resultat.Missatge = "Tots els mecanismes comprovats correctament";
                 
                 return resultat;
@@ -111,11 +112,11 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
             if (!mecanismes.Any())
             {
-                _logger.Info($" ⚠️ Registre amb microorganisme '{registre.AillamentDescripcio}' sense mecanismes de resistència");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Registre amb microorganisme '{registre.AillamentDescripcio}' sense mecanismes de resistència");
                 return;
             }
 
-            _logger.Info($"  Registre amb microorganisme '{registre.AillamentDescripcio}' si que té {mecanismes.Count}  mecanismes de resistència. Es comproven");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registre amb microorganisme '{registre.AillamentDescripcio}' si que té {mecanismes.Count} mecanismes de resistència. Es comproven");
 
             // Comprovar cada mecanisme
             foreach (var mecanisme in mecanismes)
@@ -164,7 +165,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
             Mostra mostra,
             ResultatComprovacioMecanismes resultat)
         {
-            _logger.Info($"  Comprovant existencia del mecanisme: {mecanisme.id} i combinacions microorganisme / mecanisme, a no incorporar");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Comprovant existencia del mecanisme: {mecanisme.id} i combinacions microorganisme / mecanisme, a no incorporar");
 
             // 1. Comprovar si el mecanisme existeix
             var estatMecanisme = _multiRRepository.ComprovarExistenciaMecanisme(mecanisme.id);
@@ -172,7 +173,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
             if (!estatMecanisme.Existeix)
             {
                 // No existeix. Crear-lo
-                _logger.Info($"  ✔️ Creant mecanisme nou: {mecanisme.id} - {mecanisme.descripcio}");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creant mecanisme nou: {mecanisme.id} - {mecanisme.descripcio}");
                 
                 bool creatCorrectament = _multiRRepository.CrearMecanisme(mecanisme.id, mecanisme.descripcio);
                 
@@ -183,7 +184,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 }
                 else
                 {
-                    _logger.Warning($"  ❌ No s'ha pogut crear el mecanisme {mecanisme.id}");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ No s'ha pogut crear el mecanisme {mecanisme.id}");
                 }
             }
             else
@@ -204,7 +205,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
                     string combinacio = $"{resultatMostra.AillamentDescripcio} + {mecanisme.id}";
                     
-                    _logger.Warning($"    ⚠️ Combinació marcada com NO INCORPORAR: {combinacio}");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Combinació marcada com NO INCORPORAR: {combinacio}");
                     
                     resultat.CombinacionsNoIncorporar.Add(combinacio);
                     resultat.ContinuarProcessament = false;

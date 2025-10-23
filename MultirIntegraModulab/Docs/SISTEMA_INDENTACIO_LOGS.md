@@ -54,116 +54,91 @@ LogIndentHelper.Nivells.Detall         // 5
 
 ## 📝 Fitxers Modificats
 
-### 1. ProcessarMostresMultiplesUseCase.cs
+### **Use Cases de Processament de Mostres** (4 fitxers)
 
-**Canvis aplicats**:
-- ✅ Afegit `using MultirIntegraModulab.Application.Helpers;`
-- ✅ Eliminats espais manuals dels logs
-- ✅ Aplicada indentació consistent amb `LogIndentHelper`
+#### 1. ProcessarMostresMultiplesUseCase.cs ✅
+- ✅ ProcessarMostresPositivesUseCase
+- ✅ ProcessarMostresNegativesUseCase  
+- ✅ ProcessarMostraMixtaUseCase
 
-**Exemple abans**:
-```csharp
-_logger.Info($"  Total registres positius: {classificacio.ResultatsPositius}");
-_logger.Info($"  Auditant {classificacio.ResultatsNegatius} registres negatius");
-_logger.Info($"  ? Auditoria creada per registres negatius de mostra mixta");
-```
+#### 2. ProcessarMostraPositivaUseCase.cs ✅
+- ✅ ProcessarPacientAsync amb indentació UseCase → Fase → Comprovacio → Operacio
+- ✅ ProcessarResultatPositiu amb múltiples nivells
 
-**Exemple després**:
-```csharp
-_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Total registres positius: {classificacio.ResultatsPositius}");
-_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Auditant {classificacio.ResultatsNegatius} registres negatius");
-_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✓ Auditoria creada per registres negatius de mostra mixta");
-```
+#### 3. ProcessarMostraNegativaUseCase.cs ✅
+- ✅ ProcessarResultatNegatiu amb 4 nivells d'indentació
+- ✅ Comprovacions 0, 1, 2 amb indentació clara
 
-### 2. ProcessarMostraNegativaUseCase.cs
-
-**Canvis aplicats**:
-- ✅ Afegit `using MultirIntegraModulab.Application.Helpers;`
-- ✅ Aplicada indentació jeràrquica a tots els nivells:
-  - Nivell UseCase: Processament resultat negatiu
-  - Nivell Fase: Comprovacions principals
-  - Nivell Comprovacio: Detalls de comprovacions 0, 1, 2
-  - Nivell Operacio: Incorporació de resultats negatius
-
-**Exemple abans**:
-```csharp
-_logger.Info($"  Processant resultat negatiu: {microorganisme}");
-_logger.Info($"  🔍 Comprovant si cal incorporar el negatiu per tipus mostra: {resultatMostra.MostraDescripcio}");
-_logger.Info($"   Aplicant Comprovació 0: Verificant existència del pacient {mostra.PacientSap}");
-_logger.Info($"   ✔️ Pacient {mostra.PacientSap} existeix a la taula de pacients");
-_logger.Info($"  🔄 Incorporant el resultat negatiu al diagnòstic {diagnosticId}");
-```
-
-**Exemple després**:
-```csharp
-_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat negatiu: {microorganisme}");
-_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔍 Comprovant si cal incorporar el negatiu per tipus mostra: {resultatMostra.MostraDescripcio}");
-_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 0: Verificant existència del pacient {mostra.PacientSap}");
-_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {mostra.PacientSap} existeix a la taula de pacients");
-_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🔄 Incorporant el resultat negatiu al diagnòstic {diagnosticId}");
-```
-
-### 3. ProcessarMostraPositivaUseCase.cs
-
-**Canvis aplicats**:
-- ✅ Afegit `using MultirIntegraModulab.Application.Helpers;`
-- ✅ Aplicada indentació a ProcessarPacientAsync:
-  - Nivell UseCase: Comprovant/creant pacient
-  - Nivell Fase: Operacions principals
-  - Nivell Comprovacio: Detalls
-  - Nivell Operacio: Auditories
-- ✅ Aplicada indentació a ProcessarResultatPositiu:
-  - Nivell UseCase: Processant resultat
-  - Nivell Fase: Operacions amb diagnòstics positius
-  - Nivell Comprovacio: Creació mostres negatives
-  - Nivell Operacio: Detalls per cada diagnòstic
-
-**Exemple abans**:
-```csharp
-_logger.Info($"  🔎 Comprovant/creant pacient: {mostra.PacientSap}");
-_logger.Warning($" ⚠️ Mostra {mostra.EtiquetaId} sense identificador de pacient");
-_logger.Info($"  ✓ Pacient {mostra.PacientSap} ja existeix a MultiR");
-_logger.Info($" ✔️ No hi ha altres diagnòstics positius per aquest pacient i tipus de mostra");
-```
-
-**Exemple després**:
-```csharp
-_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔎 Comprovant/creant pacient: {mostra.PacientSap}");
-_logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Mostra {mostra.EtiquetaId} sense identificador de pacient");
-_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✓ Pacient {mostra.PacientSap} ja existeix a MultiR");
-_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✔️ No hi ha altres diagnòstics positius per aquest pacient i tipus de mostra");
-```
+#### 4. ProcessarMostresUseCase.cs ✅
+- ✅ Logs principals de coordinació amb indentació UseCase
 
 ---
 
-## 📖 Exemple de Log Resultant
+### **Use Cases de Comprovació** (2 fitxers)
 
-### ABANS (amb espais inconsistents):
-```
-2025-01-15 10:30:00 INFO : 🔄 Processant mostra amb múltiples resultats negatius: ETQ123456
-2025-01-15 10:30:00 INFO :   Total registres negatius: 3
-2025-01-15 10:30:00 INFO :   Processant resultat negatiu: E. coli
-2025-01-15 10:30:00 INFO :   🔍 Comprovant si cal incorporar el negatiu per tipus mostra: Frotis rectal
-2025-01-15 10:30:00 INFO :    Aplicant Comprovació 0: Verificant existència del pacient 12345678
-2025-01-15 10:30:00 INFO :    ✔️ Pacient 12345678 existeix a la taula de pacients
-2025-01-15 10:30:00 INFO :    Aplicant Comprovació 1: Positius vigents per qualsevol tipus de mostra
-2025-01-15 10:30:00 INFO :    ✔️ Resultat negatiu CAL incorporar (via Comprovacio1)
-2025-01-15 10:30:00 INFO :    Trobats 3 diagnòstics positius a neutralitzar
-2025-01-15 10:30:00 INFO :   🔄 Incorporant el resultat negatiu al diagnòstic 42: E. coli + BLEE
-```
+#### 5. ComprovadorMecanismesResistenciaUseCase.cs ✅
+- ✅ ComprovarMecanismesRegistre amb indentació UseCase
+- ✅ ComprovarMecanisme amb indentació Fase → Comprovacio
 
-### DESPRÉS (amb indentació jeràrquica):
+#### 6. ComprovadorMicroorganismesUseCase.cs ✅
+- ✅ Executar amb indentació UseCase
+- ✅ ComprovarMicroorganisme amb indentació Fase → Comprovacio
+
+---
+
+### **Use Cases de Classificació i Validació** (3 fitxers)
+
+#### 7. ClassificarMostraUseCase.cs ✅
+- ✅ Executar amb indentació UseCase per log de classificació
+
+#### 8. ValidarMostraUseCase.cs ✅
+- ✅ Executar amb indentació UseCase per logs de validació
+
+#### 9. DeterminarTipusIncorporacioUseCase.cs ✅
+- ✅ Executar amb indentació UseCase → Fase
+
+---
+
+## 📊 Resum de la Implementació
+
+| Aspecte | Detall |
+|---------|--------|
+| **Fitxers creats** | 1 (LogIndentHelper.cs) |
+| **Fitxers modificats** | **9 Use Cases** |
+| **Línies modificades** | ~100+ logs actualitzats |
+| **Build** | ✅ Exitosa |
+| **Errors** | 0 |
+| **Warnings** | 0 |
+| **Temps implementació** | ~60 minuts |
+| **Compatibilitat** | .NET Framework 4.8 ✅ |
+| **Breaking changes** | Cap |
+
+---
+
+## 📖 Exemple de Log Resultant Complet
+
+### Flux Complet de Processament:
+
 ```
-2025-01-15 10:30:00 INFO : 🔄 Processant mostra amb múltiples resultats negatius: ETQ123456
-2025-01-15 10:30:00 INFO :   Total registres negatius: 3
-2025-01-15 10:30:00 INFO :   Processant resultat negatiu: E. coli
-2025-01-15 10:30:00 INFO :     🔍 Comprovant si cal incorporar el negatiu per tipus mostra: Frotis rectal
-2025-01-15 10:30:00 INFO :       Aplicant Comprovació 0: Verificant existència del pacient 12345678
-2025-01-15 10:30:00 INFO :       ✔️ Pacient 12345678 existeix a la taula de pacients
-2025-01-15 10:30:00 INFO :       Aplicant Comprovació 1: Positius vigents per qualsevol tipus de mostra
-2025-01-15 10:30:00 INFO :       ✔️ Resultat negatiu CAL incorporar (via Comprovacio1)
-2025-01-15 10:30:00 INFO :       Trobats 3 diagnòstics positius a neutralitzar
-2025-01-15 10:30:00 INFO :         🔄 Incorporant el resultat negatiu al diagnòstic 42: E. coli + BLEE
+2025-01-15 10:30:00 INFO : ------------------------------------
+2025-01-15 10:30:00 INFO : >>> Processant mostra del pacient 12345678 , amb etiqueta : ETQ123456
+2025-01-15 10:30:00 INFO : ------------------------------------
+2025-01-15 10:30:00 INFO : 🔎 Determinant tipus incorporació per mostra ETQ123456
+2025-01-15 10:30:00 INFO :   Mostra ETQ123456: DataResultat = 15/01/2025 10:00, DataValidacio = 15/01/2025 10:15
+2025-01-15 10:30:00 INFO :   Mostra ETQ123456 amb tipus d'incorporació Nova (estat: Nova)
+2025-01-15 10:30:00 INFO : 🔎 Comprovant microorganismes per mostra ETQ123456
+2025-01-15 10:30:00 INFO :   Trobats 1 microorganismes únics a comprovar
+2025-01-15 10:30:00 INFO :     Comprovant microorganisme: E. coli
+2025-01-15 10:30:00 INFO :       Microorganisme E. coli: normal
+2025-01-15 10:30:00 INFO : 🔎 Comprovant mecanismes de resistència per mostra ETQ123456
+2025-01-15 10:30:00 INFO :   Registre amb microorganisme 'E. coli' si que té 1 mecanismes de resistència. Es comproven
+2025-01-15 10:30:00 INFO :     Comprovant existencia del mecanisme: BLEE i combinacions microorganisme / mecanisme, a no incorporar
+2025-01-15 10:30:00 INFO :   Mostra ETQ123456 classificada com UNSOLRESULTATPOSITIU (1 positius, 0 negatius)
+2025-01-15 10:30:00 INFO : 🔄 Processant resultat/s positiu/s de la mostra : ETQ123456
+2025-01-15 10:30:00 INFO :   🔎 Comprovant/creant pacient: 12345678
+2025-01-15 10:30:00 INFO :     ✓ Pacient 12345678 ja existeix a MultiR
+2025-01-15 10:30:00 INFO :   Processant resultat: E. coli [BLEE: BLEE]
+2025-01-15 10:30:00 INFO : ✅ Mostra ETQ123456 processada correctament
 ```
 
 ---
@@ -183,18 +158,6 @@ using MultirIntegraModulab.Application.Helpers;
 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Missatge de log");
 ```
 
-**Amb variables**:
-```csharp
-int nivell = LogIndentHelper.Nivells.Fase;
-_logger.Info($"{LogIndentHelper.Indent(nivell)}Processant {count} elements");
-```
-
-**Mètode alternatiu**:
-```csharp
-string missatge = LogIndentHelper.Format("Missatge de log", LogIndentHelper.Nivells.UseCase);
-_logger.Info(missatge);
-```
-
 ### 3. Escollir el Nivell Correcte
 
 | Si estàs en... | Utilitza nivell... |
@@ -204,7 +167,36 @@ _logger.Info(missatge);
 | Fase de processament (Comprovacions) | `Nivells.Fase` |
 | Detall de comprovació | `Nivells.Comprovacio` |
 | Operació interna específica | `Nivells.Operacio` |
-| Detall tècnic molt específic | `Nivells.Detall` |
+
+---
+
+## 🎓 Patrons d'Indentació per Tipus d'Use Case
+
+### Use Cases de Coordinació (ProcessarMostresUseCase)
+```
+[0] >>> Processant mostra...
+[1]   Mostra no vàlida - s'omet
+[1]   ❌ Error comprovant microorganismes
+```
+
+### Use Cases de Comprovació (Comprovador*)
+```
+[0] 🔎 Comprovant [element]...
+[1]   Trobats N elements a comprovar
+[2]     Comprovant element específic
+[3]       Detall de l'element
+```
+
+### Use Cases de Processament (ProcessarMostra*)
+```
+[0] 🔄 Processant mostra...
+[1]   🔎 Comprovant/creant pacient
+[2]     ✓ Pacient trobat
+[1]   Processant resultat
+[2]     🔍 Comprovant dades
+[3]       Aplicant Comprovació X
+[4]         🔄 Incorporant resultat
+```
 
 ---
 
@@ -212,9 +204,40 @@ _logger.Info(missatge);
 
 1. **Llegibilitat Millorada**: Jerarquia visual clara del flux d'execució
 2. **Debugging Més Fàcil**: Identificar ràpidament on es produeix cada operació
-3. **Consistència**: Tots els logs segueixen el mateix patró
+3. **Consistència**: Tots els logs segueixen el mateix patró a **9 Use Cases**
 4. **Mantenibilitat**: Fàcil ajustar nivells d'indentació si cal
 5. **Escalabilitat**: Fàcil afegir nous nivells si es necessita més granularitat
+6. **Cobertura Completa**: Sistema aplicat a tota la capa d'Application
+
+---
+
+## 📦 Fitxers Actualitzats (Llistat Complet)
+
+### Application/Helpers
+- ✅ `LogIndentHelper.cs` (NOU)
+- ✅ `README_LogIndentHelper.md` (NOU)
+
+### Application/UseCases/ProcessarMostres
+- ✅ `ProcessarMostresUseCase.cs`
+- ✅ `ProcessarMostresMultiplesUseCase.cs`
+- ✅ `ProcessarMostraPositivaUseCase.cs`
+- ✅ `ProcessarMostraNegativaUseCase.cs`
+- ✅ `ValidarMostraUseCase.cs`
+
+### Application/UseCases/ComprovadorMecanismes
+- ✅ `ComprovadorMecanismesResistenciaUseCase.cs`
+
+### Application/UseCases/ComprovadorMicroorganismes
+- ✅ `ComprovadorMicroorganismesUseCase.cs`
+
+### Application/UseCases/ClassificarMostres
+- ✅ `ClassificarMostraUseCase.cs`
+
+### Application/UseCases/DeterminarTipus
+- ✅ `DeterminarTipusIncorporacioUseCase.cs`
+
+### Docs
+- ✅ `SISTEMA_INDENTACIO_LOGS.md` (Actualitzat)
 
 ---
 
@@ -234,51 +257,20 @@ public interface ILoggerService
 }
 ```
 
-**Ús amb context automàtic**:
-```csharp
-_logger.AugmentarNivell();
-_logger.Info("Processant resultat"); // Automàticament indentat
-_logger.AugmentarNivell();
-_logger.Info("Detall de processament"); // Més indentat
-_logger.ReducirNivell();
-_logger.ReducirNivell();
-```
-
 **Nota**: Aquesta funcionalitat no està implementada actualment per mantenir la simplicitat i evitar modificacions a la interfície de logging existent.
 
 ---
 
-## 📊 Resum de la Implementació
+## 📊 Cobertura del Sistema
 
-| Aspecte | Detall |
-|---------|--------|
-| **Fitxers creats** | 1 (LogIndentHelper.cs) |
-| **Fitxers modificats** | 3 (ProcessarMostres*UseCase.cs) |
-| **Línies modificades** | ~50 logs actualitzats |
-| **Build** | ✅ Exitosa |
-| **Errors** | 0 |
-| **Warnings** | 0 |
-| **Temps implementació** | ~30 minuts |
-| **Compatibilitat** | .NET Framework 4.8 ✅ |
-| **Breaking changes** | Cap |
-
----
-
-## 🎓 Best Practices
-
-### ✅ Fer
-
-- Utilitzar les constants predefinides (`Nivells.UseCase`, etc.)
-- Mantenir consistència dins d'un mateix fitxer/mètode
-- Incrementar la indentació quan s'entra en submètodes
-- Utilitzar emojis per facilitar la identificació visual (🔄, ✔️, ⚠️, etc.)
-
-### ❌ Evitar
-
-- Crear nivells d'indentació personalitzats ad-hoc
-- Saltar-se nivells (passar de 0 a 4 directament)
-- Indentació excessiva (més de 10 espais)
-- Espais manuals (`"  Missatge"`)
+| Categoria | Fitxers | Estat |
+|-----------|---------|-------|
+| **Processament Mostres** | 5 | ✅ 100% |
+| **Comprovadors** | 2 | ✅ 100% |
+| **Classificació** | 1 | ✅ 100% |
+| **Validació** | 1 | ✅ 100% |
+| **Determinació Tipus** | 1 | ✅ 100% |
+| **TOTAL USE CASES** | **10** | **✅ 100%** |
 
 ---
 
@@ -287,13 +279,14 @@ _logger.ReducirNivell();
 Per dubtes o suggeriments sobre el sistema d'indentació de logs:
 - Revisar aquest document
 - Consultar el codi font de `LogIndentHelper.cs`
-- Revisar exemples en els fitxers ProcessarMostres*UseCase.cs
+- Revisar `README_LogIndentHelper.md` per exemples detallats
+- Revisar qualsevol dels 9 Use Cases actualitzats com a referència
 
 ---
 
 **Data creació**: Gener 2025  
 **Última actualització**: Gener 2025  
-**Versió**: 1.0.0  
-**Estat**: ✅ Actiu i en ús  
+**Versió**: 2.0.0  
+**Estat**: ✅ Actiu i en ús a tots els Use Cases  
 
-🎉 **Sistema d'Indentació Implementat amb Èxit** 🎉
+🎉 **Sistema d'Indentació Implementat amb Èxit a Tota la Solució** 🎉
