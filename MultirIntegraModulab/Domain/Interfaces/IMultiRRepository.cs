@@ -219,7 +219,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         // Integració
         bool InserirIntegracioResultats(string etiquetaId, ResultatMostra registre, string mecanismeId, 
             string estat, string observacions, bool incorporaModulab);
-        bool InserirAuditoriaIntegracioModulab(Mostra mostra, string codiResultat, MecanismeResistenciaInfo mecanisme = null, ResultatMostra resultatMostra = null);
+        bool InserirAuditoriaIntegracioModulab(Mostra mostra, string codiResultat, ResultatMostra resultatMostra = null, MecanismeResistenciaInfo mecanisme = null);
 
         // Historial
         EstadistiquesHistorial ObtenirEstadistiquesHistorial();

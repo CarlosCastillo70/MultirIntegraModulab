@@ -195,14 +195,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     
                     bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
                         mostra,
-                        "MM", // Codi: Mostra Mixta
-                        null,
-                        mostra.Resultats.FirstOrDefault()
+                        "MM" // Codi: Mostra Mixta
                     );
 
                     if (auditoriaCreada)
                     {
-                        _logger.Info($"  ✔️ Auditoria creada per registres negatius de mostra mixta");
+                        _logger.Info($"  ? Auditoria creada per registres negatius de mostra mixta");
                     }
                 }
 

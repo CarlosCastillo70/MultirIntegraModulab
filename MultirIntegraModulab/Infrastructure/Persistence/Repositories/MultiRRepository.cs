@@ -176,8 +176,8 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
             string estat, string observacions, bool incorporaModulab) => 
             _multiRDbService.InserirIntegracioResultats(etiquetaId, registre, mecanismeId, estat, observacions, incorporaModulab);
 
-        public bool InserirAuditoriaIntegracioModulab(Mostra mostra, string codiResultat, MecanismeResistenciaInfo mecanisme = null, ResultatMostra resultatMostra = null) => 
-            _multiRDbService.InserirAuditoriaIntegracioModulab(mostra, codiResultat, mecanisme, resultatMostra);
+        public bool InserirAuditoriaIntegracioModulab(Mostra mostra, string codiResultat, ResultatMostra resultatMostra = null, MecanismeResistenciaInfo mecanisme = null) => 
+            _multiRDbService.InserirAuditoriaIntegracioModulab(mostra, codiResultat, resultatMostra, mecanisme);
 
         // Historial
         public EstadistiquesHistorial ObtenirEstadistiquesHistorial() => 

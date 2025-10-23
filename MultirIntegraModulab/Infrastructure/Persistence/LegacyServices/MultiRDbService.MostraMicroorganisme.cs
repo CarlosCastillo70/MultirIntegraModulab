@@ -1,4 +1,5 @@
 using MultirIntegraModulab.Domain.Entities;
+using MultirIntegraModulab.Domain.Enums;
 using MySql.Data.MySqlClient;
 using System;
 
@@ -36,6 +37,9 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@mostraDiagnosticId", mostraDiagnosticId);
 
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
+
+                        Logger.Info($"  Registre de mostra microorganisme {diagnosticId}, {mostraDiagnosticId} : {(count > 0 ? $"JA existeix" : "NO existeix")}");
+
                         return count > 0;
                     }
                 }

@@ -89,6 +89,17 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _logger.Info($">>> Processant mostra del pacient {mostra.PacientSap} , amb etiqueta : {mostra.EtiquetaId}");
                     _logger.Info($"------------------------------------");
 
+                    if (mostra.EtiquetaId == "402875401" || mostra.EtiquetaId == "402875592")
+                    {
+
+                        // 402875592
+
+
+                        var revisioDeCasos = 1;
+                    }
+
+
+
                     // FASE 1: Validar mostra (existència dades bàsiques)
                     if (!_validarMostraUseCase.Executar(mostra))
                     {

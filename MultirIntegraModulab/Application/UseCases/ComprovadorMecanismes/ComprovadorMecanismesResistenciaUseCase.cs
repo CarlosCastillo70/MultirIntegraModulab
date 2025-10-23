@@ -160,7 +160,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
         /// </summary>
         private void ComprovarMecanisme(
             (string id, string descripcio) mecanisme, 
-            ResultatMostra registre, 
+            ResultatMostra resultatMostra, 
             Mostra mostra,
             ResultatComprovacioMecanismes resultat)
         {
@@ -192,17 +192,17 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
             }
 
             // 2. Comprovar si la combinació microorganisme-mecanisme està marcada com "No Incorporar"
-            if (!string.IsNullOrWhiteSpace(registre.AillamentDescripcio))
+            if (!string.IsNullOrWhiteSpace(resultatMostra.AillamentDescripcio))
             {
                 bool esNoIncorporar = _multiRRepository.EsCombinacioNoIncorporar(
-                    registre.AillamentDescripcio, 
+                    resultatMostra.AillamentDescripcio, 
                     mecanisme.id);
                 
                 if (esNoIncorporar)
                 {
                     // Es una combinació marcada com a no incorporar
 
-                    string combinacio = $"{registre.AillamentDescripcio} + {mecanisme.id}";
+                    string combinacio = $"{resultatMostra.AillamentDescripcio} + {mecanisme.id}";
                     
                     _logger.Warning($"    ⚠️ Combinació marcada com NO INCORPORAR: {combinacio}");
                     
@@ -212,7 +212,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                     resultat.Missatge = $"Combinació {combinacio} marcada com NO INCORPORAR";
                     
                     // Guardar auditoria
-                    _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "CNI");
+                    _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "CNI", resultatMostra);
                 }
             }
         }

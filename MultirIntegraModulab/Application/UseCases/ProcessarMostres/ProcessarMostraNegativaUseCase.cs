@@ -190,7 +190,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 _logger.Info($"   ⚠️ Pacient {mostra.PacientSap} no existeix a la taula de pacients");
                 
                 // Inserir auditoria amb codi NMRCMC (No supera la comprovació de mostra amb motiu client)
-                bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCMC", null, resultatMostra);
+                bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCMC", resultatMostra);
                 
                 if (auditoriaCreada)
                 {
@@ -264,7 +264,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 _logger.Info($"   Resultat negatiu NO cal incorporar segons comprovacions 1 i 2");
 
                 // Inserir auditoria amb codi NMRCM (No supera la comprovació de mostra)
-                bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCM", null, resultatMostra);
+                bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCM", resultatMostra);
                 
                 if (auditoriaCreada)
                 {
@@ -417,7 +417,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 // ------------------------------------
 
                 // Si arribem aquí indica que s´ha fet tota la gestió. Deixem registre auditoria (OK Negatiu)
-                bool auditoriaCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "OKN", null, resultatMostra);
+                bool auditoriaCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "OKN", resultatMostra);
 
                 if (auditoriaCreadaOk)
                 {

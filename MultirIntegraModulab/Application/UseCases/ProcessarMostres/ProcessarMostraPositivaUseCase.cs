@@ -186,7 +186,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         _logger.Info($"  Inserint auditoria amb codi NPWS i aturant processament");
                         
                         // Inserir a taula log amb codi NPWS (No trobat al Web Service de Pacients)
-                        bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NPWS", null, mostra.Resultats.FirstOrDefault());
+                        bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NPWS");
                         
                         if (auditoriaCreada)
                         {
@@ -359,8 +359,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                             bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
                                 mostra,
                                 "DMM",
-                                new MecanismeResistenciaInfo { Id = mecanismeId },
-                                resultatMostra);
+                                resultatMostra,
+                                new MecanismeResistenciaInfo { Id = mecanismeId });
 
                             if (auditoriaCreada)
                             {
@@ -420,7 +420,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         }
 
 
-                        // Comprovar / Crear tipos de prova a tipusprova
+                        // Comprovar / Crear tipus de prova a tipusprova
                         // ------------------------------------
 
                         // Comprovar si existeix el tipus de prova
@@ -486,14 +486,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         bool auditoriaCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(
                             mostra,
                             "OKP",
-                            new MecanismeResistenciaInfo { Id = mecanismeId },
-                            resultatMostra);
+                            resultatMostra,
+                            new MecanismeResistenciaInfo { Id = mecanismeId });
 
                         if (auditoriaCreadaOk)
                         {
                             resultat.AuditoriasCreades++;
                         }
-
 
                         // Incrementar comptador de mecanismes processats
                         resultat.MecanismesProcessats++;
