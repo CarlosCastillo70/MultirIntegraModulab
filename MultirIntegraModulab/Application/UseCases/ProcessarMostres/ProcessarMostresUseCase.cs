@@ -90,13 +90,20 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _logger.Info($">>> Processant mostra del pacient {mostra.PacientSap} , amb etiqueta : {mostra.EtiquetaId}");
                     _logger.Info($"------------------------------------");
 
-                    if (mostra.EtiquetaId == "402875914" || mostra.EtiquetaId == "402876167" || mostra.EtiquetaId == "402876126" || mostra.EtiquetaId == "402876138")
+                    if (mostra.EtiquetaId == "402869079" || mostra.EtiquetaId == "400817464" || mostra.EtiquetaId == "402769776" || 
+                        mostra.EtiquetaId == "402843403" || mostra.EtiquetaId == "402876169" || mostra.EtiquetaId == "402876332" || 
+                        mostra.EtiquetaId == "402876360" || 
+                        mostra.EtiquetaId == "402876437")
                     {
 
-                        // 402875914 2 MECANISMES RESISTENCIA
-                        // 402876167 3 MECANISMES RESISTENCIA
-                        // 402876126 2 NEGATIUS
-                        // 402876138 3 NEGATIUS
+                        // 402869079 2 MECANISMES RESISTENCIA
+                        // 400817464 2 NEGATIUS
+                        // 402769776 3 NEGATIUS
+                        // 402843403 1 POSITIU 1 NEGATIU
+                        // 402876169 1 NEGATIU 1 POSITIU
+                        // 402876332 4 NEGATIUS
+                        // 402876360 2 POSITIUS (2 LINEES)
+                        // 402876437 3 NEGATIUS (ULL DIFERENT TIPUS DE PROVA)
 
                         var revisioDeCasos = 1;
                     }

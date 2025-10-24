@@ -74,7 +74,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                     // Si es detecta una combinació no incorporar, aturar immediatament
                     if (!resultat.ContinuarProcessament)
                     {
-                        _logger.Warning($"❌ Mostra {mostra.EtiquetaId} no es processarà per combinació a no incorporar");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Mostra {mostra.EtiquetaId} no es processarà per combinació a no incorporar");
                         return resultat;
                     }
                 }
@@ -84,7 +84,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Creats {resultat.MecanismesCreats.Count} mecanismes nous");
                 }
 
-                _logger.Info($"Comprovació de mecanismes completada per mostra {mostra.EtiquetaId}");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Comprovació de mecanismes completada per mostra {mostra.EtiquetaId}");
                 resultat.Missatge = "Tots els mecanismes comprovats correctament";
                 
                 return resultat;

@@ -48,7 +48,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 throw new ArgumentNullException(nameof(mostra));
             }
 
-            _logger.Info($"Processant mostra amb múltiples resultats positius: {mostra.EtiquetaId}");
+            _logger.Info($"🔄 Processant mostra amb múltiples resultats positius: {mostra.EtiquetaId}");
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Total registres positius: {classificacio.ResultatsPositius}");
 
             try
@@ -59,7 +59,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 if (resultat.Exitosa)
                 {
-                    _logger.Info($"Mostra amb múltiples positius {mostra.EtiquetaId} processada correctament");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra amb múltiples positius {mostra.EtiquetaId} processada correctament");
                 }
 
                 return resultat;
@@ -118,7 +118,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 if (resultat.Exitosa)
                 {
-                    _logger.Info($"Mostra amb múltiples negatius {mostra.EtiquetaId} processada (auditada)");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra amb múltiples negatius {mostra.EtiquetaId} processada (auditada)");
                 }
 
                 return resultat;
@@ -164,7 +164,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 throw new ArgumentNullException(nameof(mostra));
             }
 
-            _logger.Info($"Processant mostra mixta: {mostra.EtiquetaId}");
+            _logger.Info($"🔄 Processant mostra mixta: {mostra.EtiquetaId}");
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registres positius: {classificacio.ResultatsPositius}");
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registres negatius: {classificacio.ResultatsNegatius}");
 
@@ -207,7 +207,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 if (resultat.Exitosa)
                 {
-                    _logger.Info($"Mostra mixta {mostra.EtiquetaId} processada correctament");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra mixta {mostra.EtiquetaId} processada correctament");
                     resultat.Missatge = $"Mostra mixta processada: {resultat.IntegracionsCreades} positius processats, " +
                         $"{classificacio.ResultatsNegatius} negatius auditats";
                 }

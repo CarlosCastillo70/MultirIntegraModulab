@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MySql.Data.MySqlClient;
 using MultirIntegraModulab.Domain.Entities;
+using MultirIntegraModulab.Application.Helpers;
 
 namespace MultirIntegraModulab
 {
@@ -86,7 +87,7 @@ namespace MultirIntegraModulab
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($" ✔️ Pacient {dadesPacient.PacientSap} inserit correctament a pacients de MultiR");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {dadesPacient.PacientSap} inserit correctament a pacients de MultiR");
                             return true;
                         }
                         else

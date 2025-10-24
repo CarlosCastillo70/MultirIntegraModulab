@@ -167,13 +167,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         {
             string microorganisme = resultatMostra.AillamentDescripcio ?? "sense microorganisme";
             
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat negatiu: {microorganisme}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat negatiu: '{microorganisme}'");
 
             
             // FASE 1: COMPROVACIONS PER DETERMINAR SI CAL INCORPORAR EL NEGATIU
             // ------------------------------------
             
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔍 Comprovant si cal incorporar el negatiu per tipus mostra: {resultatMostra.MostraDescripcio}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔍 Comprovant si cal incorporar el negatiu per tipus mostra: '{resultatMostra.MostraDescripcio}'");
             
             bool calIncorporarNegatiu = false;
             TipusComprovacioNegatiu tipusComprovacio = TipusComprovacioNegatiu.Cap;

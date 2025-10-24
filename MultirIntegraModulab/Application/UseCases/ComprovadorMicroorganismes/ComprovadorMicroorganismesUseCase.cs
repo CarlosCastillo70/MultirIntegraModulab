@@ -71,7 +71,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
 
                 if (!microorganismes.Any())
                 {
-                    _logger.Info($"⚠️ No hi ha microorganismes a la mostra {mostra.EtiquetaId}");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ No hi ha microorganismes a la mostra {mostra.EtiquetaId}");
                     resultat.Missatge = "No hi ha microorganismes a comprovar";
                     return resultat;
                 }
@@ -86,12 +86,12 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
 
                 if (resultat.MicroorganismesNoCreats.Any())
                 {
-                    _logger.Warning($"No s'han pogut crear {resultat.MicroorganismesNoCreats.Count} microorganismes");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}No s'han pogut crear {resultat.MicroorganismesNoCreats.Count} microorganismes");
                     resultat.Missatge = $"{resultat.MicroorganismesNoCreats.Count} microorganismes no creats";
                 }
                 else
                 {
-                    _logger.Info($"Comprovació de microorganismes completada per mostra {mostra.EtiquetaId}");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Comprovació de microorganismes completada per mostra {mostra.EtiquetaId}");
                     resultat.Missatge = "Tots els microorganismes comprovats correctament";
                 }
 

@@ -1,4 +1,5 @@
 using MultirIntegraModulab.Domain.Entities;
+using MultirIntegraModulab.Application.Helpers;
 using MySql.Data.MySqlClient;
 using System;
 
@@ -44,7 +45,7 @@ namespace MultirIntegraModulab
 
                         if (count > 0)
                         {
-                            Logger.Info($"  Tipus prova {codiProva} ja existeix a tipusprova");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Tipus prova {codiProva} ja existeix a tipusprova");
                         }
 
                         return count > 0;
@@ -82,7 +83,7 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
 
-                    Logger.Info($" El tipus de prova {codiProva} no existeix, es procedeix a crear-lo");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}El tipus de prova {codiProva} no existeix, es procedeix a crear-lo");
 
                     conn.Open();
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -93,12 +94,12 @@ namespace MultirIntegraModulab
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($" ✔️ Tipus prova {codiProva} creat correctament");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Tipus prova {codiProva} creat correctament");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($" ⚠️ No s'ha pogut crear el tipus prova a tipusprova");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut crear el tipus prova a tipusprova");
                         }
 
                         return false;

@@ -1,4 +1,5 @@
 using MultirIntegraModulab.Domain.Entities;
+using MultirIntegraModulab.Application.Helpers;
 using MySql.Data.MySqlClient;
 using System;
 
@@ -43,11 +44,11 @@ namespace MultirIntegraModulab
 
                         if (count > 0)
                         {
-                            Logger.Info($"  Tipus mostra {codiMostra} ja existeix a tipusmostra_m");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Tipus mostra {codiMostra} ja existeix a tipusmostra_m");
                         }
                         else
                         {
-                            Logger.Info($"  El tipus de mostra {codiMostra} no existeix, es procedeix a crear-lo");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}El tipus de mostra {codiMostra} no existeix, es procedeix a crear-lo");
                         }
 
                         return count > 0;
@@ -93,12 +94,12 @@ namespace MultirIntegraModulab
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($" ✔️ Tipus mostra_m {codiMostra} creat correctament");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Tipus mostra_m {codiMostra} creat correctament");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($" ⚠ No s'ha pogut crear el tipus mostra a tipusmostra_m");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠ No s'ha pogut crear el tipus mostra a tipusmostra_m");
                         }
 
                         return false;
@@ -151,12 +152,12 @@ namespace MultirIntegraModulab
                         if (result != null && result != DBNull.Value)
                         {
                             int comportament = Convert.ToInt32(result);
-                            Logger.Info($"   Tipus mostra {codiMostra} té comportament: {comportament}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus mostra {codiMostra} té comportament: {comportament}");
                             return comportament;
                         }
                         else
                         {
-                            Logger.Info($"   Tipus mostra {codiMostra} no trobat o no actiu");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus mostra {codiMostra} no trobat o no actiu");
                             return null;
                         }
                     }
@@ -183,7 +184,7 @@ namespace MultirIntegraModulab
                 return false;
             }
 
-            Logger.Info($"  ⚠️ Tipus de mostra amb comportament 1 (incorporar si el pacient té positius)");
+            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Tipus de mostra amb comportament 1 (incorporar si el pacient té positius)");
 
             string sql = @"
                 SELECT COUNT(*) AS positius_algun_tipus_mostra  
@@ -209,11 +210,11 @@ namespace MultirIntegraModulab
                         
                         if (tePositius)
                         {
-                            Logger.Info($"  ✓ Comprovació 1 COMPLERTA: Pacient {pacientSap} té {count} diagnòstics positius previs → Cal incorporar el negatiu");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✓ Comprovació 1 COMPLERTA: Pacient {pacientSap} té {count} diagnòstics positius previs → Cal incorporar el negatiu");
                         }
                         else
                         {
-                            Logger.Info($"   Comprovació 1: Pacient {pacientSap} NO té positius previs → Continuar amb comprovació 2");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Comprovació 1: Pacient {pacientSap} NO té positius previs → Continuar amb comprovació 2");
                         }
                         
                         return tePositius;
@@ -274,7 +275,7 @@ namespace MultirIntegraModulab
                   AND pdm.dt_delete IS NULL 
                   AND tm.dt_delete IS NULL";
 
-            Logger.Info($"   Aplicant Comprovació 2: Positius vigents per aquest tipus de mostra o equivalents");
+            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 2: Positius vigents per aquest tipus de mostra o equivalents");
 
             try
             {
@@ -292,12 +293,12 @@ namespace MultirIntegraModulab
                         
                         if (tePositiusVigents)
                         {
-                            Logger.Info($"   Pacient {pacientSap} té {count} positiu(s) vigent(s) per tipus mostra '{tipusMostra}' o equivalents");
-                            Logger.Info($"   ⚠️ Pacient té positius vigents → Cal incorporar el negatiu");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient {pacientSap} té {count} positiu(s) vigent(s) per tipus mostra '{tipusMostra}' o equivalents");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient té positius vigents → Cal incorporar el negatiu");
                         }
                         else
                         {
-                            Logger.Info($"   Pacient NO té positius vigents per aquest tipus de mostra '{tipusMostra}' o equivalents");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient NO té positius vigents per aquest tipus de mostra '{tipusMostra}' o equivalents");
                         }
                         
                         return tePositiusVigents;

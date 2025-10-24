@@ -1,5 +1,6 @@
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Enums;
+using MultirIntegraModulab.Application.Helpers;
 using MySql.Data.MySqlClient;
 using System;
 
@@ -38,7 +39,7 @@ namespace MultirIntegraModulab
 
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
 
-                        Logger.Info($"  Registre de mostra microorganisme {diagnosticId}, {mostraDiagnosticId} : {(count > 0 ? $"JA existeix" : "NO existeix")}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Registre de mostra microorganisme {diagnosticId}, {mostraDiagnosticId} : {(count > 0 ? $"JA existeix" : "NO existeix")}");
 
                         return count > 0;
                     }
@@ -70,7 +71,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"  Es procedeix a crear el registre mostra_microorganisme");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Es procedeix a crear el registre mostra_microorganisme");
 
                     conn.Open();
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -82,12 +83,12 @@ namespace MultirIntegraModulab
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($" ✔️ Creat registre a mostra_microorganisme : diagnostic_id = {diagnosticId}, mostra_diagnostic_id = {mostraDiagnosticId}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creat registre a mostra_microorganisme : diagnostic_id = {diagnosticId}, mostra_diagnostic_id = {mostraDiagnosticId}");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($" ⚠ No s'ha pogut crear el registre mostra_microorganisme");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠ No s'ha pogut crear el registre mostra_microorganisme");
                         }
 
 
@@ -155,11 +156,11 @@ namespace MultirIntegraModulab
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($" ✔️ Data diagnòstic (pacients_diagnostics) actualitzada per pacient = {pacientSap}, microorganisme = '{microorganismeCodi}', mecanisme = '{mecanismeId}'");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Data diagnòstic (pacients_diagnostics) actualitzada per pacient = {pacientSap}, microorganisme = '{microorganismeCodi}', mecanisme = '{mecanismeId}'");
                             return true;
                         }
                         
-                        Logger.Info($" ⚠️ No s'ha actualitzat cap registre per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha actualitzat cap registre per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId}");
                         return false;
                     }
                 }
@@ -241,11 +242,11 @@ namespace MultirIntegraModulab
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($" ✔️ Data diagnòstic (pacients_diagnostics_mostra) actualitzada per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Data diagnòstic (pacients_diagnostics_mostra) actualitzada per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId}");
                             return true;
                         }
                         
-                        Logger.Info($" ⚠️ No s'ha actualitzat cap registre de pacients_diagnostics_mostra per pacient={pacientSap}, micro={microorganismeCodi}, mec={mecanismeId}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha actualitzat cap registre de pacients_diagnostics_mostra per pacient={pacientSap}, micro={microorganismeCodi}, mec={mecanismeId}");
                         return false;
                     }
                 }
