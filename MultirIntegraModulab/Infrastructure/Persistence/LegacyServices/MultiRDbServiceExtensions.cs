@@ -5,6 +5,7 @@ using System.Data;
 using System.Linq;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Enums;
+using MultirIntegraModulab.Application.Helpers;
 
 namespace MultirIntegraModulab
 {
@@ -102,7 +103,7 @@ namespace MultirIntegraModulab
                         
                         if (count > 0)
                         {
-                            Logger.Info($"Mecanisme '{mecanismeCodi}' ja existeix");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mecanisme '{mecanismeCodi}' ja existeix");
                             return true;
                         }
                     }
@@ -121,7 +122,7 @@ namespace MultirIntegraModulab
                         
                         if (filsAfectades > 0)
                         {
-                            Logger.Info($"Mecanisme '{mecanismeCodi}' creat correctament");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mecanisme '{mecanismeCodi}' creat correctament");
                             return true;
                         }
                         else
@@ -281,7 +282,7 @@ namespace MultirIntegraModulab
 
                     if (!updates.Any())
                     {
-                        Logger.Warning($"No hi ha cap camp per actualitzar per l'etiqueta {etiquetaId}");
+                        Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}No hi ha cap camp per actualitzar per l'etiqueta {etiquetaId}");
                         return false;
                     }
 
@@ -315,12 +316,12 @@ namespace MultirIntegraModulab
 
                         if (filsAfectades > 0)
                         {
-                            Logger.Info($"Actualitzades {filsAfectades} files per l'etiqueta {etiquetaId}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Actualitzades {filsAfectades} files per l'etiqueta {etiquetaId}");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($"No s'han trobat files per actualitzar per l'etiqueta {etiquetaId}");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}No s'han trobat files per actualitzar per l'etiqueta {etiquetaId}");
                             return false;
                         }
                     }
@@ -362,12 +363,12 @@ namespace MultirIntegraModulab
                         
                         if (filsAfectades > 0)
                         {
-                            Logger.Info($"Actualitzades {filsAfectades} files per l'etiqueta {etiquetaId}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Actualitzades {filsAfectades} files per l'etiqueta {etiquetaId}");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($"No s'han trobat files per actualitzar per l'etiqueta {etiquetaId}");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}No s'han trobat files per actualitzar per l'etiqueta {etiquetaId}");
                             return false;
                         }
                     }
@@ -408,12 +409,12 @@ namespace MultirIntegraModulab
                         
                         if (filsAfectades > 0)
                         {
-                            Logger.Info($"Actualitzada data validació per l'etiqueta {etiquetaId}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Actualitzada data validació per l'etiqueta {etiquetaId}");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($"No s'han trobat files per actualitzar validació per l'etiqueta {etiquetaId}");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}No s'han trobat files per actualitzar validació per l'etiqueta {etiquetaId}");
                             return false;
                         }
                     }
@@ -461,7 +462,7 @@ namespace MultirIntegraModulab
                         }
                     }
                     
-                    Logger.Info($"🎉 Creant nou microorganisme (no existia previament): {microorganismeDescripcio}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🎉 Creant nou microorganisme (no existia previament): {microorganismeDescripcio}");
                     
                     string sqlCrear = @"INSERT INTO microorganismes (codi, descripcio) 
                                        VALUES (@codi, @descripcio)";
@@ -475,7 +476,7 @@ namespace MultirIntegraModulab
                         
                         if (filasAfectadas > 0)
                         {
-                            Logger.Info($"✔️ Microorganisme {microorganismeDescripcio} creat correctament");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Microorganisme {microorganismeDescripcio} creat correctament");
                             return true;
                         }
                         else
@@ -665,11 +666,11 @@ namespace MultirIntegraModulab
                     if (resultat)
                     {
                         string infoMecanisme = mecanisme != null ? $" amb mecanisme {mecanisme.Id}" : " sense mecanisme";
-                        Logger.Info($" ✔️ Inserit registre d'auditoria per mostra amb etiqueta {mostra.EtiquetaId} {infoMecanisme}, amb resultat {codiResultat}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Inserit registre d'auditoria per mostra amb etiqueta {mostra.EtiquetaId} {infoMecanisme}, amb resultat {codiResultat}");
                     }
                     else
                     {
-                        Logger.Warning($" ⚠ No s'ha pogut crear registre d'auditoria amb resultat {codiResultat}");
+                        Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠ No s'ha pogut crear registre d'auditoria amb resultat {codiResultat}");
                     }
 
                     return resultat;
@@ -931,7 +932,7 @@ namespace MultirIntegraModulab
                         
                         if (filesAfectades > 0)
                         {
-                            Logger.Info($"Pacient {dadesPacient.PacientSap} creat correctament");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient {dadesPacient.PacientSap} creat correctament");
                             return true;
                         }
                         else
@@ -985,7 +986,7 @@ namespace MultirIntegraModulab
                         int diagnosticId = result != null ? Convert.ToInt32(result) : 0;
                         
 
-                        Logger.Info($"  Diagnòstic del pacient {pacientSap} + {microorganisme} + {mecanisme}: {(diagnosticId > 0 ? $"JA existeix (ID: {diagnosticId})" : "NO existeix")}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Diagnòstic del pacient {pacientSap} + {microorganisme} + {mecanisme}: {(diagnosticId > 0 ? $"JA existeix (ID: {diagnosticId})" : "NO existeix")}");
                         return diagnosticId;
                     }
                 }
@@ -1009,7 +1010,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"  Es procedeix a crear el Diagnòstic: {microorganisme} + {mecanisme}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Es procedeix a crear el Diagnòstic: {microorganisme} + {mecanisme}");
 
                     conn.Open();
                     
@@ -1035,12 +1036,12 @@ namespace MultirIntegraModulab
                         
                         if (nouDiagnosticId > 0)
                         {
-                            Logger.Info($" ✔️ Creat diagnòstic ID {nouDiagnosticId} per pacient {pacientSap}: {microorganisme} + {mecanisme}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creat diagnòstic ID {nouDiagnosticId} per pacient {pacientSap}: {microorganisme} + {mecanisme}");
                             return nouDiagnosticId;
                         }
                         else
                         {
-                            Logger.Error($" ⚠️ Error creant diagnòstic per pacient {pacientSap}: no s'ha retornat ID");
+                            Logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Error creant diagnòstic per pacient {pacientSap}: no s'ha retornat ID");
                             return 0;
                         }
                     }
@@ -1098,7 +1099,7 @@ namespace MultirIntegraModulab
                         var result = cmd.ExecuteScalar();
                         int mostraId = result != null ? Convert.ToInt32(result) : 0;
                         
-                        Logger.Info($"  Mostra del pacient {pacientSap} + data {dataMostra:dd/MM/yyyy} + tipus '{tipusMostra}': {(mostraId > 0 ? $"JA existeix (ID: {mostraId})" : "NO existeix")}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Mostra del pacient {pacientSap} + data {dataMostra:dd/MM/yyyy} + tipus '{tipusMostra}': {(mostraId > 0 ? $"JA existeix (ID: {mostraId})" : "NO existeix")}");
                         return mostraId;
                     }
                 }
@@ -1144,7 +1145,7 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
 
-                    Logger.Info($"  Es procedeix a crear la Mostra diagnòstic");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Es procedeix a crear la Mostra diagnòstic");
 
                     conn.Open();
                     
@@ -1185,12 +1186,12 @@ namespace MultirIntegraModulab
                         
                         if (nouMostraId > 0)
                         {
-                            Logger.Info($" ✔️ Creada mostra diagnòstic ID {nouMostraId} per pacient {pacientSap}: data {dataMostra:dd/MM/yyyy}, tipus {tipusMostra}, valoració {valoracio}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creada mostra diagnòstic ID {nouMostraId} per pacient {pacientSap}: data {dataMostra:dd/MM/yyyy}, tipus {tipusMostra}, valoració {valoracio}");
                             return nouMostraId;
                         }
                         else
                         {
-                            Logger.Error($" ⚠️ Error creant mostra diagnòstic per pacient {pacientSap}: no s'ha retornat ID");
+                            Logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Error creant mostra diagnòstic per pacient {pacientSap}: no s'ha retornat ID");
                             return 0;
                         }
                     }
@@ -1394,14 +1395,14 @@ namespace MultirIntegraModulab
                             {
                                 cmdMostra.Parameters.AddWithValue("@etiqueta", etiquetaId);
                                 int filesAfectades = cmdMostra.ExecuteNonQuery();
-                                Logger.Info($"Esborrades {filesAfectades} files de pacients_diagnostics_mostra per etiqueta {etiquetaId}");
+                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Esborrades {filesAfectades} files de pacients_diagnostics_mostra per etiqueta {etiquetaId}");
                             }
 
                             // 2. Soft delete de mostra_microorganisme (si existeix aquesta taula)
                             // TODOCC: Afegir aquí l'esborrat de mostra_microorganisme si cal
 
                             transaction.Commit();
-                            Logger.Info($"Dades de mostra {etiquetaId} esborrades correctament");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Dades de mostra {etiquetaId} esborrades correctament");
                             return true;
                         }
                         catch (Exception ex)
@@ -1497,7 +1498,7 @@ namespace MultirIntegraModulab
                         }
                     }
 
-                    Logger.Info($"  Trobats {diagnostics.Count} diagnòstics positius per pacient {pacientSap} i tipus mostra '{tipusMostra}'{infoEtiqueta}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Trobats {diagnostics.Count} diagnòstics positius per pacient {pacientSap} i tipus mostra '{tipusMostra}'{infoEtiqueta}");
                 }
 
             }
@@ -1592,7 +1593,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"  🔍 Recuperant diagnòstics positius del pacient {pacientSap} per qualsevol tipus de mostra");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔍 Recuperant diagnòstics positius del pacient {pacientSap} per qualsevol tipus de mostra");
 
                     conn.Open();
 
@@ -1622,7 +1623,7 @@ namespace MultirIntegraModulab
                         }
                     }
 
-                    Logger.Info($"   Trobats {diagnostics.Count} diagnòstics positius per pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstics positius per pacient {pacientSap}");
                 }
             }
             catch (Exception ex)
@@ -1655,7 +1656,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"   🔍 Recuperant diagnòstics positius vigents del pacient {pacientSap} per tipus mostra '{tipusMostra}' o equivalents (Comprovació 2)");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🔍 Recuperant diagnòstics positius vigents del pacient {pacientSap} per tipus mostra '{tipusMostra}' o equivalents (Comprovació 2)");
                     conn.Open();
 
                     string sql = @"
@@ -1701,7 +1702,7 @@ namespace MultirIntegraModulab
                         }
                     }
 
-                    Logger.Info($"   Trobats {diagnostics.Count} diagnòstics positius vigents per pacient {pacientSap} i tipus mostra '{tipusMostra}' o equivalents");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstics positius vigents per pacient {pacientSap} i tipus mostra '{tipusMostra}' o equivalents");
                 }
             }
             catch (Exception ex)

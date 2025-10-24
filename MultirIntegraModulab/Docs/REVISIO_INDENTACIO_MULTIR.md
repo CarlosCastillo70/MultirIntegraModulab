@@ -12,59 +12,59 @@
 
 ### 1. MultiRDbService.TipusMostra.cs ✅
 
-**Logs corregits**:
-- ✅ `Logger.Info($"  Tipus mostra {codiMostra} ja existeix...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
-- ✅ `Logger.Info($"  El tipus de mostra {codiMostra} no existeix...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
-- ✅ `Logger.Info($" ✔️ Tipus mostra_m {codiMostra} creat...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Warning($" ⚠ No s'ha pogut crear...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Info($"   Tipus mostra {codiMostra} té comportament...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Info($"   Tipus mostra {codiMostra} no trobat...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Info($"  ⚠️ Tipus de mostra amb comportament 1...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
-- ✅ `Logger.Info($"  ✓ Comprovació 1 COMPLERTA...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
-- ✅ `Logger.Info($"   Comprovació 1: Pacient...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Info($"   Aplicant Comprovació 2...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Info($"   Pacient {pacientSap} té {count}...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Info($"   ⚠️ Pacient té positius vigents...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Info($"   Pacient NO té positius vigents...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-
-**Total logs corregits**: 13
+**Logs corregits**: 13
 
 ---
 
 ### 2. MultiRDbService.TipusProva.cs ✅
 
-**Logs corregits**:
-- ✅ `Logger.Info($"  Tipus prova {codiProva} ja existeix...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
-- ✅ `Logger.Info($" El tipus de prova {codiProva} no existeix...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
-- ✅ `Logger.Info($" ✔️ Tipus prova {codiProva} creat...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Warning($" ⚠️ No s'ha pogut crear...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-
-**Total logs corregits**: 4
+**Logs corregits**: 4
 
 ---
 
 ### 3. MultiRDbService.MostraMicroorganisme.cs ✅
 
-**Logs corregits**:
-- ✅ `Logger.Info($"  Registre de mostra microorganisme...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
-- ✅ `Logger.Info($"  Es procedeix a crear el registre...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
-- ✅ `Logger.Info($" ✔️ Creat registre a mostra_microorganisme...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Warning($" ⚠ No s'ha pogut crear...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Info($" ✔️ Data diagnòstic (pacients_diagnostics) actualitzada...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Info($" ⚠️ No s'ha actualitzat cap registre...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Info($" ✔️ Data diagnòstic (pacients_diagnostics_mostra) actualitzada...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-- ✅ `Logger.Info($" ⚠️ No s'ha actualitzat cap registre de pacients_diagnostics_mostra...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
-
-**Total logs corregits**: 8
+**Logs corregits**: 8
 
 ---
 
 ### 4. MultiRDbService.cs ✅
 
-**Logs corregits**:
-- ✅ `Logger.Info($" ✔️ Pacient {dadesPacient.PacientSap} inserit correctament...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+**Logs corregits**: 1
 
-**Total logs corregits**: 1
+---
+
+### 5. MultiRDbServiceExtensions.cs ✅ (NOU)
+
+**Logs corregits**:
+- ✅ `Logger.Info($"Mecanisme '{mecanismeCodi}' ja existeix")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"Mecanisme '{mecanismeCodi}' creat correctament")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Warning($"No hi ha cap camp per actualitzar...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"Actualitzades {filsAfectades} files...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Warning($"No s'han trobat files per actualitzar...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"Actualitzada data validació...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"🎉 Creant nou microorganisme...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"✔️ Microorganisme {microorganismeDescripcio} creat...")` → afegit indentació `LogIndentHelper.Nivells.Operacio`
+- ✅ `Logger.Info($"✔️ Inserit registre d'auditoria...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Warning($"⚠ No s'ha pogut crear registre d'auditoria...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"Pacient {dadesPacient.PacientSap} creat...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"Diagnòstic del pacient...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
+- ✅ `Logger.Info($"Es procedeix a crear el Diagnòstic...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
+- ✅ `Logger.Info($"✔️ Creat diagnòstic ID...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Error($"⚠️ Error creant diagnòstic...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"Mostra del pacient {pacientSap}...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
+- ✅ `Logger.Info($"Es procedeix a crear la Mostra diagnòstic")` → afegit indentació `LogIndentHelper.Nivells.Fase`
+- ✅ `Logger.Info($"✔️ Creada mostra diagnòstic ID...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Error($"⚠️ Error creant mostra diagnòstic...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"Esborrades {filesAfectades} files...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"Dades de mostra {etiquetaId} esborrades...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"Trobats {diagnostics.Count} diagnòstics positius...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
+- ✅ `Logger.Info($"🔍 Recuperant diagnòstics positius...")` → afegit indentació `LogIndentHelper.Nivells.Fase`
+- ✅ `Logger.Info($"Trobats {diagnostics.Count} diagnòstics positius per pacient...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"🔍 Recuperant diagnòstics positius vigents...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+- ✅ `Logger.Info($"Trobats {diagnostics.Count} diagnòstics positius vigents...")` → afegit indentació `LogIndentHelper.Nivells.Comprovacio`
+
+**Total logs corregits**: 26
 
 ---
 
@@ -76,7 +76,8 @@
 | MultiRDbService.TipusProva.cs | 4 | ✅ |
 | MultiRDbService.MostraMicroorganisme.cs | 8 | ✅ |
 | MultiRDbService.cs | 1 | ✅ |
-| **TOTAL** | **26** | **✅** |
+| MultiRDbServiceExtensions.cs | 26 | ✅ |
+| **TOTAL** | **52** | **✅** |
 
 ---
 
@@ -89,18 +90,22 @@
 | **Principal** | 0 | Missatges inicials (amb emoticons 🔎 🔄) |
 | **Fase** | 4 | Comprovacions inicials, detalls de fase |
 | **Comprovacio** | 6 | Resultats de comprovacions, creacions |
+| **Operacio** | 8 | Operacions internes molt específiques |
 
 ### Exemples d'Aplicació
 
 ```csharp
 // Nivell Principal (0 espais)
-Logger.Info($"🔎 Comprovant / creant tipus mostra a tipusmostra_m: {codiMostra}");
+Logger.Info($"🔎 Comprovant / creant diagnostic {microorganisme}");
 
 // Nivell Fase (4 espais)
-Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Tipus mostra {codiMostra} ja existeix a tipusmostra_m");
+Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Diagnòstic del pacient JA existeix");
 
 // Nivell Comprovacio (6 espais)
-Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Tipus mostra_m {codiMostra} creat correctament");
+Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creat diagnòstic ID {nouDiagnosticId}");
+
+// Nivell Operacio (8 espais)
+Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Microorganisme creat correctament");
 ```
 
 ---
@@ -121,9 +126,10 @@ Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔�
 2. ✅ `Infrastructure/Persistence/LegacyServices/MultiRDbService.TipusProva.cs`
 3. ✅ `Infrastructure/Persistence/LegacyServices/MultiRDbService.MostraMicroorganisme.cs`
 4. ✅ `Infrastructure/Persistence/LegacyServices/MultiRDbService.cs`
+5. ✅ `Infrastructure/Persistence/LegacyServices/MultiRDbServiceExtensions.cs` ⭐ (NOU)
 
 ### Documentació
-5. ✅ `Docs/REVISIO_INDENTACIO_MULTIR.md` (nou - aquest fitxer)
+6. ✅ `Docs/REVISIO_INDENTACIO_MULTIR.md` (actualitzat)
 
 ---
 
@@ -132,17 +138,19 @@ Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔�
 ### ❌ ABANS (Inconsistent)
 
 ```
-2025-01-15 10:00:00 INFO : 🔎 Comprovant / creant tipus mostra a tipusmostra_m: ORINA
-2025-01-15 10:00:01 INFO :   Tipus mostra ORINA ja existeix a tipusmostra_m
-2025-01-15 10:00:02 INFO :    Tipus mostra ORINA té comportament: 0
+2025-01-15 10:00:00 INFO : 🔎 Comprovant / creant diagnostic E. coli [BLEE - BLEE]
+2025-01-15 10:00:01 INFO :   Diagnòstic del pacient 12345678 + E. coli + BLEE: JA existeix (ID: 123)
+2025-01-15 10:00:02 INFO :  Es procedeix a crear el Diagnòstic: E. coli + BLEE
+2025-01-15 10:00:03 INFO :  ✔️ Creat diagnòstic ID 124 per pacient 12345678
 ```
 
 ### ✅ DESPRÉS (Consistent)
 
 ```
-2025-01-15 10:00:00 INFO : 🔎 Comprovant / creant tipus mostra a tipusmostra_m: ORINA
-2025-01-15 10:00:01 INFO :     Tipus mostra ORINA ja existeix a tipusmostra_m
-2025-01-15 10:00:02 INFO :       Tipus mostra ORINA té comportament: 0
+2025-01-15 10:00:00 INFO : 🔎 Comprovant / creant diagnostic E. coli [BLEE - BLEE]
+2025-01-15 10:00:01 INFO :     Diagnòstic del pacient 12345678 + E. coli + BLEE: JA existeix (ID: 123)
+2025-01-15 10:00:02 INFO :     Es procedeix a crear el Diagnòstic: E. coli + BLEE
+2025-01-15 10:00:03 INFO :       ✔️ Creat diagnòstic ID 124 per pacient 12345678
 ```
 
 ---
@@ -151,8 +159,8 @@ Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔�
 
 ### Objectius Aconseguits
 
-✅ **Tots els logs de MultiRDbService revisats** - 4 fitxers verificats  
-✅ **26 logs corregits** - Indentació consistent aplicada  
+✅ **Tots els logs de MultiRDbService revisats** - 5 fitxers verificats  
+✅ **52 logs corregits** - Indentació consistent aplicada  
 ✅ **0 errors** - Build exitosa  
 ✅ **Sistema consistent** - Mateix patró que Use Cases
 
@@ -162,6 +170,7 @@ Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔�
 2. **Llegibilitat**: Jerarquia visual clara en les operacions de base de dades
 3. **Debugging**: Més fàcil seguir el flux d'operacions de persistència
 4. **Professionalitat**: Logs amb aparença professional i estructurada
+5. **Cobertura completa**: Tots els fitxers MultiRDbService amb indentació correcta
 
 ---
 
@@ -172,8 +181,9 @@ Quan afegiu nous mètodes als fitxers MultiRDbService, recordeu:
 1. **Logs principals** (nivell 0) → Sense indentació, amb emoticons (🔎 🔄 ✅ ❌)
 2. **Logs de fase** (nivell 2) → `LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)` (4 espais)
 3. **Logs de comprovació** (nivell 3) → `LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)` (6 espais)
+4. **Logs d'operació** (nivell 4) → `LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)` (8 espais)
 
-4. **Consultar**:
+5. **Consultar**:
    - `Docs/SISTEMA_INDENTACIO_LOGS.md` - Guia completa
    - `Application/Helpers/README_LogIndentHelper.md` - Guia d'ús del helper
    - Qualsevol dels fitxers MultiRDbService actualitzats - Exemples reals
@@ -185,4 +195,4 @@ Quan afegiu nous mètodes als fitxers MultiRDbService, recordeu:
 **Estat**: ✅ **COMPLETAT I VERIFICAT**  
 **Build**: ✅ **EXITOSA**  
 
-🎉 **Indentació de Logs Consistent en Tota la Capa d'Infraestructura** 🎉
+🎉 **Indentació de Logs Consistent en Tota la Capa d'Infraestructura (100% Completat)** 🎉

@@ -108,8 +108,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 throw new ArgumentNullException(nameof(mostra));
             }
 
-            _logger.Info($"🔄 Processant mostra amb múltiples resultats negatius: {mostra.EtiquetaId}");
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Total registres negatius: {classificacio.ResultatsNegatius}");
+            _logger.Info($"🔄 Processant mostra amb múltiples ({classificacio.ResultatsNegatius}) resultats negatius: {mostra.EtiquetaId}");
 
             try
             {

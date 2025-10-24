@@ -117,8 +117,6 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 };
             }
 
-            _logger.Info($"🔄 Processant mostra amb {classificacio.ResultatsNegatius} negatiu/s");
-
             var resultat = new ResultatProcessamentNegatiu();
 
             try

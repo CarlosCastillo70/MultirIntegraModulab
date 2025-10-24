@@ -91,7 +91,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 }
                 else
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Comprovació de microorganismes completada per mostra {mostra.EtiquetaId}");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Comprovació de microorganismes completada per la mostra");
                     resultat.Missatge = "Tots els microorganismes comprovats correctament";
                 }
 
@@ -132,7 +132,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
             string microorganisme, 
             ResultatComprovacioMicroorganismes resultat)
         {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Comprovant microorganisme: {microorganisme}");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Comprovant microorganisme: '{microorganisme}'");
             
             try
             {
@@ -152,7 +152,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 if (esEspecial.HasValue)
                 {
                     string tipus = esEspecial.Value ? "ESPECIAL" : "normal";
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganisme {microorganisme}: {tipus}");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganisme {microorganisme}: '{tipus}'");
                     resultat.MicroorganismesEspecials[microorganisme] = esEspecial.Value;
                 }
                 else
