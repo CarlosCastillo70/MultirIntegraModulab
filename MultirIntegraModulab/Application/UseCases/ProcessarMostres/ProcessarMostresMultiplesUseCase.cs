@@ -117,7 +117,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 if (resultat.Exitosa)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra amb múltiples negatius {mostra.EtiquetaId} processada (auditada)");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra amb múltiples negatius {mostra.EtiquetaId} processada");
                 }
 
                 return resultat;
@@ -131,8 +131,47 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
     }
 
     /// <summary>
+    /// Resultat del processament d'una mostra mixta
+    /// </summary>
+    public class ResultatProcessamentMixte
+    {
+        public bool Exitosa { get; set; }
+        public string Missatge { get; set; }
+        
+        // Comptadors positius
+        public bool PacientCreat { get; set; }
+        public int DiagnosticsCreats { get; set; }
+        public int DiagnosticsExistents { get; set; }
+        public int MostresDiagnosticCreades { get; set; }
+        public int MostresDiagnosticExistents { get; set; }
+        public int RelacionsCreades { get; set; }
+        public int RelacionsDuplicades { get; set; }
+        public int MecanismesProcessats { get; set; }
+        public int IntegracionsCreades { get; set; }
+        public int MostresNegativesCreades { get; set; }
+        
+        // Comptadors negatius
+        public int MostresDiagnosticCreadesNegatives { get; set; }
+        public int MostresDiagnosticExistentsNegatives { get; set; }
+        public int RelacionsCreadesNegatives { get; set; }
+        public int RelacionsDuplicadesNegatives { get; set; }
+        public int ResultatsProcessatsNegatius { get; set; }
+        public int ResultatsNoIncorporats { get; set; }
+        public int IncorporatsPerComprovacio1 { get; set; }
+        public int IncorporatsPerComprovacio2 { get; set; }
+        
+        // Totals auditories
+        public int AuditoriasCreades { get; set; }
+
+        public ResultatProcessamentMixte()
+        {
+            Exitosa = true;
+        }
+    }
+
+    /// <summary>
     /// Use Case per processar mostres mixtes (amb resultats positius i negatius)
-    /// Processa els positius i audita els negatius
+    /// Processa els positius i després els negatius
     /// </summary>
     public class ProcessarMostraMixtaUseCase
     {
@@ -153,7 +192,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// <summary>
         /// Executa el processament d'una mostra mixta
         /// </summary>
-        public async Task<ResultatProcessamentPositiu> ExecutarAsync(
+        public async Task<ResultatProcessamentMixte> ExecutarAsync(
             Mostra mostra,
             ResultatClassificacio classificacio)
         {
@@ -163,22 +202,19 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 throw new ArgumentNullException(nameof(mostra));
             }
 
-            _logger.Info($"🔄 Processant mostra mixta: {mostra.EtiquetaId}");
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registres positius: {classificacio.ResultatsPositius}");
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registres negatius: {classificacio.ResultatsNegatius}");
+            _logger.Info($"🔄 Processant mostra mixta amb {classificacio.ResultatsPositius} resultat(s) positiu(s) i {classificacio.ResultatsNegatius} resultat(s) negatiu(s)");
 
-            var resultat = new ResultatProcessamentPositiu();
+            var resultat = new ResultatProcessamentMixte();
 
             try
             {
-                // Per mostres mixtes:
-                // 1. Processar només els registres positius (com una mostra positiva)
-                // 2. Els registres negatius no es processen, només s'auditen
+                // FASE 1: PROCESSAR RESULTATS POSITIUS
+                // ------------------------------------
+                
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📋 Processant {classificacio.ResultatsPositius} resultat(s) positiu(s)");
 
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant només els registres positius de la mostra mixta");
-
-                // Crear una mostra temporal només amb els registres positius
-                var mostraPositius = CrearMostraAmbRegistresPositius(mostra, classificacio);
+                // Crear una mostra temporal només amb els resultats positius
+                var mostraPositius = CrearMostraAmbResultatsPositius(mostra, classificacio);
 
                 // Processar com una mostra positiva
                 var processarPositivaUseCase = new ProcessarMostraPositivaUseCase(
@@ -186,29 +222,82 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _pacientWebService,
                     _logger);
 
-                resultat = await processarPositivaUseCase.ExecutarAsync(mostraPositius, classificacio);
+                var resultatPositius = await processarPositivaUseCase.ExecutarAsync(mostraPositius, classificacio);
 
-                // Auditar els negatius
-                if (classificacio.ResultatsNegatius > 0)
+                if (!resultatPositius.Exitosa)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Auditant {classificacio.ResultatsNegatius} registres negatius");
-                    
-                    bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
-                        mostra,
-                        "MM" // Codi: Mostra Mixta
-                    );
-
-                    if (auditoriaCreada)
-                    {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✓ Auditoria creada per registres negatius de mostra mixta");
-                    }
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Error processant positius de mostra mixta");
+                    resultat.Exitosa = false;
+                    resultat.Missatge = resultatPositius.Missatge;
+                    return resultat;
                 }
 
+                // Copiar resultats dels positius
+                resultat.PacientCreat = resultatPositius.PacientCreat;
+                resultat.DiagnosticsCreats = resultatPositius.DiagnosticsCreats;
+                resultat.DiagnosticsExistents = resultatPositius.DiagnosticsExistents;
+                resultat.MostresDiagnosticCreades = resultatPositius.MostresDiagnosticCreades;
+                resultat.MostresDiagnosticExistents = resultatPositius.MostresDiagnosticExistents;
+                resultat.RelacionsCreades = resultatPositius.RelacionsCreades;
+                resultat.RelacionsDuplicades = resultatPositius.RelacionsDuplicades;
+                resultat.MecanismesProcessats = resultatPositius.MecanismesProcessats;
+                resultat.IntegracionsCreades = resultatPositius.IntegracionsCreades;
+                resultat.MostresNegativesCreades = resultatPositius.MostresNegativesCreades;
+                resultat.AuditoriasCreades = resultatPositius.AuditoriasCreades;
+
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✔️ Processats {resultatPositius.MecanismesProcessats} resultat(s) positiu(s)");
+
+
+                // FASE 2: PROCESSAR RESULTATS NEGATIUS
+                // ------------------------------------
+                
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📋 Processant {classificacio.ResultatsNegatius} resultat(s) negatiu(s)");
+
+                // Crear una mostra temporal només amb els resultats negatius
+                var mostraNegatius = CrearMostraAmbResultatsNegatius(mostra, classificacio);
+
+                // Processar com una mostra negativa
+                var processarNegativaUseCase = new ProcessarMostraNegativaUseCase(
+                    _multiRRepository,
+                    _logger);
+
+                var resultatNegatius = await processarNegativaUseCase.ExecutarAsync(mostraNegatius, classificacio);
+
+                if (!resultatNegatius.Exitosa)
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Error processant negatius de mostra mixta");
+                    // No fallem el processament complet, ja que els positius s'han processat correctament
+                }
+                else
+                {
+                    // Copiar resultats dels negatius
+                    resultat.MostresDiagnosticCreadesNegatives = resultatNegatius.MostresDiagnosticCreades;
+                    resultat.MostresDiagnosticExistentsNegatives = resultatNegatius.MostresDiagnosticExistents;
+                    resultat.RelacionsCreadesNegatives = resultatNegatius.RelacionsCreades;
+                    resultat.RelacionsDuplicadesNegatives = resultatNegatius.RelacionsDuplicades;
+                    resultat.ResultatsProcessatsNegatius = resultatNegatius.ResultatsProcessats;
+                    resultat.ResultatsNoIncorporats = resultatNegatius.ResultatsNoIncorporats;
+                    resultat.IncorporatsPerComprovacio1 = resultatNegatius.IncorporatsPerComprovacio1;
+                    resultat.IncorporatsPerComprovacio2 = resultatNegatius.IncorporatsPerComprovacio2;
+                    resultat.AuditoriasCreades += resultatNegatius.AuditoriasCreades;
+
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✔️ Processats {resultatNegatius.ResultatsProcessats} resultat(s) negatiu(s)");
+                }
+
+
+                // RESULTAT FINAL
+                // ------------------------------------
+                
                 if (resultat.Exitosa)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra mixta {mostra.EtiquetaId} processada correctament");
-                    resultat.Missatge = $"Mostra mixta processada: {resultat.IntegracionsCreades} positius processats, " +
-                        $"{classificacio.ResultatsNegatius} negatius auditats";
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra mixta {mostra.EtiquetaId} processada correctament:");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Resultats positius : {resultat.MecanismesProcessats} processats, " +
+                        $"{resultat.DiagnosticsCreats} diagnòstics creats, {resultat.MostresDiagnosticCreades} mostres creades");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Resultats negatius: {resultat.ResultatsProcessatsNegatius} processats, " +
+                        $"{resultat.ResultatsNoIncorporats} no incorporats");
+                    
+                    resultat.Missatge = $"Mostra mixta processada: {resultat.MecanismesProcessats} positius, " +
+                        $"{resultat.ResultatsProcessatsNegatius} negatius incorporats, {resultat.ResultatsNoIncorporats} negatius no incorporats";
                 }
 
                 return resultat;
@@ -223,15 +312,63 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         }
 
         /// <summary>
-        /// Crea una mostra temporal només amb els registres que tenen resultats positius
+        /// Crea una mostra temporal només amb els resultats que tenen mecanismes (positius)
         /// </summary>
-        private Mostra CrearMostraAmbRegistresPositius(
+        private Mostra CrearMostraAmbResultatsPositius(
             Mostra mostraOriginal,
             ResultatClassificacio classificacio)
         {
-            // Per simplificar, podem processar tots els registres
-            // El Use Case de mostra positiva ja filtra correctament
-            return mostraOriginal;
+            var mostraPositius = new Mostra(mostraOriginal.EtiquetaId, mostraOriginal.PacientSap);
+            
+            foreach (var resultat in mostraOriginal.Resultats)
+            {
+                // Un resultat és positiu si té almenys un mecanisme o és microorganisme especial
+                bool teAlgunMecanisme = !string.IsNullOrWhiteSpace(resultat.MecanismeResistencia1Id) ||
+                                       !string.IsNullOrWhiteSpace(resultat.MecanismeResistencia2Id) ||
+                                       !string.IsNullOrWhiteSpace(resultat.MecanismeResistencia3Id) ||
+                                       !string.IsNullOrWhiteSpace(resultat.MecanismeResistencia4Id) ||
+                                       !string.IsNullOrWhiteSpace(resultat.MecanismeResistencia5Id);
+                
+                bool esMicroorganismeEspecial = resultat.EsMicroorganismeEspecial.HasValue && 
+                                               resultat.EsMicroorganismeEspecial.Value;
+                
+                if (teAlgunMecanisme || esMicroorganismeEspecial)
+                {
+                    mostraPositius.AfegirResultat(resultat);
+                }
+            }
+            
+            return mostraPositius;
+        }
+
+        /// <summary>
+        /// Crea una mostra temporal només amb els resultats que NO tenen mecanismes (negatius)
+        /// </summary>
+        private Mostra CrearMostraAmbResultatsNegatius(
+            Mostra mostraOriginal,
+            ResultatClassificacio classificacio)
+        {
+            var mostraNegatius = new Mostra(mostraOriginal.EtiquetaId, mostraOriginal.PacientSap);
+            
+            foreach (var resultat in mostraOriginal.Resultats)
+            {
+                // Un resultat és negatiu si NO té cap mecanisme i NO és microorganisme especial
+                bool teAlgunMecanisme = !string.IsNullOrWhiteSpace(resultat.MecanismeResistencia1Id) ||
+                                       !string.IsNullOrWhiteSpace(resultat.MecanismeResistencia2Id) ||
+                                       !string.IsNullOrWhiteSpace(resultat.MecanismeResistencia3Id) ||
+                                       !string.IsNullOrWhiteSpace(resultat.MecanismeResistencia4Id) ||
+                                       !string.IsNullOrWhiteSpace(resultat.MecanismeResistencia5Id);
+                
+                bool esMicroorganismeEspecial = resultat.EsMicroorganismeEspecial.HasValue && 
+                                               resultat.EsMicroorganismeEspecial.Value;
+                
+                if (!teAlgunMecanisme && !esMicroorganismeEspecial)
+                {
+                    mostraNegatius.AfegirResultat(resultat);
+                }
+            }
+            
+            return mostraNegatius;
         }
     }
 }

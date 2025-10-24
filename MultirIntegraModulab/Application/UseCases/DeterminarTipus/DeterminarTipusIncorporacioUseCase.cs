@@ -56,7 +56,7 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                 // Convertir TipusEstatResultat a TipusIncorporacio
                 var tipusIncorporacio = ConvertirTipusEstat(tipusEstat);
 
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra {mostra.EtiquetaId} amb tipus d'incorporació {tipusIncorporacio} (estat: {tipusEstat})");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra {mostra.EtiquetaId} amb tipus d'incorporació '{tipusIncorporacio.ToString().ToUpper()}' (estat: {tipusEstat})");
 
                 return tipusIncorporacio;
             }

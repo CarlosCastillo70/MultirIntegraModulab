@@ -60,7 +60,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 throw new ArgumentNullException(nameof(mostra));
             }
 
-            _logger.Info($"🔎 Comprovant mecanismes de resistència per mostra {mostra.EtiquetaId}");
+            _logger.Info($"🔎 Comprovant mecanismes de resistència per mostra");
 
             var resultat = new ResultatComprovacioMecanismes();
 
@@ -112,11 +112,11 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
             if (!mecanismes.Any())
             {
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Registre amb microorganisme '{registre.AillamentDescripcio}' sense mecanismes de resistència");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registre amb microorganisme '{registre.AillamentDescripcio}' SENSE mecanismes de resistència");
                 return;
             }
 
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registre amb microorganisme '{registre.AillamentDescripcio}' si que té {mecanismes.Count} mecanismes de resistència. Es comproven");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registre amb microorganisme '{registre.AillamentDescripcio}' SI que té {mecanismes.Count} mecanismes de resistència. Es comproven");
 
             // Comprovar cada mecanisme
             foreach (var mecanisme in mecanismes)
@@ -165,7 +165,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
             Mostra mostra,
             ResultatComprovacioMecanismes resultat)
         {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Comprovant existencia del mecanisme: {mecanisme.id} i combinacions microorganisme / mecanisme, a no incorporar");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Comprovant existencia del mecanisme: '{mecanisme.id} {mecanisme.descripcio}' i combinacions microorganisme / mecanisme, a no incorporar");
 
             // 1. Comprovar si el mecanisme existeix
             var estatMecanisme = _multiRRepository.ComprovarExistenciaMecanisme(mecanisme.id);
@@ -189,6 +189,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
             }
             else
             {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mecanisme : '{mecanisme.id} - {mecanisme.descripcio}' JA existeix");
                 resultat.MecanismesExistents[mecanisme.id] = true; // Ja existia
             }
 
@@ -214,6 +215,10 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                     
                     // Guardar auditoria
                     _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "CNI", resultatMostra);
+                }
+                else
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Combinació microorganisme '{resultatMostra.AillamentDescripcio}' mecanisme : '{mecanisme.id} - {mecanisme.descripcio}' NO està marcada com a NO INCORPORAR");
                 }
             }
         }

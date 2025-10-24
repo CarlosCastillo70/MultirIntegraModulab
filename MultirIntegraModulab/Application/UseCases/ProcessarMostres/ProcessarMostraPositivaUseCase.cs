@@ -103,7 +103,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 // Resultat final
                 if (resultat.Exitosa)
                 {
-                    _logger.Info($"Mostra positiva {mostra.EtiquetaId} processada correctament: " +
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra positiva {mostra.EtiquetaId} processada correctament: " +
                         $"{resultat.DiagnosticsCreats} diagnòstics creats, {resultat.DiagnosticsExistents} diagnòstics existents, " +
                         $"{resultat.MostresDiagnosticCreades} mostres creades, {resultat.MostresDiagnosticExistents} mostres existents, " +
                         $"{resultat.RelacionsCreades} relacions creades, {resultat.RelacionsDuplicades} duplicades, " +
@@ -129,7 +129,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// </summary>
         private async Task ProcessarPacientAsync(Mostra mostra, ResultatProcessamentPositiu resultat)
         {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔎 Comprovant/creant pacient: {mostra.PacientSap}");
+            _logger.Info($"🔎 Comprovant/creant pacient: {mostra.PacientSap}");
 
             // Validació bàsica: comprovar que existeix identificador de pacient
             if (string.IsNullOrWhiteSpace(mostra.PacientSap))
@@ -145,12 +145,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             if (pacientExisteixMultiR)
             {
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✓ Pacient {mostra.PacientSap} ja existeix a MultiR");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Pacient {mostra.PacientSap} JA existeix a MultiR");
                 resultat.PacientCreat = false;
                 return;
             }
 
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Pacient {mostra.PacientSap} no existeix a MultiR, consultant web service SAP ...");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Pacient {mostra.PacientSap} NO existeix a MultiR, consultant web service SAP ...");
 
             // 2. Si el pacient no existeix, intentar recuperar les dades del web service
             if (_pacientWebService != null)
@@ -245,10 +245,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             string microorganisme = resultatMostra.AillamentDescripcio ?? "sense microorganisme";
             string textMecanismes = mecanismes.Any() ? $" [{string.Join(", ", mecanismes)}]" : " [sense mecanismes]";
-            
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat: {microorganisme}{textMecanismes}");
 
-            
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}---------------------------");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat: '{microorganisme}{textMecanismes}'");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}---------------------------");
+
+
             if (!string.IsNullOrWhiteSpace(resultatMostra.AillamentDescripcio))
             {
                 // Obtenir el codi del microorganisme de la taula microorganismes

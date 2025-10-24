@@ -44,11 +44,11 @@ namespace MultirIntegraModulab
 
                         if (count > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Tipus mostra {codiMostra} ja existeix a tipusmostra_m");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Tipus mostra {codiMostra} JA existeix a tipusmostra_m");
                         }
                         else
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}El tipus de mostra {codiMostra} no existeix, es procedeix a crear-lo");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}El tipus de mostra {codiMostra} NO existeix, es procedeix a crear-lo");
                         }
 
                         return count > 0;
@@ -235,8 +235,9 @@ namespace MultirIntegraModulab
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
         /// <param name="tipusMostra">Tipus de mostra (MOSTRA_DESCRIPCIO)</param>
+        /// <param name="etiquetaExcloure">Etiqueta a excloure de la cerca (opcional)</param>
         /// <returns>True si el pacient té almenys un positiu vigent per aquest tipus o equivalents</returns>
-        public bool PacientTePositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra)
+        public bool PacientTePositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiquetaExcloure = null)
         {
             if (string.IsNullOrWhiteSpace(pacientSap))
             {
@@ -275,7 +276,13 @@ namespace MultirIntegraModulab
                   AND pdm.dt_delete IS NULL 
                   AND tm.dt_delete IS NULL";
 
-            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 2: Positius vigents per aquest tipus de mostra o equivalents");
+            // Si s'especifica una etiqueta a excloure, afegir la condició
+            if (!string.IsNullOrWhiteSpace(etiquetaExcloure))
+            {
+                sql += " AND pdm.etiqueta <> @etiquetaExcloure";
+            }
+
+            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 2: Positius vigents per aquest tipus de mostra o equivalents, i amb diferent etiqueta");
 
             try
             {
@@ -286,6 +293,11 @@ namespace MultirIntegraModulab
                     {
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
                         cmd.Parameters.AddWithValue("@tipusMostra", tipusMostra);
+                        
+                        if (!string.IsNullOrWhiteSpace(etiquetaExcloure))
+                        {
+                            cmd.Parameters.AddWithValue("@etiquetaExcloure", etiquetaExcloure);
+                        }
 
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
                         
@@ -298,7 +310,7 @@ namespace MultirIntegraModulab
                         }
                         else
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient NO té positius vigents per aquest tipus de mostra '{tipusMostra}' o equivalents");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient NO té positius vigents per aquest tipus de mostra '{tipusMostra}' o equivalents, i amb diferent etiqueta");
                         }
                         
                         return tePositiusVigents;

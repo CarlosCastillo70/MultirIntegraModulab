@@ -198,8 +198,9 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
         /// <param name="tipusMostra">Tipus de mostra (MOSTRA_DESCRIPCIO)</param>
+        /// <param name="etiquetaExcloure">Etiqueta a excloure de la cerca (opcional)</param>
         /// <returns>True si el pacient té almenys un positiu vigent per aquest tipus o equivalents</returns>
-        bool PacientTePositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra);
+        bool PacientTePositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiquetaExcloure = null);
 
         // Tipus de prova
         /// <summary>

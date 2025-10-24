@@ -103,7 +103,7 @@ namespace MultirIntegraModulab
                         
                         if (count > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mecanisme '{mecanismeCodi}' ja existeix");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mecanisme '{mecanismeCodi}' JA existeix");
                             return true;
                         }
                     }
@@ -639,6 +639,43 @@ namespace MultirIntegraModulab
 
         #region Auditoria
 
+        /// <summary>
+        /// Obté la descripció d'un resultat d'integració a partir del seu codi
+        /// </summary>
+        /// <param name="codiResultat">Codi del resultat (ex: OKP, OKN, NPWS, DMM, etc.)</param>
+        /// <returns>Descripció del resultat o null si no es troba</returns>
+        private string ObtenirDescripcioResultatIntegracio(string codiResultat)
+        {
+            if (string.IsNullOrWhiteSpace(codiResultat))
+                return null;
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+
+                    string sql = @"SELECT descripcio 
+                                  FROM integracio_modulab_resultats 
+                                  WHERE codi = @codiResultat 
+                                  LIMIT 1";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@codiResultat", codiResultat);
+
+                        var result = cmd.ExecuteScalar();
+                        return result?.ToString();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error obtenint descripció del resultat {codiResultat}: {ex.Message}", ex);
+                return null;
+            }
+        }
+
         public bool InserirAuditoriaIntegracioModulab(Mostra mostra, string codiResultat, ResultatMostra resultatMostra = null, MecanismeResistenciaInfo mecanisme = null)
         {
             if (mostra == null)
@@ -655,7 +692,13 @@ namespace MultirIntegraModulab
 
             try
             {
-                Logger.Info($"🔄 Inserint auditoria amb codi {codiResultat}");
+                // Obtenir la descripció del resultat
+                string descripcioResultat = ObtenirDescripcioResultatIntegracio(codiResultat);
+                string textDescripcio = !string.IsNullOrWhiteSpace(descripcioResultat) 
+                    ? $" ({descripcioResultat})" 
+                    : "";
+
+                Logger.Info($"🔄 Inserint auditoria amb codi {codiResultat}{textDescripcio}");
 
                 using (var conn = new MySqlConnection(_connectionString))
                 {
@@ -666,11 +709,11 @@ namespace MultirIntegraModulab
                     if (resultat)
                     {
                         string infoMecanisme = mecanisme != null ? $" amb mecanisme {mecanisme.Id}" : " sense mecanisme";
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Inserit registre d'auditoria per mostra amb etiqueta {mostra.EtiquetaId} {infoMecanisme}, amb resultat {codiResultat}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Inserit registre d'auditoria per mostra amb etiqueta {mostra.EtiquetaId} {infoMecanisme}, amb resultat {codiResultat}{textDescripcio}");
                     }
                     else
                     {
-                        Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠ No s'ha pogut crear registre d'auditoria amb resultat {codiResultat}");
+                        Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠ No s'ha pogut crear registre d'auditoria amb resultat {codiResultat}{textDescripcio}");
                     }
 
                     return resultat;
@@ -827,7 +870,7 @@ namespace MultirIntegraModulab
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error comprovant existència del pacient {pacientSap}: {ex.Message}", ex);
+                Logger.Error($"Error comprobant existència del pacient {pacientSap}: {ex.Message}", ex);
                 return false;
             }
         }

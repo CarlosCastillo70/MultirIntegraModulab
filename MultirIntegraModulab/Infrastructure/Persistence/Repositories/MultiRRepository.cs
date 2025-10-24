@@ -164,6 +164,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool PacientTePositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra) =>
             _multiRDbService.PacientTePositiusVigentsTipusMostraIEquivalents(pacientSap, tipusMostra);
 
+        public bool PacientTePositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiquetaExcloure = null) =>
+            _multiRDbService.PacientTePositiusVigentsTipusMostraIEquivalents(pacientSap, tipusMostra, etiquetaExcloure);
+
         // Tipus de prova
         public bool ExisteixTipusProvaActiu(string codiProva) =>
             _multiRDbService.ExisteixTipusProvaActiu(codiProva);

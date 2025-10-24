@@ -131,7 +131,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 if (resultat.Exitosa)
                 {
-                    _logger.Info($"Mostra negativa {mostra.EtiquetaId} processada correctament: " +
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra negativa {mostra.EtiquetaId} processada correctament: " +
                         $"{resultat.DiagnosticsCreats} diagnòstics creats, {resultat.DiagnosticsExistents} diagnòstics existents, " +
                         $"{resultat.MostresDiagnosticCreades} mostres creades, {resultat.MostresDiagnosticExistents} mostres existents, " +
                         $"{resultat.RelacionsCreades} relacions creades, {resultat.RelacionsDuplicades} duplicades, " +
@@ -164,13 +164,14 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             ResultatProcessamentNegatiu resultat)
         {
             string microorganisme = resultatMostra.AillamentDescripcio ?? "sense microorganisme";
-            
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat negatiu: '{microorganisme}'");
 
-            
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}---------------------------");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat negatiu: '{microorganisme}'");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}---------------------------");
+
             // FASE 1: COMPROVACIONS PER DETERMINAR SI CAL INCORPORAR EL NEGATIU
             // ------------------------------------
-            
+
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔍 Comprovant si cal incorporar el negatiu per tipus mostra: '{resultatMostra.MostraDescripcio}'");
             
             bool calIncorporarNegatiu = false;
@@ -186,7 +187,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             
             if (!pacientExisteix)
             {
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient {mostra.PacientSap} no existeix a la taula de pacients");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient {mostra.PacientSap} NO existeix a la taula de pacients");
                 
                 // Inserir auditoria amb codi NMRCMC (No supera la comprovació de mostra amb motiu client)
                 bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCMC", resultatMostra);
@@ -200,7 +201,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 return;
             }
             
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {mostra.PacientSap} existeix a la taula de pacients");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {mostra.PacientSap} SI existeix a la taula de pacients");
 
 
             // Comprovació 1: Tipus de mostra a incorporar sempre que el pacient tingui algun positiu
@@ -244,7 +245,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 // Comprovar si el pacient té positius vigents per aquest tipus de mostra o equivalents
                 bool pacientTePositiusVigents = _multiRRepository.PacientTePositiusVigentsTipusMostraIEquivalents(
                     mostra.PacientSap, 
-                    resultatMostra.MostraDescripcio);
+                    resultatMostra.MostraDescripcio, mostra.EtiquetaId);
                 
                 if (pacientTePositiusVigents)
                 {
@@ -260,7 +261,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             
             if (!calIncorporarNegatiu)
             {
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Resultat negatiu NO cal incorporar segons comprovacions 1 i 2");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Resultat negatiu NO cal incorporar segons comprovacions 0, 1 i 2");
 
                 // Inserir auditoria amb codi NMRCM (No supera la comprovació de mostra)
                 bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCM", resultatMostra);

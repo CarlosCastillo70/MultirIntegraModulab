@@ -45,7 +45,7 @@ namespace MultirIntegraModulab
 
                         if (count > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Tipus prova {codiProva} ja existeix a tipusprova");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Tipus prova {codiProva} JA existeix a tipusprova");
                         }
 
                         return count > 0;

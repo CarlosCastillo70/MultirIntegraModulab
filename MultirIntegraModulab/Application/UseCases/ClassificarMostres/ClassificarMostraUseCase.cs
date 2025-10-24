@@ -47,7 +47,7 @@ namespace MultirIntegraModulab.Application.UseCases.ClassificarMostres
             // Determinar el tipus de mostra : un sol positiu, un sol negatiu, mix, ...
             resultat.TipusMostra = DeterminarTipusMostra(resultat.ResultatsPositius, resultat.ResultatsNegatius);
 
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra {mostra.EtiquetaId} classificada com {resultat.TipusMostra.ToString().ToUpper()} ({resultat.ResultatsPositius} positius, {resultat.ResultatsNegatius} negatius)");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra {mostra.EtiquetaId} classificada com '{resultat.TipusMostra.ToString().ToUpper()}' ({resultat.ResultatsPositius} positius, {resultat.ResultatsNegatius} negatius)");
 
             return resultat;
         }
