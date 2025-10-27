@@ -45,7 +45,7 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                 var dataResultatOracle = mostra.DataUltimResultat;
                 var dataValidacioOracle = ObtenirDataValidacioMaxima(mostra);
 
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra {mostra.EtiquetaId}: DataResultat = {dataResultatOracle:dd/MM/yyyy HH:mm}, DataValidacio = {dataValidacioOracle?.ToString("dd/MM/yyyy HH:mm") ?? "null"}");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}DataResultat = {dataResultatOracle:dd/MM/yyyy HH:mm}, DataValidacio = {dataValidacioOracle?.ToString("dd/MM/yyyy HH:mm") ?? "null"}");
 
                 // Classificar l'estat comparant amb una possible mostra de MultiR (MySQL)
                 var tipusEstat = _multiRRepository.ClassificarEstatResultat(
@@ -56,7 +56,7 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                 // Convertir TipusEstatResultat a TipusIncorporacio
                 var tipusIncorporacio = ConvertirTipusEstat(tipusEstat);
 
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra {mostra.EtiquetaId} amb tipus d'incorporació '{tipusIncorporacio.ToString().ToUpper()}' (estat: {tipusEstat})");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Tipus d'incorporació : '{tipusIncorporacio.ToString().ToUpper()}' (estat: {tipusEstat})");
 
                 return tipusIncorporacio;
             }

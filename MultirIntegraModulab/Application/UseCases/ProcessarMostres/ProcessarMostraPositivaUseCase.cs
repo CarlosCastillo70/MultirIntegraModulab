@@ -246,9 +246,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             string microorganisme = resultatMostra.AillamentDescripcio ?? "sense microorganisme";
             string textMecanismes = mecanismes.Any() ? $" [{string.Join(", ", mecanismes)}]" : " [sense mecanismes]";
 
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}---------------------------");
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat: '{microorganisme}{textMecanismes}'");
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}---------------------------");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}------------------------------------------------------------------------------");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat positiu: '{microorganisme}{textMecanismes}'");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}------------------------------------------------------------------------------");
 
 
             if (!string.IsNullOrWhiteSpace(resultatMostra.AillamentDescripcio))
@@ -272,7 +272,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 {
                     if (!string.IsNullOrWhiteSpace(mecanismeId))
                     {
-                        
+
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}---------------------------");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant microorganisme [mecanisme de resistència]: '{microorganismeCodi} [{mecanismeId} - {mecanismeDescrip}]'");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}---------------------------");
+
+
                         // Pacients_diagnostics
                         // ------------------------------------
 

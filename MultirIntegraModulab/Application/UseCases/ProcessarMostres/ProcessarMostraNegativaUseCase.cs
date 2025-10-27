@@ -165,9 +165,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         {
             string microorganisme = resultatMostra.AillamentDescripcio ?? "sense microorganisme";
 
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}---------------------------");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}------------------------------------------------------------------------------");
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat negatiu: '{microorganisme}'");
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}---------------------------");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}------------------------------------------------------------------------------");
 
             // FASE 1: COMPROVACIONS PER DETERMINAR SI CAL INCORPORAR EL NEGATIU
             // ------------------------------------
@@ -189,8 +189,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             {
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient {mostra.PacientSap} NO existeix a la taula de pacients");
                 
-                // Inserir auditoria amb codi NMRCMC (No supera la comprovació de mostra amb motiu client)
-                bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCMC", resultatMostra);
+                // Inserir auditoria amb codi NMRCMP (No supera la comprovació de mostra amb motiu pacient)
+                bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCMP", resultatMostra);
                 
                 if (auditoriaCreada)
                 {

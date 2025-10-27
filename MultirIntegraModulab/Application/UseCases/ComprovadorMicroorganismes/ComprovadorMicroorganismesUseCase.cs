@@ -56,7 +56,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 throw new ArgumentNullException(nameof(mostra));
             }
 
-            _logger.Info($"🔎 Comprovant microorganismes per mostra {mostra.EtiquetaId}");
+            _logger.Info($"🔎 Comprovant microorganismes");
 
             var resultat = new ResultatComprovacioMicroorganismes
             {
@@ -91,7 +91,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 }
                 else
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Comprovació de microorganismes completada per la mostra");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Comprovació de microorganismes de la mostra, completada");
                     resultat.Missatge = "Tots els microorganismes comprovats correctament";
                 }
 

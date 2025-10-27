@@ -60,7 +60,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 throw new ArgumentNullException(nameof(mostra));
             }
 
-            _logger.Info($"🔎 Comprovant mecanismes de resistència per mostra");
+            _logger.Info($"🔎 Comprovant mecanismes de resistència");
 
             var resultat = new ResultatComprovacioMecanismes();
 
@@ -84,7 +84,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Creats {resultat.MecanismesCreats.Count} mecanismes nous");
                 }
 
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Comprovació de mecanismes completada per mostra {mostra.EtiquetaId}");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Comprovació de mecanismes de la mostra, completada");
                 resultat.Missatge = "Tots els mecanismes comprovats correctament";
                 
                 return resultat;

@@ -90,22 +90,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _logger.Info($" Processant mostra del pacient {mostra.PacientSap} , amb etiqueta : {mostra.EtiquetaId}");
                     _logger.Info($"▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀");
 
-                    if (mostra.EtiquetaId == "402869079" || mostra.EtiquetaId == "400817464" || mostra.EtiquetaId == "402769776" || 
-                        mostra.EtiquetaId == "402843403" || mostra.EtiquetaId == "402876169" || mostra.EtiquetaId == "402876332" || 
-                        mostra.EtiquetaId == "402876360" || 
-                        mostra.EtiquetaId == "402876437") 
+                    if (mostra.EtiquetaId == "402876565" || mostra.EtiquetaId == "402877669") 
                     {
-
-                        // 400817464 2 NEGATIUS
-                        // 402769776 3 NEGATIUS
-                        // 402843403 1 POSITIU 1 NEGATIU
-                        // 402869079 2 MECANISMES RESISTENCIA
-                        // 402876169 1 NEGATIU 1 POSITIU
-
-                        // 402876332 4 NEGATIUS
-                        // 402876360 2 POSITIUS (2 LINEES)
-                        // 402876437 3 NEGATIUS (ULL DIFERENT TIPUS DE PROVA)
-
                         var revisioDeCasos = 1;
                     }
 
@@ -125,6 +111,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     // Actualitzar resum final segons tipus d'incorporació
                     ActualitzarResumPerTipus(resum, tipusIncorporacio);
+
+                    // TRACTAMENT ESPECÍFIC SEGONS TIPUS D'INCORPORACIÓ
+                    if (!TractarTipusIncorporacio(mostra, tipusIncorporacio, resum))
+                    {
+                        // Si retorna false, cal ometre el processament posterior (continue)
+                        continue;
+                    }
 
 
 
@@ -173,6 +166,214 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             _logger.Info($"========================================");
 
             return resum;
+        }
+
+        /// <summary>
+        /// Tracta una mostra segons el seu tipus d'incorporació
+        /// </summary>
+        /// <param name="mostra">Mostra a tractar</param>
+        /// <param name="tipusIncorporacio">Tipus d'incorporació determinat</param>
+        /// <param name="resum">Resum del processament</param>
+        /// <returns>True si cal continuar processant, False si cal ometre la mostra</returns>
+        private bool TractarTipusIncorporacio(Mostra mostra, TipusIncorporacio tipusIncorporacio, ResumProcessamentDto resum)
+        {
+            switch (tipusIncorporacio)
+            {
+                case TipusIncorporacio.Nova:
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✨ Mostra nova - continuar endavant...");
+                    return true; // Continuar processament normal
+
+                case TipusIncorporacio.Repetida:
+                    return TractarMostraRepetida(mostra, resum);
+
+                case TipusIncorporacio.Desvalidada:
+                    return TractarMostraDesvalidada(mostra, resum);
+
+                case TipusIncorporacio.Antiga:
+                    return TractarMostraAntigua(mostra, resum);
+
+                case TipusIncorporacio.Validada:
+                    return TractarMostraValidada(mostra, tipusIncorporacio);
+
+                case TipusIncorporacio.Revalidada:
+                    return TractarMostraRevalidada(mostra, tipusIncorporacio);
+
+                default:
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❓ Tipus d'incorporació desconegut: {tipusIncorporacio}");
+                    return true; // Continuar per seguretat
+            }
+        }
+
+        /// <summary>
+        /// Tracta una mostra desvalidada: guarda historial i esborra dades
+        /// </summary>
+        private bool TractarMostraDesvalidada(Mostra mostra, ResumProcessamentDto resum)
+        {
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🗑️ Mostra desvalidada - guardant historial i esborrant dades...");
+
+            try
+            {
+                // Guardar historial abans d'esborrar
+                var tipusCanvi = "DESVALIDADA";
+                var observacions = "Mostra desvalidada - Oracle no té data de validació";
+                
+                bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
+                    mostra.EtiquetaId,
+                    tipusCanvi,
+                    observacions);
+
+                if (historialGuardat)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📝 Historial guardat correctament");
+                }
+                else
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut guardar l'historial");
+                }
+
+                // Esborrar dades de la mostra
+                bool esborrat = _multiRRepository.EsborrarDadesMostra(mostra.EtiquetaId);
+                
+                if (!esborrat)
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error esborrant mostra desvalidada");
+                    resum.MostresAmbError++;
+                }
+                else
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Dades esborrades correctament");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error tractant mostra desvalidada: {ex.Message}", ex);
+                resum.MostresAmbError++;
+            }
+
+            return false; // No processar més, passar a la següent mostra
+        }
+
+        /// <summary>
+        /// Tracta una mostra antiga: actualitza les dates
+        /// </summary>
+        private bool TractarMostraAntigua(Mostra mostra, ResumProcessamentDto resum)
+        {
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra antiga (sense dates) - actualitzant dates...");
+
+            // TODO: Implementar actualització de dates per mostres antigues
+            // Per ara, deixem que continuï el processament normal
+            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Tractament de mostres antigues pendent d'implementació");
+
+            return true; // Continuar processant
+        }
+
+
+
+        /// <summary>
+        /// Tracta una mostra repetida: inserir auditoria i no continuar
+        /// </summary>
+        private bool TractarMostraRepetida(Mostra mostra, ResumProcessamentDto resum)
+        {
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⏭️ Mostra repetida (dates idèntiques) - inserint auditoria...");
+
+            try
+            {
+                // Inserir auditoria amb codi EMCR (Estat Mostra Cas Repetit)
+                // Utilitzem el primer resultat per l'auditoria
+                var primerResultat = mostra.Resultats[0];
+                
+                bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                    mostra, 
+                    "EMCR", 
+                    primerResultat, 
+                    null);
+
+                if (auditoriaCreada)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Auditoria EMCR (Estat Mostra Cas Repetit) creada correctament");
+                }
+                else
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut crear l'auditoria EMCR");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error creant auditoria per mostra repetida: {ex.Message}", ex);
+            }
+
+            return false; // No processar més, passar a la següent mostra
+        }
+
+
+        /// <summary>
+        /// Tracta una mostra validada: guarda historial i continua processament
+        /// </summary>
+        private bool TractarMostraValidada(Mostra mostra, TipusIncorporacio tipusIncorporacio)
+        {
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Mostra validada - guardant historial i actualitzant...");
+
+            try
+            {
+                // Guardar historial
+                var tipusCanvi = "VALIDADA";
+                var observacions = "Mostra validada - Oracle té nova data de validació";
+
+                bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
+                    mostra.EtiquetaId,
+                    tipusCanvi,
+                    observacions);
+
+                if (historialGuardat)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📝 Historial guardat correctament");
+                }
+                else
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut guardar l'historial");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error guardant historial de mostra validada: {ex.Message}", ex);
+            }
+
+            return true; // Continuar processament per actualitzar dates i relacions
+        }
+
+        /// <summary>
+        /// Tracta una mostra revalidada: guarda historial i continua processament
+        /// </summary>
+        private bool TractarMostraRevalidada(Mostra mostra, TipusIncorporacio tipusIncorporacio)
+        {
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Mostra revalidada - guardant historial i actualitzant...");
+
+            try
+            {
+                // Guardar historial
+                var tipusCanvi = "REVALIDADA";
+                var observacions = "Mostra revalidada - Data de validació diferent a Oracle";
+
+                bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
+                    mostra.EtiquetaId,
+                    tipusCanvi,
+                    observacions);
+
+                if (historialGuardat)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📝 Historial guardat correctament");
+                }
+                else
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut guardar l'historial");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error guardant historial de mostra revalidada: {ex.Message}", ex);
+            }
+
+            return true; // Continuar processament per actualitzar dates i relacions
         }
 
         /// <summary>
