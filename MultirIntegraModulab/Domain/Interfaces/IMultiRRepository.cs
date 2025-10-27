@@ -51,7 +51,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         int CrearDiagnosticPacient(string pacientSap, string microorganisme, string mecanisme, string tipusMecanisme);
 
         /// <summary>
-        /// Obté els IDs dels diagnòstics positius d'un pacient per un tipus de mostra específic,
+        /// Obtingué els IDs dels diagnòstics positius d'un pacient per un tipus de mostra específic,
         /// excloent opcionalment una etiqueta concreta
         /// Retorna només els diagnòstics amb mecanisme de resistència o microorganisme especial
         /// </summary>
@@ -100,6 +100,21 @@ namespace MultirIntegraModulab.Domain.Interfaces
         int CrearMostraDiagnostic(string pacientSap, DateTime? dataMostra, string tipusMostra, 
             string tipusProva, string etiqueta, DateTime? dataResultat, DateTime? dataValidacio, 
             string mecanismeId, bool? esMicroorganismeEspecial);
+
+        /// <summary>
+        /// Obté les dades completes d'una mostra diagnòstic existent
+        /// </summary>
+        /// <param name="etiquetaId">Etiqueta de la mostra</param>
+        /// <returns>Dades de la mostra diagnòstic o null si no existeix</returns>
+        MostraDiagnosticExistent ObtenirMostraDiagnostic(string etiquetaId);
+
+        /// <summary>
+        /// Compara una mostra entrant amb una mostra existent per detectar canvis
+        /// </summary>
+        /// <param name="mostraExistent">Mostra existent a la base de dades</param>
+        /// <param name="mostraEntrant">Mostra que està entrant</param>
+        /// <returns>Resultat de la comparació amb detall dels canvis</returns>
+        ResultatComparacioMostres CompararMostres(MostraDiagnosticExistent mostraExistent, Mostra mostraEntrant);
 
         /// <summary>
         /// Esborra les dades d'una mostra (soft delete)

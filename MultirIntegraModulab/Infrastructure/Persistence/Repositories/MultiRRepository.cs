@@ -65,6 +65,12 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool EsborrarDadesMostra(string etiquetaId) => 
             _multiRDbService.EsborrarDadesMostra(etiquetaId);
 
+        public MostraDiagnosticExistent ObtenirMostraDiagnostic(string etiquetaId) =>
+            _multiRDbService.ObtenirMostraDiagnostic(etiquetaId);
+
+        public ResultatComparacioMostres CompararMostres(MostraDiagnosticExistent mostraExistent, Mostra mostraEntrant) =>
+            _multiRDbService.CompararMostres(mostraExistent, mostraEntrant);
+
         // Microorganismes
         public bool? EsMicroorganismeEspecial(string microorganismeDescripcio) => 
             _multiRDbService.EsMicroorganismeEspecial(microorganismeDescripcio);
