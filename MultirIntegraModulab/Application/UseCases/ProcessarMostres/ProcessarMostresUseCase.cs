@@ -112,7 +112,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // Actualitzar resum final segons tipus d'incorporació
                     ActualitzarResumPerTipus(resum, tipusIncorporacio);
 
-                    // TRACTAMENT ESPECÍFIC SEGONS TIPUS D'INCORPORACIÓ
+
+                    // FASE 3: Tractament especific segons tipus d´incorporació
                     if (!TractarTipusIncorporacio(mostra, tipusIncorporacio, resum))
                     {
                         // Si retorna false, cal ometre el processament posterior (continue)
@@ -121,7 +122,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
 
 
-                    // FASE 3: Comprovar microorganismes
+                    // FASE 4: Comprovar microorganismes
                     var resultatMicroorganismes = _comprovadorMicroorganismesUseCase.Executar(mostra);
                     if (!resultatMicroorganismes.Exitosa)
                     {
@@ -129,7 +130,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
 
-                    // FASE 4: Comprovar mecanismes de resistència
+                    // FASE 5: Comprovar mecanismes de resistència
                     var resultatMecanismes = _comprovadorMecanismesUseCase.Executar(mostra);
                     if (!resultatMecanismes.ContinuarProcessament)
                     {
@@ -139,11 +140,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
                     
-                    // FASE 5: Classificar mostra (un sol positiu, múltiples negatius, mixta, ...)
+                    // FASE 6: Classificar mostra (un sol positiu, múltiples negatius, mixta, ...)
                     var classificacio = _classificarMostraUseCase.Executar(mostra);
 
 
-                    // FASE 6: Processar segons el tipus de mostra
+                    // FASE 7: Processar segons el tipus de mostra
                     await ProcessarPerTipusMostraAsync(mostra, classificacio, resum);
 
 
@@ -204,6 +205,107 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
         }
 
+
+        /// <summary>
+        /// Tracta una mostra repetida: inserir auditoria i no continuar
+        /// </summary>
+        private bool TractarMostraRepetida(Mostra mostra, ResumProcessamentDto resum)
+        {
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⏭️ Mostra repetida (dates idèntiques) - inserint auditoria...");
+
+            try
+            {
+                // Inserir auditoria amb codi EMCR (Estat Mostra Cas Repetit)
+                // Utilitzem el primer resultat per l'auditoria
+                var primerResultat = mostra.Resultats[0];
+
+                bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                    mostra,
+                    "EMCR",
+                    primerResultat,
+                    null);
+
+                if (auditoriaCreada)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Auditoria EMCR (Estat Mostra Cas Repetit) creada correctament");
+                }
+                else
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut crear l'auditoria EMCR");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error creant auditoria per mostra repetida: {ex.Message}", ex);
+            }
+
+            return false; // No processar més, passar a la següent mostra
+        }
+
+
+        /// <summary>
+        /// Tracta una mostra antiga: actualitza les dates
+        /// </summary>
+        private bool TractarMostraAntigua(Mostra mostra, ResumProcessamentDto resum)
+        {
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra antiga (sense dates) - actualitzant dates...");
+
+            try
+            {
+                // Obtenir les dates del primer resultat (són iguals per tots els resultats de la mateixa etiqueta)
+                var primerResultat = mostra.Resultats[0];
+                var dataResultat = primerResultat.DataResultat;
+                var dataValidacio = primerResultat.DataValidacio;
+
+                // Actualitzar les dates a la base de dades
+                bool actualitzat = _multiRRepository.ActualitzarResultatAntic(
+                    mostra.EtiquetaId,
+                    dataResultat,
+                    dataValidacio);
+
+                if (actualitzat)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Dates actualitzades correctament");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   - Data resultat: {dataResultat:dd/MM/yyyy HH:mm}");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   - Data validació: {(dataValidacio.HasValue ? dataValidacio.Value.ToString("dd/MM/yyyy HH:mm") : "NULL")}");
+                }
+                else
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'han pogut actualitzar les dates");
+                }
+
+                // Inserir auditoria amb codi EMCA (Estat Mostra Cas Antic)
+                bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                    mostra,
+                    "EMCA",
+                    primerResultat,
+                    null);
+
+                if (auditoriaCreada)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Auditoria EMCA (Estat Mostra Cas Antic) creada correctament");
+                }
+                else
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut crear l'auditoria EMCA");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error tractant mostra antiga: {ex.Message}", ex);
+                resum.MostresAmbError++;
+            }
+
+            return false; // No continuar processament, passar a la següent mostra
+        }
+
+
+
+
+
+
+
+
         /// <summary>
         /// Tracta una mostra desvalidada: guarda historial i esborra dades
         /// </summary>
@@ -253,57 +355,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             return false; // No processar més, passar a la següent mostra
         }
 
-        /// <summary>
-        /// Tracta una mostra antiga: actualitza les dates
-        /// </summary>
-        private bool TractarMostraAntigua(Mostra mostra, ResumProcessamentDto resum)
-        {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra antiga (sense dates) - actualitzant dates...");
-
-            // TODO: Implementar actualització de dates per mostres antigues
-            // Per ara, deixem que continuï el processament normal
-            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Tractament de mostres antigues pendent d'implementació");
-
-            return true; // Continuar processant
-        }
 
 
-
-        /// <summary>
-        /// Tracta una mostra repetida: inserir auditoria i no continuar
-        /// </summary>
-        private bool TractarMostraRepetida(Mostra mostra, ResumProcessamentDto resum)
-        {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⏭️ Mostra repetida (dates idèntiques) - inserint auditoria...");
-
-            try
-            {
-                // Inserir auditoria amb codi EMCR (Estat Mostra Cas Repetit)
-                // Utilitzem el primer resultat per l'auditoria
-                var primerResultat = mostra.Resultats[0];
-                
-                bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
-                    mostra, 
-                    "EMCR", 
-                    primerResultat, 
-                    null);
-
-                if (auditoriaCreada)
-                {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Auditoria EMCR (Estat Mostra Cas Repetit) creada correctament");
-                }
-                else
-                {
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut crear l'auditoria EMCR");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error creant auditoria per mostra repetida: {ex.Message}", ex);
-            }
-
-            return false; // No processar més, passar a la següent mostra
-        }
 
 
         /// <summary>
