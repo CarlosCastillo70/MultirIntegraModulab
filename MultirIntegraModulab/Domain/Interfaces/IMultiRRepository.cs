@@ -241,8 +241,29 @@ namespace MultirIntegraModulab.Domain.Interfaces
         EstadistiquesHistorial ObtenirEstadistiquesHistorial();
         int ComprovarHistorialExisteix(string etiquetaId);
         List<RegistreHistorialMostra> ObtenirHistorialMostra(string etiquetaId);
-        bool GuardarHistorialMostra(string etiquetaId, string tipusCanvi, string observacions = null,
-            string microorganisme = null, string mecanisme = null, string estatAbans = null, string estatDespres = null);
+        
+        /// <summary>
+        /// Guarda un registre d'historial per una mostra amb tota la informació
+        /// </summary>
+        /// <param name="etiquetaId">Identificador de l'etiqueta</param>
+        /// <param name="tipusCanvi">Tipus de canvi realitzat (VALIDADA_AMB_CANVIS, REVALIDADA_AMB_CANVIS, DESVALIDADA_AMB_CANVIS)</param>
+        /// <param name="combinacionsAnteriors">Combinacions microorganisme+mecanisme anteriors (JSON o text)</param>
+        /// <param name="dataResultatAnterior">Data resultat anterior</param>
+        /// <param name="dataValidacioAnterior">Data validació anterior</param>
+        /// <param name="combinacionsNoves">Combinacions microorganisme+mecanisme noves (JSON o text)</param>
+        /// <param name="dataResultatNova">Data resultat nova</param>
+        /// <param name="dataValidacioNova">Data validació nova</param>
+        /// <returns>True si s'ha guardat correctament</returns>
+        bool GuardarHistorialMostra(
+            string etiquetaId, 
+            string tipusCanvi, 
+            string combinacionsAnteriors = null,
+            DateTime? dataResultatAnterior = null,
+            DateTime? dataValidacioAnterior = null,
+            string combinacionsNoves = null,
+            DateTime? dataResultatNova = null,
+            DateTime? dataValidacioNova = null);
+        
         bool GuardarHistorialAutomaticMostra(Mostra mostra, TipusIncorporacio tipusIncorporacio, string observacions = null);
         int NetejarHistorialAntic(int diesRetencio = 90);
     }

@@ -4,14 +4,14 @@ using System.Configuration;
 namespace MultirIntegraModulab.Configuration
 {
     /// <summary>
-    /// Gestiona la configuració de l'aplicació de forma centralitzada i tipada
+    /// Gestiona la configuraciÃ³ de l'aplicaciÃ³ de forma centralitzada i tipada
     /// </summary>
     public class AppConfiguration
     {
         private static AppConfiguration _instance;
         private static readonly object _lock = new object();
 
-        // Singleton pattern per evitar múltiples lectures del fitxer
+        // Singleton pattern per evitar mÃºltiples lectures del fitxer
         public static AppConfiguration Instance
         {
             get
@@ -40,32 +40,32 @@ namespace MultirIntegraModulab.Configuration
         public string OracleConnectionString { get; private set; }
         public string MySqlConnectionString { get; private set; }
 
-        // CONFIGURACIÓ DE CÀRREGA
+        // CONFIGURACIÃ“ DE CÃ€RREGA
         // ------------------------
         public int DiesEndarreraCarrega { get; private set; }
         public int LimitResultatsProves { get; private set; }
         public bool EntornProduccion { get; private set; }
 
-        // CONFIGURACIÓ DE LOGGING
+        // CONFIGURACIÃ“ DE LOGGING
         // ------------------------
         public string LogDirectory { get; private set; }
         public string LogLevel { get; private set; }
 
-        // CONFIGURACIÓ DE CACHE
+        // CONFIGURACIÃ“ DE CACHE
         // ---------------------
         public int MinutsVigenciaCache { get; private set; }
 
-        // CONFIGURACIÓ DE MANTENIMENT
+        // CONFIGURACIÃ“ DE MANTENIMENT
         // ---------------------------
         public int DiesRetencioHistorial { get; private set; }
 
-        // CONFIGURACIÓ DE PROCESSAMENT
+        // CONFIGURACIÃ“ DE PROCESSAMENT
         // ----------------------------
         public bool ProcessarMostresEnParalel { get; private set; }
         public int MaxGrauParalelisme { get; private set; }
 
         /// <summary>
-        /// Carrega tota la configuració des de App.config
+        /// Carrega tota la configuraciÃ³ des de App.config
         /// </summary>
         private void CarregarConfiguracio()
         {
@@ -76,7 +76,7 @@ namespace MultirIntegraModulab.Configuration
                 MySqlConnectionString = ObtenirConnectionString("MySqlMultiR");
 
                 // AppSettings
-                DiesEndarreraCarrega = ObtenirAppSettingInt("DiesEndarreraCarrega", 1);
+                DiesEndarreraCarrega = ObtenirAppSettingInt("DiesEndarreraCarrega", 2);
                 LimitResultatsProves = ObtenirAppSettingInt("LimitResultatsProves", 50);
                 EntornProduccion = ObtenirAppSettingBool("EntornProduccion", false);
 
@@ -92,13 +92,13 @@ namespace MultirIntegraModulab.Configuration
             catch (Exception ex)
             {
                 throw new ConfigurationErrorsException(
-                    "Error carregant la configuració de l'aplicació. " +
-                    "Verifica que el fitxer App.config existeix i està ben format.", ex);
+                    "Error carregant la configuraciÃ³ de l'aplicaciÃ³. " +
+                    "Verifica que el fitxer App.config existeix i estÃ  ben format.", ex);
             }
         }
 
         /// <summary>
-        /// Obté un connection string del fitxer de configuració
+        /// ObtÃ© un connection string del fitxer de configuraciÃ³
         /// </summary>
         private string ObtenirConnectionString(string name)
         {
@@ -106,13 +106,13 @@ namespace MultirIntegraModulab.Configuration
             if (connectionString == null || string.IsNullOrWhiteSpace(connectionString.ConnectionString))
             {
                 throw new ConfigurationErrorsException(
-                    $"La connection string '{name}' no està definida a App.config");
+                    $"La connection string '{name}' no estÃ  definida a App.config");
             }
             return connectionString.ConnectionString;
         }
 
         /// <summary>
-        /// Obté un valor string de AppSettings
+        /// ObtÃ© un valor string de AppSettings
         /// </summary>
         private string ObtenirAppSettingString(string key, string defaultValue = null)
         {
@@ -121,7 +121,7 @@ namespace MultirIntegraModulab.Configuration
         }
 
         /// <summary>
-        /// Obté un valor int de AppSettings
+        /// ObtÃ© un valor int de AppSettings
         /// </summary>
         private int ObtenirAppSettingInt(string key, int defaultValue)
         {
@@ -134,7 +134,7 @@ namespace MultirIntegraModulab.Configuration
         }
 
         /// <summary>
-        /// Obté un valor bool de AppSettings
+        /// ObtÃ© un valor bool de AppSettings
         /// </summary>
         private bool ObtenirAppSettingBool(string key, bool defaultValue)
         {
@@ -147,7 +147,7 @@ namespace MultirIntegraModulab.Configuration
         }
 
         /// <summary>
-        /// Valida que la configuració és correcta
+        /// Valida que la configuraciÃ³ Ã©s correcta
         /// </summary>
         public void ValidarConfiguracio()
         {
@@ -174,30 +174,30 @@ namespace MultirIntegraModulab.Configuration
         }
 
         /// <summary>
-        /// Mostra un resum de la configuració actual
+        /// Mostra un resum de la configuraciÃ³ actual
         /// </summary>
         public string ObtenirResumConfiguracio()
         {
             return $@"
     ================================================================================
-    CONFIGURACIÓ DE L'APLICACIÓ
+    CONFIGURACIÃ“ DE L'APLICACIÃ“
     ================================================================================
 
     BASES DE DADES:
     - Oracle: {MascaraConnectionString(OracleConnectionString)}
     - MySQL:  {MascaraConnectionString(MySqlConnectionString)}
                  
-    CÀRREGA DE DADES:
+    CÃ€RREGA DE DADES:
     - Dies enrere: {DiesEndarreraCarrega}
-    - Límit resultats: {(EntornProduccion ? "Il·limitat (Producció)" : LimitResultatsProves.ToString())}
-    - Entorn: {(EntornProduccion ? "PRODUCCIÓ" : "PROVES")}
+    - LÃ­mit resultats: {(EntornProduccion ? "IlÂ·limitat (ProducciÃ³)" : LimitResultatsProves.ToString())}
+    - Entorn: {(EntornProduccion ? "PRODUCCIÃ“" : "PROVES")}
  
     LOGGING:
     - Directori: {LogDirectory}
     - Nivell: {LogLevel}
 
     CACHE:
-    - Vigència: {MinutsVigenciaCache} minuts
+    - VigÃ¨ncia: {MinutsVigenciaCache} minuts
 
     ================================================================================
                 ";
@@ -218,7 +218,7 @@ namespace MultirIntegraModulab.Configuration
                 "$1=***",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
-            // Si és molt llarga, abreujar-la
+            // Si Ã©s molt llarga, abreujar-la
             if (masked.Length > 80)
             {
                 return masked.Substring(0, 77) + "...";
@@ -228,7 +228,7 @@ namespace MultirIntegraModulab.Configuration
         }
 
         /// <summary>
-        /// Força la recàrrega de la configuració (útil per testing)
+        /// ForÃ§a la recÃ rrega de la configuraciÃ³ (Ãºtil per testing)
         /// </summary>
         public static void RecarregarConfiguracio()
         {

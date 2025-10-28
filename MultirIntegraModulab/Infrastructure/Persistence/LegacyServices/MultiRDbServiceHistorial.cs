@@ -14,9 +14,9 @@ namespace MultirIntegraModulab
     public partial class MultiRDbService
     {
         /// <summary>
-        /// ObtÈ estadÌstiques generals de l'historial de mostres
+        /// Obt√© estad√≠stiques generals de l'historial de mostres
         /// </summary>
-        /// <returns>EstadÌstiques de l'historial</returns>
+        /// <returns>Estad√≠stiques de l'historial</returns>
         public EstadistiquesHistorial ObtenirEstadistiquesHistorial()
         {
             var estadistiques = new EstadistiquesHistorial();
@@ -56,7 +56,7 @@ namespace MultirIntegraModulab
                             }
                         }
 
-                        // Obtenir distribuciÛ per tipus de canvi
+                        // Obtenir distribuci√≥ per tipus de canvi
                         string sqlTipus = @"SELECT tipus_canvi, COUNT(*) as total
                                            FROM pacients_diagnostics_mostra_historial 
                                            WHERE dt_delete IS NULL 
@@ -80,8 +80,8 @@ namespace MultirIntegraModulab
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error obtenint estadÌstiques d'historial: {ex.Message}", ex);
-                // Retornar estadÌstiques buides en cas d'error
+                Logger.Error($"Error obtenint estad√≠stiques d'historial: {ex.Message}", ex);
+                // Retornar estad√≠stiques buides en cas d'error
                 estadistiques = new EstadistiquesHistorial();
             }
 
@@ -89,7 +89,7 @@ namespace MultirIntegraModulab
         }
 
         /// <summary>
-        /// Comprova si existeix historial per una mostra especÌfica
+        /// Comprova si existeix historial per una mostra espec√≠fica
         /// </summary>
         /// <param name="etiquetaId">Identificador de l'etiqueta</param>
         /// <returns>Nombre de registres d'historial per la mostra</returns>
@@ -97,7 +97,7 @@ namespace MultirIntegraModulab
         {
             if (string.IsNullOrWhiteSpace(etiquetaId))
             {
-                Logger.Warning("ComprovarHistorialExisteix: etiquetaId Ès null o buit");
+                Logger.Warning("ComprovarHistorialExisteix: etiquetaId √©s null o buit");
                 return 0;
             }
 
@@ -127,17 +127,17 @@ namespace MultirIntegraModulab
         }
 
         /// <summary>
-        /// ObtÈ l'historial complet d'una mostra
+        /// Obt√© l'historial complet d'una mostra
         /// </summary>
         /// <param name="etiquetaId">Identificador de l'etiqueta</param>
-        /// <returns>Llista ordenada de registres d'historial (mÈs recent primer)</returns>
+        /// <returns>Llista ordenada de registres d'historial (m√©s recent primer)</returns>
         public List<RegistreHistorialMostra> ObtenirHistorialMostra(string etiquetaId)
         {
             var historial = new List<RegistreHistorialMostra>();
 
             if (string.IsNullOrWhiteSpace(etiquetaId))
             {
-                Logger.Warning("ObtenirHistorialMostra: etiquetaId Ès null o buit");
+                Logger.Warning("ObtenirHistorialMostra: etiquetaId √©s null o buit");
                 return historial;
             }
 
@@ -172,7 +172,7 @@ namespace MultirIntegraModulab
                                     DataCanvi = reader["data_canvi"] as DateTime?,
                                     TipusCanvi = reader["tipus_canvi"]?.ToString(),
                                     EstatAbansCanvi = reader["estat_abans_canvi"]?.ToString(),
-                                    // Usar una propiedad v·lida en lugar de EstatDespresCanvi
+                                    // Usar una propiedad v√°lida en lugar de EstatDespresCanvi
                                     Observacions = reader["estat_despres_canvi"]?.ToString(),
                                     Microorganisme = reader["microorganisme"]?.ToString(),
                                     MecanismeResistencia = reader["mecanisme_resistencia"]?.ToString(),
@@ -195,28 +195,44 @@ namespace MultirIntegraModulab
         }
 
         /// <summary>
-        /// Guarda un registre d'historial per una mostra
+        /// Guarda un registre d'historial per una mostra amb tota la informaci√≥
         /// </summary>
         /// <param name="etiquetaId">Identificador de l'etiqueta</param>
-        /// <param name="tipusCanvi">Tipus de canvi realitzat</param>
-        /// <param name="observacions">Observacions opcionals</param>
-        /// <param name="microorganisme">Microorganisme afectat (opcional)</param>
-        /// <param name="mecanisme">Mecanisme de resistËncia afectat (opcional)</param>
-        /// <param name="estatAbans">Estat abans del canvi (opcional)</param>
-        /// <param name="estatDespres">Estat desprÈs del canvi (opcional)</param>
+        /// <param name="tipusCanvi">Tipus de canvi realitzat (VALIDADA_AMB_CANVIS, REVALIDADA_AMB_CANVIS, DESVALIDADA_AMB_CANVIS)</param>
+        /// <param name="combinacionsAnteriors">Combinacions microorganisme+mecanisme anteriors (JSON o text)</param>
+        /// <param name="dataResultatAnterior">Data resultat anterior</param>
+        /// <param name="dataValidacioAnterior">Data validaci√≥ anterior</param>
+        /// <param name="combinacionsNoves">Combinacions microorganisme+mecanisme noves (JSON o text)</param>
+        /// <param name="dataResultatNova">Data resultat nova</param>
+        /// <param name="dataValidacioNova">Data validaci√≥ nova</param>
         /// <returns>True si s'ha guardat correctament</returns>
-        public bool GuardarHistorialMostra(string etiquetaId, string tipusCanvi, string observacions = null,
-            string microorganisme = null, string mecanisme = null, string estatAbans = null, string estatDespres = null)
+        public bool GuardarHistorialMostra(
+            string etiquetaId, 
+            string tipusCanvi, 
+            string combinacionsAnteriors = null,
+            DateTime? dataResultatAnterior = null,
+            DateTime? dataValidacioAnterior = null,
+            string combinacionsNoves = null,
+            DateTime? dataResultatNova = null,
+            DateTime? dataValidacioNova = null)
         {
             if (string.IsNullOrWhiteSpace(etiquetaId))
             {
-                Logger.Error("GuardarHistorialMostra: etiquetaId Ès null o buit");
+                Logger.Error("GuardarHistorialMostra: etiquetaId √©s null o buit");
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(tipusCanvi))
             {
-                Logger.Error("GuardarHistorialMostra: tipusCanvi Ès null o buit");
+                Logger.Error("GuardarHistorialMostra: tipusCanvi √©s null o buit");
+                return false;
+            }
+
+            // Validar que tipusCanvi sigui un dels valors permesos
+            var tipusPermesos = new[] { "VALIDADA_AMB_CANVIS", "REVALIDADA_AMB_CANVIS", "DESVALIDADA_AMB_CANVIS" };
+            if (!tipusPermesos.Contains(tipusCanvi))
+            {
+                Logger.Error($"GuardarHistorialMostra: tipusCanvi '{tipusCanvi}' no √©s v√†lid. Ha de ser: {string.Join(", ", tipusPermesos)}");
                 return false;
             }
 
@@ -226,48 +242,37 @@ namespace MultirIntegraModulab
                 {
                     conn.Open();
 
-                    // Obtenir pacient_sap de la mostra actual si cal
-                    string pacientSap = null;
-                    if (string.IsNullOrEmpty(pacientSap))
-                    {
-                        string sqlPacient = @"SELECT DISTINCT npat 
-                                             FROM pacients_diagnostics_mostra 
-                                             WHERE etiqueta = @etiquetaId 
-                                             AND dt_delete IS NULL 
-                                             LIMIT 1";
-
-                        using (var cmdPacient = new MySqlCommand(sqlPacient, conn))
-                        {
-                            cmdPacient.Parameters.AddWithValue("@etiquetaId", etiquetaId);
-                            pacientSap = cmdPacient.ExecuteScalar()?.ToString();
-                        }
-                    }
+                    // Obtenir la versi√≥ seg√ºent per aquesta etiqueta
+                    int versioNova = ObtenirProperaVersio(conn, etiquetaId);
 
                     string sql = @"INSERT INTO pacients_diagnostics_mostra_historial 
-                                  (etiqueta_id, pacient_sap, data_canvi, tipus_canvi, estat_abans_canvi, 
-                                   estat_despres_canvi, microorganisme, mecanisme_resistencia, observacions, 
-                                   dt_create, dt_update)
+                                  (etiqueta, versio, tipus_canvi, 
+                                   combinacions_anteriors, data_resultat_anterior, data_validacio_anterior,
+                                   combinacions_noves, data_resultat_nova, data_validacio_nova,
+                                   data_canvi, proces_origen)
                                   VALUES 
-                                  (@etiquetaId, @pacientSap, NOW(), @tipusCanvi, @estatAbans, 
-                                   @estatDespres, @microorganisme, @mecanisme, @observacions, 
-                                   NOW(), NOW())";
+                                  (@etiquetaId, @versio, @tipusCanvi,
+                                   @combinacionsAnteriors, @dataResultatAnterior, @dataValidacioAnterior,
+                                   @combinacionsNoves, @dataResultatNova, @dataValidacioNova,
+                                   NOW(), 'IntegracioModulab')";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@etiquetaId", etiquetaId);
-                        cmd.Parameters.AddWithValue("@pacientSap", pacientSap ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@versio", versioNova);
                         cmd.Parameters.AddWithValue("@tipusCanvi", tipusCanvi);
-                        cmd.Parameters.AddWithValue("@estatAbans", estatAbans ?? (object)DBNull.Value);
-                        cmd.Parameters.AddWithValue("@estatDespres", estatDespres ?? (object)DBNull.Value);
-                        cmd.Parameters.AddWithValue("@microorganisme", microorganisme ?? (object)DBNull.Value);
-                        cmd.Parameters.AddWithValue("@mecanisme", mecanisme ?? (object)DBNull.Value);
-                        cmd.Parameters.AddWithValue("@observacions", observacions ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@combinacionsAnteriors", combinacionsAnteriors ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@dataResultatAnterior", dataResultatAnterior ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@dataValidacioAnterior", dataValidacioAnterior ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@combinacionsNoves", combinacionsNoves ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@dataResultatNova", dataResultatNova ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@dataValidacioNova", dataValidacioNova ?? (object)DBNull.Value);
 
                         int filesAfectades = cmd.ExecuteNonQuery();
 
                         if (filesAfectades > 0)
                         {
-                            Logger.Info($"Registre d'historial guardat per {etiquetaId}: {tipusCanvi}");
+                            Logger.Info($"Registre d'historial (v{versioNova}) guardat per {etiquetaId}: {tipusCanvi}");
                             return true;
                         }
                         else
@@ -286,46 +291,64 @@ namespace MultirIntegraModulab
         }
 
         /// <summary>
-        /// Guarda historial autom‡ticament quan es detecten canvis en mostres validades/revalidades/desvalidades
+        /// Obt√© la propera versi√≥ per una etiqueta
+        /// </summary>
+        private int ObtenirProperaVersio(MySqlConnection conn, string etiquetaId)
+        {
+            string sql = @"SELECT COALESCE(MAX(versio), 0) + 1 
+                          FROM pacients_diagnostics_mostra_historial 
+                          WHERE etiqueta = @etiquetaId";
+
+            using (var cmd = new MySqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@etiquetaId", etiquetaId);
+                return Convert.ToInt32(cmd.ExecuteScalar());
+            }
+        }
+
+        /// <summary>
+        /// Guarda historial autom√†ticament quan es detecten canvis en mostres validades/revalidades/desvalidades
+        /// NOTA: Aquest m√®tode est√† obsolet i ja no s'utilitza. Utilitzeu GuardarHistorialMostra amb tots els par√†metres.
         /// </summary>
         /// <param name="mostra">Mostra que ha canviat</param>
-        /// <param name="tipusIncorporacio">Tipus d'incorporaciÛ detectat</param>
+        /// <param name="tipusIncorporacio">Tipus d'incorporaci√≥ detectat</param>
         /// <param name="observacions">Observacions opcionals sobre el canvi</param>
         /// <returns>True si s'ha guardat correctament</returns>
+        [Obsolete("Utilitzeu GuardarHistorialMostra amb tots els par√†metres en lloc d'aquest m√®tode")]
         public bool GuardarHistorialAutomaticMostra(Mostra mostra, TipusIncorporacio tipusIncorporacio, string observacions = null)
         {
             if (mostra == null)
             {
-                Logger.Error("GuardarHistorialAutomaticMostra: mostra Ès null");
+                Logger.Error("GuardarHistorialAutomaticMostra: mostra √©s null");
                 return false;
             }
 
-            // NomÈs guardar historial per canvis significatius
+            // Nom√©s guardar historial per canvis significatius
             string tipusCanvi = null;
             switch (tipusIncorporacio)
             {
                 case TipusIncorporacio.Desvalidada:
-                    tipusCanvi = "DESVALIDADA_CANVI";
+                    tipusCanvi = "DESVALIDADA_AMB_CANVIS";
                     break;
                 case TipusIncorporacio.Validada:
-                    tipusCanvi = "VALIDADA_CANVI";
+                    tipusCanvi = "VALIDADA_AMB_CANVIS";
                     break;
                 case TipusIncorporacio.Revalidada:
-                    tipusCanvi = "REVALIDADA_CANVI";
+                    tipusCanvi = "REVALIDADA_AMB_CANVIS";
                     break;
                 default:
                     // No guardar historial per altres tipus
                     return true;
             }
 
-            // Obtenir informaciÛ dels microorganismes i mecanismes de la mostra
+            // Obtenir informaci√≥ dels microorganismes i mecanismes de la mostra
             var microorganismes = mostra.Microorganismes;
             var mecanismes = mostra.MecanismesResistencia;
 
             string infoMicroorganismes = microorganismes.Any() ? string.Join(", ", microorganismes) : null;
             string infoMecanismes = mecanismes.Any() ? string.Join(", ", mecanismes) : null;
 
-            string observacionsCompletes = observacions;
+            string combinacionsNoves = observacions;
             if (!string.IsNullOrEmpty(infoMicroorganismes) || !string.IsNullOrEmpty(infoMecanismes))
             {
                 var detalls = new List<string>();
@@ -335,22 +358,25 @@ namespace MultirIntegraModulab
                     detalls.Add($"Mecanismes: {infoMecanismes}");
 
                 string detallsText = string.Join("; ", detalls);
-                observacionsCompletes = string.IsNullOrEmpty(observacions) ? detallsText : $"{observacions}. {detallsText}";
+                combinacionsNoves = string.IsNullOrEmpty(observacions) ? detallsText : $"{observacions}. {detallsText}";
             }
 
+            // Cridar el m√®tode nou amb nom√©s les dades disponibles
             return GuardarHistorialMostra(
                 mostra.EtiquetaId,
                 tipusCanvi,
-                observacionsCompletes,
-                infoMicroorganismes,
-                infoMecanismes
-            );
+                null, // combinacionsAnteriors - no disponible aqu√≠
+                null, // dataResultatAnterior - no disponible aqu√≠
+                null, // dataValidacioAnterior - no disponible aqu√≠
+                combinacionsNoves,
+                mostra.DataUltimResultat,
+                mostra.Resultats.FirstOrDefault()?.DataValidacio);
         }
 
         /// <summary>
-        /// Neteja registres d'historial mÈs antics de X dies (per manteniment)
+        /// Neteja registres d'historial m√©s antics de X dies (per manteniment)
         /// </summary>
-        /// <param name="diesRetencio">Dies de retenciÛ (per defecte 90 dies)</param>
+        /// <param name="diesRetencio">Dies de retenci√≥ (per defecte 90 dies)</param>
         /// <returns>Nombre de registres eliminats</returns>
         public int NetejarHistorialAntic(int diesRetencio = 90)
         {

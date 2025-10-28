@@ -198,9 +198,24 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public List<RegistreHistorialMostra> ObtenirHistorialMostra(string etiquetaId) => 
             _multiRDbService.ObtenirHistorialMostra(etiquetaId);
 
-        public bool GuardarHistorialMostra(string etiquetaId, string tipusCanvi, string observacions = null,
-            string microorganisme = null, string mecanisme = null, string estatAbans = null, string estatDespres = null) => 
-            _multiRDbService.GuardarHistorialMostra(etiquetaId, tipusCanvi, observacions, microorganisme, mecanisme, estatAbans, estatDespres);
+        public bool GuardarHistorialMostra(
+            string etiquetaId, 
+            string tipusCanvi, 
+            string combinacionsAnteriors = null,
+            DateTime? dataResultatAnterior = null,
+            DateTime? dataValidacioAnterior = null,
+            string combinacionsNoves = null,
+            DateTime? dataResultatNova = null,
+            DateTime? dataValidacioNova = null) => 
+            _multiRDbService.GuardarHistorialMostra(
+                etiquetaId, 
+                tipusCanvi, 
+                combinacionsAnteriors, 
+                dataResultatAnterior, 
+                dataValidacioAnterior, 
+                combinacionsNoves, 
+                dataResultatNova, 
+                dataValidacioNova);
 
         public bool GuardarHistorialAutomaticMostra(Mostra mostra, TipusIncorporacio tipusIncorporacio, string observacions = null) => 
             _multiRDbService.GuardarHistorialAutomaticMostra(mostra, tipusIncorporacio, observacions);

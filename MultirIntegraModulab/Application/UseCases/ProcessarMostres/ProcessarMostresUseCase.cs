@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MultirIntegraModulab.Application.DTOs;
 using MultirIntegraModulab.Application.Helpers;
@@ -90,13 +92,6 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _logger.Info($" Processant mostra del pacient {mostra.PacientSap} , amb etiqueta : {mostra.EtiquetaId}");
                     _logger.Info($"▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀");
 
-                    if (mostra.EtiquetaId == "402876565" || mostra.EtiquetaId == "402877669") 
-                    {
-                        var revisioDeCasos = 1;
-                    }
-
-
-
                     // FASE 1: Validar mostra (existència dades bàsiques)
                     if (!_validarMostraUseCase.Executar(mostra))
                     {
@@ -113,7 +108,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     ActualitzarResumPerTipus(resum, tipusIncorporacio);
 
 
-                    // FASE 3: Tractament especific segons tipus d´incorporació
+                    // FASE 3: Tractament specifíc segons tipus d´incorporació
                     if (!TractarTipusIncorporacio(mostra, tipusIncorporacio, resum))
                     {
                         // Si retorna false, cal ometre el processament posterior (continue)
@@ -167,6 +162,109 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             _logger.Info($"========================================");
 
             return resum;
+        }
+
+        /// <summary>
+        /// Actualitza els comptadors del resum segons el tipus d'incorporació
+        /// </summary>
+        private void ActualitzarResumPerTipus(ResumProcessamentDto resum, TipusIncorporacio tipusIncorporacio)
+        {
+            switch (tipusIncorporacio)
+            {
+                case TipusIncorporacio.Nova:
+                    resum.NovesIncorporacions++;
+                    break;
+                case TipusIncorporacio.Antiga:
+                    resum.MostresAntigues++;
+                    break;
+                case TipusIncorporacio.Repetida:
+                    resum.MostresRepetides++;
+                    break;
+                case TipusIncorporacio.Desvalidada:
+                    resum.MostresDesvalidades++;
+                    break;
+                case TipusIncorporacio.Validada:
+                    resum.MostresValidades++;
+                    break;
+                case TipusIncorporacio.Revalidada:
+                    resum.MostresRevalidades++;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Processa una mostra segons el seu tipus de classificació
+        /// </summary>
+        private async Task ProcessarPerTipusMostraAsync(Mostra mostra, ResultatClassificacio classificacio, ResumProcessamentDto resum)
+        {
+            switch (classificacio.TipusMostra)
+            {
+                case TipusMostra.UnSolResultatPositiu:
+                    var resultatPositiu = await _processarPositivaUseCase.ExecutarAsync(mostra, classificacio);
+                    if (resultatPositiu.Exitosa)
+                    {
+                        resum.MostresPositives++;
+                    }
+                    else
+                    {
+                        resum.MostresAmbError++;
+                    }
+                    break;
+
+                case TipusMostra.MultiplesResultatsTotsPositius:
+                    var resultatPositives = await _processarPositivesUseCase.ExecutarAsync(mostra, classificacio);
+                    if (resultatPositives.Exitosa)
+                    {
+                        resum.MostresPositives++;
+                    }
+                    else
+                    {
+                        resum.MostresAmbError++;
+                    }
+                    break;
+
+                case TipusMostra.UnSolResultatNegatiu:
+                    var resultatNegatiu = await _processarNegativaUseCase.ExecutarAsync(mostra, classificacio);
+                    if (resultatNegatiu.Exitosa)
+                    {
+                        resum.MostresNegatives++;
+                    }
+                    else
+                    {
+                        resum.MostresAmbError++;
+                    }
+                    break;
+
+                case TipusMostra.MultiplesResultatsTotsNegatius:
+                    var resultatNegatives = await _processarNegativesUseCase.ExecutarAsync(mostra, classificacio);
+                    if (resultatNegatives.Exitosa)
+                    {
+                        resum.MostresNegatives++;
+                    }
+                    else
+                    {
+                        resum.MostresAmbError++;
+                    }
+                    break;
+
+                case TipusMostra.MultiplesResultatsPositiusINegatius:
+                    var resultatMixta = await _processarMixtaUseCase.ExecutarAsync(mostra, classificacio);
+                    if (resultatMixta.Exitosa)
+                    {
+                        resum.MostresPositives++;
+                        resum.MostresNegatives++;
+                    }
+                    else
+                    {
+                        resum.MostresAmbError++;
+                    }
+                    break;
+
+                default:
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Tipus de mostra desconegut: {classificacio.TipusMostra}");
+                    resum.MostresAmbError++;
+                    break;
+            }
         }
 
         /// <summary>
@@ -370,14 +468,23 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 {canvi}");
                     }
 
-                    // Guardar historial abans d'esborrar
-                    var tipusCanvi = "DESVALIDADA";
-                    var observacions = $"Mostra desvalidada amb canvis - {string.Join(", ", resultatComparacio.CanvisDetectats)}";
+                    // Preparar dades per a l'historial
+                    var tipusCanvi = "DESVALIDADA_AMB_CANVIS";
                     
+                    // Obtenir combinacions anteriors i noves en format text
+                    var combinacionsAnteriors = ObtenirCombinacionsTextMostraExistent(mostraExistent);
+                    var combinacionsNoves = ObtenirCombinacionsTextMostraEntrant(mostra);
+                    
+                    // Guardar historial abans d'esborrar
                     bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
                         mostra.EtiquetaId,
                         tipusCanvi,
-                        observacions);
+                        combinacionsAnteriors,
+                        mostraExistent.DataResultat,
+                        mostraExistent.DataValidacio,
+                        combinacionsNoves,
+                        mostra.DataUltimResultat,
+                        mostra.Resultats.FirstOrDefault()?.DataValidacio);
 
                     if (historialGuardat)
                     {
@@ -416,6 +523,60 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         }
 
         /// <summary>
+        /// Obté les combinacions microorganisme+mecanisme d'una mostra existent en format text
+        /// </summary>
+        private string ObtenirCombinacionsTextMostraExistent(MostraDiagnosticExistent mostraExistent)
+        {
+            if (mostraExistent == null)
+                return null;
+
+            // Aquí hauries d'obtenir les combinacions de la base de dades
+            // Per ara retornem un text simple amb la informació disponible
+            return $"Tipus mostra: {mostraExistent.TipusMostra}, " +
+                   $"Data resultat: {mostraExistent.DataResultat:dd/MM/yyyy HH:mm}, " +
+                   $"Data validació: {mostraExistent.DataValidacio?.ToString("dd/MM/yyyy HH:mm") ?? "NULL"}";
+        }
+
+        /// <summary>
+        /// Obté les combinacions microorganisme+mecanisme d'una mostra entrant en format text
+        /// </summary>
+        private string ObtenirCombinacionsTextMostraEntrant(Mostra mostra)
+        {
+            if (mostra == null || !mostra.Resultats.Any())
+                return null;
+
+            var combinacions = new List<string>();
+            
+            foreach (var resultat in mostra.Resultats)
+            {
+                var microorganisme = resultat.AillamentDescripcio ?? "Sense microorganisme";
+                var mecanismes = new List<string>();
+                
+                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia1Id))
+                    mecanismes.Add(resultat.MecanismeResistencia1Id);
+                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia2Id))
+                    mecanismes.Add(resultat.MecanismeResistencia2Id);
+                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia3Id))
+                    mecanismes.Add(resultat.MecanismeResistencia3Id);
+                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia4Id))
+                    mecanismes.Add(resultat.MecanismeResistencia4Id);
+                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia5Id))
+                    mecanismes.Add(resultat.MecanismeResistencia5Id);
+                
+                if (mecanismes.Any())
+                {
+                    combinacions.Add($"{microorganisme}+[{string.Join(",", mecanismes)}]");
+                }
+                else
+                {
+                    combinacions.Add(microorganisme);
+                }
+            }
+            
+            return string.Join("; ", combinacions);
+        }
+
+        /// <summary>
         /// Tracta una mostra validada: guarda historial i continua processament
         /// </summary>
         private bool TractarMostraValidada(Mostra mostra, TipusIncorporacio tipusIncorporacio)
@@ -424,22 +585,39 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             try
             {
-                // Guardar historial
-                var tipusCanvi = "VALIDADA";
-                var observacions = "Mostra validada - Oracle té nova data de validació";
-
-                bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
-                    mostra.EtiquetaId,
-                    tipusCanvi,
-                    observacions);
-
-                if (historialGuardat)
+                // Obtenir mostra existent per les dades anteriors
+                var mostraExistent = _multiRRepository.ObtenirMostraDiagnostic(mostra.EtiquetaId);
+                
+                if (mostraExistent != null)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📝 Historial guardat correctament");
+                    // Preparar dades per a l'historial
+                    var tipusCanvi = "VALIDADA_AMB_CANVIS";
+                    var combinacionsAnteriors = ObtenirCombinacionsTextMostraExistent(mostraExistent);
+                    var combinacionsNoves = ObtenirCombinacionsTextMostraEntrant(mostra);
+                    
+                    // Guardar historial
+                    bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
+                        mostra.EtiquetaId,
+                        tipusCanvi,
+                        combinacionsAnteriors,
+                        mostraExistent.DataResultat,
+                        mostraExistent.DataValidacio,
+                        combinacionsNoves,
+                        mostra.DataUltimResultat,
+                        mostra.Resultats.FirstOrDefault()?.DataValidacio);
+
+                    if (historialGuardat)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📝 Historial guardat correctament");
+                    }
+                    else
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut guardar l'historial");
+                    }
                 }
                 else
                 {
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut guardar l'historial");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha trobat mostra existent per guardar historial");
                 }
             }
             catch (Exception ex)
@@ -459,22 +637,39 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             try
             {
-                // Guardar historial
-                var tipusCanvi = "REVALIDADA";
-                var observacions = "Mostra revalidada - Data de validació diferent a Oracle";
-
-                bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
-                    mostra.EtiquetaId,
-                    tipusCanvi,
-                    observacions);
-
-                if (historialGuardat)
+                // Obtenir mostra existent per les dades anteriors
+                var mostraExistent = _multiRRepository.ObtenirMostraDiagnostic(mostra.EtiquetaId);
+                
+                if (mostraExistent != null)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📝 Historial guardat correctament");
+                    // Preparar dades per a l'historial
+                    var tipusCanvi = "REVALIDADA_AMB_CANVIS";
+                    var combinacionsAnteriors = ObtenirCombinacionsTextMostraExistent(mostraExistent);
+                    var combinacionsNoves = ObtenirCombinacionsTextMostraEntrant(mostra);
+                    
+                    // Guardar historial
+                    bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
+                        mostra.EtiquetaId,
+                        tipusCanvi,
+                        combinacionsAnteriors,
+                        mostraExistent.DataResultat,
+                        mostraExistent.DataValidacio,
+                        combinacionsNoves,
+                        mostra.DataUltimResultat,
+                        mostra.Resultats.FirstOrDefault()?.DataValidacio);
+
+                    if (historialGuardat)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📝 Historial guardat correctament");
+                    }
+                    else
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut guardar l'historial");
+                    }
                 }
                 else
                 {
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut guardar l'historial");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha trobat mostra existent per guardar historial");
                 }
             }
             catch (Exception ex)
@@ -483,94 +678,6 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
 
             return true; // Continuar processament per actualitzar dates i relacions
-        }
-
-        /// <summary>
-        /// Processa la mostra segons el seu tipus: un positiu, múltiples positius, un negatiu, múltiples negatius, mixta
-        /// </summary>
-        private async Task ProcessarPerTipusMostraAsync(
-            Mostra mostra,
-            ResultatClassificacio classificacio,
-            ResumProcessamentDto resum)
-        {
-            switch (classificacio.TipusMostra)
-            {
-                case TipusMostra.UnSolResultatPositiu:
-                    var resultatPositiu = await _processarPositivaUseCase.ExecutarAsync(mostra, classificacio);
-                    if (resultatPositiu.Exitosa)
-                    {
-                        resum.MostresPositives++;
-                    }
-                    break;
-
-                case TipusMostra.UnSolResultatNegatiu:
-                    var resultatNegatiu = await _processarNegativaUseCase.ExecutarAsync(mostra, classificacio);
-                    if (resultatNegatiu.Exitosa)
-                    {
-                        resum.MostresNegatives++;
-                    }
-                    break;
-
-                case TipusMostra.MultiplesResultatsTotsPositius:
-                    var resultatPositius = await _processarPositivesUseCase.ExecutarAsync(mostra, classificacio);
-                    if (resultatPositius.Exitosa)
-                    {
-                        resum.MostresPositives++;
-                    }
-                    break;
-
-                case TipusMostra.MultiplesResultatsTotsNegatius:
-                    var resultatNegatius = await _processarNegativesUseCase.ExecutarAsync(mostra, classificacio);
-                    if (resultatNegatius.Exitosa)
-                    {
-                        resum.MostresNegatives++;
-                    }
-                    break;
-
-                case TipusMostra.MultiplesResultatsPositiusINegatius:
-                    var resultatMixta = await _processarMixtaUseCase.ExecutarAsync(mostra, classificacio);
-                    if (resultatMixta.Exitosa)
-                    {
-                        resum.MostresPositives++; // Es compta com positiva
-                    }
-                    break;
-
-                default:
-                    _logger.Warning($"❌ Tipus de mostra desconegut: {classificacio.TipusMostra}");
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Actualitza el resum segons el tipus d'incorporació
-        /// </summary>
-        private void ActualitzarResumPerTipus(ResumProcessamentDto resum, TipusIncorporacio tipus)
-        {
-            switch (tipus)
-            {
-                case TipusIncorporacio.Nova:
-                    resum.NovesIncorporacions++;
-                    break;
-                case TipusIncorporacio.Antiga:
-                    resum.MostresAntigues++;
-                    break;
-                case TipusIncorporacio.Repetida:
-                    resum.MostresRepetides++;
-                    break;
-                case TipusIncorporacio.Desvalidada:
-                    resum.MostresDesvalidades++;
-                    break;
-                case TipusIncorporacio.Validada:
-                    resum.MostresValidades++;
-                    break;
-                case TipusIncorporacio.Revalidada:
-                    resum.MostresRevalidades++;
-                    break;
-                default:
-                    // Altres tipus
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Tipus d'incorporació desconegut (no es gestiona): {tipus.ToString()}");
-                    break;
-            }
         }
     }
 }
