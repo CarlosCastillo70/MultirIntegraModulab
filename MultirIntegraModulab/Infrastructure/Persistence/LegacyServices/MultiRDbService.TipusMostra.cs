@@ -279,10 +279,10 @@ namespace MultirIntegraModulab
             // Si s'especifica una etiqueta a excloure, afegir la condició
             if (!string.IsNullOrWhiteSpace(etiquetaExcloure))
             {
-                sql += " AND pdm.etiqueta <> @etiquetaExcloure";
+                sql += " AND (pdm.etiqueta <> @etiquetaExcloure OR pdm.etiqueta IS NULL)";
             }
 
-            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 2: Positius vigents per aquest tipus de mostra o equivalents, i amb diferent etiqueta");
+            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 2: Positius vigents per aquest tipus de mostra '{tipusMostra}' o equivalents, i amb diferent etiqueta");
 
             try
             {

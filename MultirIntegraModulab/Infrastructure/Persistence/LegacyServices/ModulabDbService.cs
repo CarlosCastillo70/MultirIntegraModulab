@@ -280,6 +280,7 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
                          AND
                          (DETALL.DATA_VALIDACIO_TRUNC >= trunc(sysdate-:diesEndarrera) OR DETALL.DATA_RESULTAT_TRUNC >= trunc(sysdate-:diesEndarrera)) 
                         )
+
                 ORDER BY PET.ETIQUETA_ID";
 
             // Afegir clàusula ROWNUM si hi ha límit especificat

@@ -577,25 +577,87 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         }
 
         /// <summary>
-        /// Tracta una mostra validada: guarda historial i continua processament
+        /// Tracta una mostra validada: compara amb mostra existent i decideix acció
+        /// Si són idèntiques: actualitza data_validacio amb nova data i estat, insereix auditoria EMCV
+        /// Si són diferents: guarda historial, esborrar dades i continua processament
         /// </summary>
         private bool TractarMostraValidada(Mostra mostra, TipusIncorporacio tipusIncorporacio)
         {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Mostra validada - guardant historial i actualitzant...");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Mostra validada - comprovant canvis...");
 
             try
             {
-                // Obtenir mostra existent per les dades anteriors
+                // 1. Obtenir la mostra existent de la base de dades
                 var mostraExistent = _multiRRepository.ObtenirMostraDiagnostic(mostra.EtiquetaId);
                 
-                if (mostraExistent != null)
+                if (mostraExistent == null)
                 {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha trobat mostra existent per comparar");
+                    // Si no existeix, tractar com a nova i continuar
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}➡️ Tractant com a mostra nova...");
+                    return true;
+                }
+
+                // 2. Comparar mostres per detectar canvis
+                var resultatComparacio = _multiRRepository.CompararMostres(mostraExistent, mostra);
+
+                if (!resultatComparacio.HiHaCanvis)
+                {
+                    // CAS 1: No hi ha canvis - només actualitzar data_validacio amb la nova data
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Mostres idèntiques - actualitzant data_validacio...");
+
+                    // Obtenir la nova data de validació
+                    var novaDataValidacio = mostra.Resultats.FirstOrDefault()?.DataValidacio;
+
+                    bool actualitzat = _multiRRepository.ActualitzarDataValidacio(mostra.EtiquetaId, novaDataValidacio);
+
+                    if (actualitzat)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Data validació actualitzada a {(novaDataValidacio.HasValue ? novaDataValidacio.Value.ToString("dd/MM/yyyy HH:mm") : "NULL")} i estat_integracio_m a 'V'");
+                    }
+                    else
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut actualitzar la data de validació");
+                    }
+
+                    // Inserir auditoria EMCV (Estat Mostra Cas Validat sense canvis)
+                    var primerResultat = mostra.Resultats[0];
+                    bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                        mostra,
+                        "EMCV",
+                        primerResultat,
+                        null);
+
+                    if (auditoriaCreada)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✅ Auditoria EMCV (Estat Mostra Cas Validat sense canvis) creada correctament");
+                    }
+                    else
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut crear l'auditoria EMCV");
+                    }
+
+                    return false; // No continuar processament
+                }
+                else
+                {
+                    // CAS 2: Hi ha canvis - guardar historial, esborrar i continuar
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Mostres diferents - guardant historial i esborrant dades...");
+                    
+                    // Mostrar canvis detectats
+                    foreach (var canvi in resultatComparacio.CanvisDetectats)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 {canvi}");
+                    }
+
                     // Preparar dades per a l'historial
                     var tipusCanvi = "VALIDADA_AMB_CANVIS";
+                    
+                    // Obtenir combinacions anteriors i noves en format text
                     var combinacionsAnteriors = ObtenirCombinacionsTextMostraExistent(mostraExistent);
                     var combinacionsNoves = ObtenirCombinacionsTextMostraEntrant(mostra);
                     
-                    // Guardar historial
+                    // Guardar historial abans d'esborrar
                     bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
                         mostra.EtiquetaId,
                         tipusCanvi,
@@ -608,46 +670,120 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     if (historialGuardat)
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📝 Historial guardat correctament");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Historial guardat correctament");
                     }
                     else
                     {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut guardar l'historial");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut guardar l'historial");
                     }
-                }
-                else
-                {
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha trobat mostra existent per guardar historial");
+
+                    // Esborrar dades de la mostra
+                    bool esborrat = _multiRRepository.EsborrarDadesMostra(mostra.EtiquetaId);
+                    
+                    if (!esborrat)
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ Error esborrant mostra validada amb canvis");
+                        return false;
+                    }
+                    else
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Dades esborrades correctament");
+                    }
+
+                    // Continuar processament per re-processar la mostra amb les noves dades
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}➡️ Continuant processament amb noves dades...");
+                    return true; // Continuar processament
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error guardant historial de mostra validada: {ex.Message}", ex);
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error tractant mostra validada: {ex.Message}", ex);
+                return false;
             }
-
-            return true; // Continuar processament per actualitzar dates i relacions
         }
 
         /// <summary>
-        /// Tracta una mostra revalidada: guarda historial i continua processament
+        /// Tracta una mostra revalidada: compara amb mostra existent i decideix acció
+        /// Si són idèntiques: actualitza data_validacio amb nova data i estat, insereix auditoria EMCRV
+        /// Si són diferents: guarda historial, esborrar dades i continua processament
         /// </summary>
         private bool TractarMostraRevalidada(Mostra mostra, TipusIncorporacio tipusIncorporacio)
         {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Mostra revalidada - guardant historial i actualitzant...");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Mostra revalidada - comprovant canvis...");
 
             try
             {
-                // Obtenir mostra existent per les dades anteriors
+                // 1. Obtenir la mostra existent de la base de dades
                 var mostraExistent = _multiRRepository.ObtenirMostraDiagnostic(mostra.EtiquetaId);
                 
-                if (mostraExistent != null)
+                if (mostraExistent == null)
                 {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha trobat mostra existent per comparar");
+                    // Si no existeix, tractar com a nova i continuar
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}➡️ Tractant com a mostra nova...");
+                    return true;
+                }
+
+                // 2. Comparar mostres per detectar canvis
+                var resultatComparacio = _multiRRepository.CompararMostres(mostraExistent, mostra);
+
+                if (!resultatComparacio.HiHaCanvis)
+                {
+                    // CAS 1: No hi ha canvis - només actualitzar data_validacio amb la nova data
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Mostres idèntiques - actualitzant data_validacio...");
+
+                    // Obtenir la nova data de validació
+                    var novaDataValidacio = mostra.Resultats.FirstOrDefault()?.DataValidacio;
+
+                    bool actualitzat = _multiRRepository.ActualitzarDataValidacio(mostra.EtiquetaId, novaDataValidacio);
+
+                    if (actualitzat)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Data validació actualitzada a {(novaDataValidacio.HasValue ? novaDataValidacio.Value.ToString("dd/MM/yyyy HH:mm") : "NULL")} i estat_integracio_m a 'V'");
+                    }
+                    else
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut actualitzar la data de validació");
+                    }
+
+                    // Inserir auditoria EMCRV (Estat Mostra Cas Revalidat sense canvis)
+                    var primerResultat = mostra.Resultats[0];
+                    bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                        mostra,
+                        "EMCRV",
+                        primerResultat,
+                        null);
+
+                    if (auditoriaCreada)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✅ Auditoria EMCRV (Estat Mostra Cas Revalidat sense canvis) creada correctament");
+                    }
+                    else
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut crear l'auditoria EMCRV");
+                    }
+
+                    return false; // No continuar processament
+                }
+                else
+                {
+                    // CAS 2: Hi ha canvis - guardar historial, esborrar i continuar
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Mostres diferents - guardant historial i esborrant dades...");
+                    
+                    // Mostrar canvis detectats
+                    foreach (var canvi in resultatComparacio.CanvisDetectats)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 {canvi}");
+                    }
+
                     // Preparar dades per a l'historial
                     var tipusCanvi = "REVALIDADA_AMB_CANVIS";
+                    
+                    // Obtenir combinacions anteriors i noves en format text
                     var combinacionsAnteriors = ObtenirCombinacionsTextMostraExistent(mostraExistent);
                     var combinacionsNoves = ObtenirCombinacionsTextMostraEntrant(mostra);
                     
-                    // Guardar historial
+                    // Guardar historial abans d'esborrar
                     bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
                         mostra.EtiquetaId,
                         tipusCanvi,
@@ -660,24 +796,36 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     if (historialGuardat)
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📝 Historial guardat correctament");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Historial guardat correctament");
                     }
                     else
                     {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut guardar l'historial");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut guardar l'historial");
                     }
-                }
-                else
-                {
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha trobat mostra existent per guardar historial");
+
+                    // Esborrar dades de la mostra
+                    bool esborrat = _multiRRepository.EsborrarDadesMostra(mostra.EtiquetaId);
+                    
+                    if (!esborrat)
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ Error esborrant mostra revalidada amb canvis");
+                        return false;
+                    }
+                    else
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Dades esborrades correctament");
+                    }
+
+                    // Continuar processament per re-processar la mostra amb les noves dades
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}➡️ Continuant processament amb noves dades...");
+                    return true; // Continuar processament
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error guardant historial de mostra revalidada: {ex.Message}", ex);
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error tractant mostra revalidada: {ex.Message}", ex);
+                return false;
             }
-
-            return true; // Continuar processament per actualitzar dates i relacions
         }
     }
 }

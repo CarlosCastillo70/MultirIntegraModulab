@@ -124,7 +124,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
 
             return microorganismes;
         }
-
+        
         /// <summary>
         /// Comprova un microorganisme individual
         /// </summary>
@@ -152,7 +152,8 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 if (esEspecial.HasValue)
                 {
                     string tipus = esEspecial.Value ? "ESPECIAL" : "normal";
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganisme {microorganisme}: '{tipus}'");
+                    string alerta = esEspecial.Value ? "⚡ " : " ";
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}{alerta}Microorganisme {microorganisme}: '{tipus}'");
                     resultat.MicroorganismesEspecials[microorganisme] = esEspecial.Value;
                 }
                 else
