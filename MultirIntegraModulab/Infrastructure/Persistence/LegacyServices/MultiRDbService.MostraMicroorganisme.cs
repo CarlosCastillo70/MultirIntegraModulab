@@ -124,6 +124,11 @@ namespace MultirIntegraModulab
             string mecanismeId, 
             string tipusMecanisme)
         {
+            // Determinar si hem de comparar amb NULL o amb valor
+            // Si mecanismeId o tipusMecanisme són null, a la BD estan emmagatzemats com a ''
+            bool mecanismeEsNullOBuit = string.IsNullOrWhiteSpace(mecanismeId);
+            bool tipusMecanismeEsNullOBuit = string.IsNullOrWhiteSpace(tipusMecanisme);
+
             string sql = @"
                 UPDATE pacients_diagnostics  
                 SET data_diagnostic = (  
@@ -134,8 +139,8 @@ namespace MultirIntegraModulab
                 )  
                 WHERE npat = @pacientSap
                   AND microorganisme = @microorganismeCodi
-                  AND mecanisme = @mecanismeId
-                  AND tipus_mecanisme = @tipusMecanisme
+                  AND (mecanisme = @mecanismeId OR (mecanisme = '' AND @mecanismeEsNullOBuit = 1))
+                  AND (tipus_mecanisme = @tipusMecanisme OR (tipus_mecanisme = '' AND @tipusMecanismeEsNullOBuit = 1))
                   AND dt_delete IS NULL";
 
             try
@@ -149,25 +154,27 @@ namespace MultirIntegraModulab
                     {
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
                         cmd.Parameters.AddWithValue("@microorganismeCodi", microorganismeCodi);
-                        cmd.Parameters.AddWithValue("@mecanismeId", mecanismeId);
-                        cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanisme);
+                        cmd.Parameters.AddWithValue("@mecanismeId", mecanismeEsNullOBuit ? "" : mecanismeId);
+                        cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanismeEsNullOBuit ? "" : tipusMecanisme);
+                        cmd.Parameters.AddWithValue("@mecanismeEsNullOBuit", mecanismeEsNullOBuit ? 1 : 0);
+                        cmd.Parameters.AddWithValue("@tipusMecanismeEsNullOBuit", tipusMecanismeEsNullOBuit ? 1 : 0);
 
                         int rowsAffected = cmd.ExecuteNonQuery();
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Data diagnòstic (pacients_diagnostics) actualitzada per pacient = {pacientSap}, microorganisme = '{microorganismeCodi}', mecanisme = '{mecanismeId}'");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Data diagnòstic (pacients_diagnostics) actualitzada a {rowsAffected} registre(s), per pacient = {pacientSap}, microorganisme = '{microorganismeCodi}', mecanisme = '{mecanismeId ?? "(buit)"}'");
                             return true;
                         }
                         
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha actualitzat cap registre per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha actualitzat cap registre per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId ?? "(buit)"}");
                         return false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error actualitzant data diagnòstic (pacient: {pacientSap}, micro: {microorganismeCodi}, mec: {mecanismeId})", ex);
+                Logger.Error($"Error actualitzant data diagnòstic (pacient: {pacientSap}, micro: {microorganismeCodi}, mec: {mecanismeId ?? "(buit)"})", ex);
                 return false;
             }
         }
@@ -186,6 +193,11 @@ namespace MultirIntegraModulab
             string mecanismeId, 
             string tipusMecanisme)
         {
+            // Determinar si hem de comparar amb NULL o amb valor
+            // Si mecanismeId o tipusMecanisme són null, a la BD estan emmagatzemats com a ''
+            bool mecanismeEsNullOBuit = string.IsNullOrWhiteSpace(mecanismeId);
+            bool tipusMecanismeEsNullOBuit = string.IsNullOrWhiteSpace(tipusMecanisme);
+
             string sql = @"
                 UPDATE pacients_diagnostics_mostra pdm  
                 SET data_diagnostic = (  
@@ -197,8 +209,8 @@ namespace MultirIntegraModulab
                         FROM pacients_diagnostics  
                         WHERE npat = @pacientSap  
                           AND microorganisme = @microorganismeCodi 
-                          AND mecanisme = @mecanismeId  
-                          AND tipus_mecanisme = @tipusMecanisme
+                          AND (mecanisme = @mecanismeId OR (mecanisme = '' AND @mecanismeEsNullOBuit = 1))
+                          AND (tipus_mecanisme = @tipusMecanisme OR (tipus_mecanisme = '' AND @tipusMecanismeEsNullOBuit = 1))
                           AND dt_delete IS NULL 
                     )  
                 )  
@@ -211,8 +223,8 @@ namespace MultirIntegraModulab
                         FROM pacients_diagnostics  
                         WHERE npat = @pacientSap2  
                           AND microorganisme = @microorganismeCodi2 
-                          AND mecanisme = @mecanismeId2  
-                          AND tipus_mecanisme = @tipusMecanisme2
+                          AND (mecanisme = @mecanismeId2 OR (mecanisme = '' AND @mecanismeEsNullOBuit2 = 1))
+                          AND (tipus_mecanisme = @tipusMecanisme2 OR (tipus_mecanisme = '' AND @tipusMecanismeEsNullOBuit2 = 1))
                           AND dt_delete IS NULL  
                     )  
                 )";
@@ -229,31 +241,35 @@ namespace MultirIntegraModulab
                         // Paràmetres per la subconsulta del SET
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
                         cmd.Parameters.AddWithValue("@microorganismeCodi", microorganismeCodi);
-                        cmd.Parameters.AddWithValue("@mecanismeId", mecanismeId);
-                        cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanisme);
+                        cmd.Parameters.AddWithValue("@mecanismeId", mecanismeEsNullOBuit ? "" : mecanismeId);
+                        cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanismeEsNullOBuit ? "" : tipusMecanisme);
+                        cmd.Parameters.AddWithValue("@mecanismeEsNullOBuit", mecanismeEsNullOBuit ? 1 : 0);
+                        cmd.Parameters.AddWithValue("@tipusMecanismeEsNullOBuit", tipusMecanismeEsNullOBuit ? 1 : 0);
                         
                         // Paràmetres per la subconsulta del WHERE (MySQL no permet reutilitzar paràmetres)
                         cmd.Parameters.AddWithValue("@pacientSap2", pacientSap);
                         cmd.Parameters.AddWithValue("@microorganismeCodi2", microorganismeCodi);
-                        cmd.Parameters.AddWithValue("@mecanismeId2", mecanismeId);
-                        cmd.Parameters.AddWithValue("@tipusMecanisme2", tipusMecanisme);
+                        cmd.Parameters.AddWithValue("@mecanismeId2", mecanismeEsNullOBuit ? "" : mecanismeId);
+                        cmd.Parameters.AddWithValue("@tipusMecanisme2", tipusMecanismeEsNullOBuit ? "" : tipusMecanisme);
+                        cmd.Parameters.AddWithValue("@mecanismeEsNullOBuit2", mecanismeEsNullOBuit ? 1 : 0);
+                        cmd.Parameters.AddWithValue("@tipusMecanismeEsNullOBuit2", tipusMecanismeEsNullOBuit ? 1 : 0);
 
                         int rowsAffected = cmd.ExecuteNonQuery();
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Data diagnòstic (pacients_diagnostics_mostra) actualitzada per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Data diagnòstic (pacients_diagnostics_mostra) actualitzada a {rowsAffected} registre(s), per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId ?? "(buit)"}");
                             return true;
                         }
                         
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha actualitzat cap registre de pacients_diagnostics_mostra per pacient={pacientSap}, micro={microorganismeCodi}, mec={mecanismeId}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha actualitzat cap registre de pacients_diagnostics_mostra per pacient={pacientSap}, micro={microorganismeCodi}, mec={mecanismeId ?? "(buit)"}");
                         return false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error actualitzant data diagnòstic de pacients_diagnostics_mostra (pacient: {pacientSap}, micro: {microorganismeCodi}, mec: {mecanismeId})", ex);
+                Logger.Error($"Error actualitzant data diagnòstic de pacients_diagnostics_mostra (pacient: {pacientSap}, micro: {microorganismeCodi}, mec: {mecanismeId ?? "(buit)"})", ex);
                 return false;
             }
         }

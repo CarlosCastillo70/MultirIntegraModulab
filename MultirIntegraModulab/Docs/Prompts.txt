@@ -1104,10 +1104,641 @@ Fer insert i recuperarem el ID PACIENTS_DIAGNOSTICS.ID que després necessitarem
 Continuar endavant amb la resta de procesos
 
 
+----
+
+Continuem amb ProcessarResultatPositiu. Després de la comprovació del diagnostic (pacients_diagnostics), 
+farem algo semblant amb la mostra (pacients_diagnostics_mostra).
+
+Es comprovarà si hi ha un registre a multir (mysql) 
+
+SELECT *  
+FROM pacients_diagnostics_mostra 
+WHERE npat = MODULAB.PACIENT_SAP  
+    	AND data_mostra =  MODULAB.DATA_PETICIO_TRUC 
+	AND tipus_mostra _m = MODULAB.MOSTRA_DESCRIPCIO 
+
+Si registre Pacients_Diagnostics_Mostra  SI existeix 
+Recuperar ID : PACIENTS_DIAGNOSTICS_MOSTRA.ID 
+
+Si registre Pacients_Diagnostics_Mostra  NO existeix 
+Si no existeix el registre a pacients_diagnostics_mostra , s´ha de crear un registre 
+
+Fer insert a Pacients_Diagnostics_Mostra amb les següents dades: 
+
+Npat = MODULAB.PACIENT_SAP 
+Data_diagnostic = NULL 
+Data_mostra = MODULAB.DATA_PETICIO_TRUC 
+Tipus_mostra _m = MODULAB.MOSTRA_DESCRIPCIO 
+Usuari = ‘MODULAB’
+Dt_create = Now() 
+Dt_update = Now() 
+Consolidat = ‘N’ 
+Valoracio =   
+	‘2’ Si la mostra es positiva (hi ha mecanisme de resistència o bé el microorganisme és especial) 
+	‘1’  Si la mostra es negativa (no hi ha mecanisme de resistència i el microorganisme no és especial) 
+
+Tipus_prova = PROVA_DESCRIPCIO 
+Etiqueta= ETIQUETA_ID 
+Data_resultat = DATA_RESULTAT 
+Data_validacio = DATA_VALIDACIO (* POT SER NULL) 
+Estat_integracio_m= 
+	Si DATA_VALIDACIO <> NULL --> ’V’  
+	Si DATA_VALIDACIO = NULL --> ‘P’   
+
+Fer insert i recuperar ID : PACIENTS_DIAGNOSTICS_MOSTRA.ID 
+
+---
+
+A continuació de pacients_diagnostics_mostres, farem la gestió del registre MOSTRA_MICROORGANISME 
+
+De pacients_diagnostics ens quedarem amb diagnosticId o bé amb nouDiagnosticId
+De pacients_diagnostics_mostres ens quedarem amb mostraDiagnosticId o bé amb nouMostraDiagnosticId
+
+Es comprovarà si ja hi ha un registre a la nostra multir (mysql)
+
+SELECT *  
+FROM mostra_microorganisme 
+WHERE pacient_diagnostic_id = diagnosticId o bé amb nouDiagnosticId 
+
+    	AND pacient_diagnostic_mostra_id = mostraDiagnosticId o bé amb nouMostraDiagnosticId 
+
+
+Si registre Mostra_Microorganisme SI existeix vol dir que és un duplicat. 
+Inserir log --> DMM (Duplicat Mostra Microorganisme) i continuar. 
+
+Si registre Mostra_Microorganisme NO existeix 
+Fer insert a Mostra_Microorganisme amb les següents dades: 
+Pacient_diagnostic_mostra_id = diagnosticId o bé amb nouDiagnosticId 
+Pacient_diagnostic_id = mostraDiagnosticId o bé amb nouMostraDiagnosticId 
+
+
+--- 
+
+A continuació de Mostra_Microorganisme farem la actualització del camp data_diagnostic (de la taula pacients_diagnostics)
+amb la data de mostra més antiga per aquest pacient i diagnòstic. 
+
+Per fer-ho, aplicarem el seguent update 
+
+UPDATE pacients_diagnostics  
+SET data_diagnostic = (  
+	SELECT MIN(pdm.data_mostra)  
+	FROM mostra_microorganisme mm  
+	JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id 	 
+	WHERE mm.pacient_diagnostic_id = pacients_diagnostics.id  
+)  
+WHERE npat = MODULAB.PACIENT_SAP  
+	AND microorganisme = MICROORGANISME.CODI  
+	AND mecanisme = MODULAB.MECANISME_RESISTENCIAX_ID  
+	AND tipus_mecanisme = MECANISME.TIPUS_MECANISME 
+	AND dt_delete IS NULL	 
+
+
+--
+
+A ActualitzarDataDiagnosticPacientsDiagnostics el where és aquest:
+
+WHERE npat = MODULAB.PACIENT_SAP  
+AND microorganisme = MICROORGANISME.CODI  
+AND mecanisme = MODULAB.MECANISME_RESISTENCIAX_ID  
+AND tipus_mecanisme = MECANISME.TIPUS_MECANISME 
+AND dt_delete IS NULL
+
+-- 
+
+Dintre de ProcessarResultatPositiu, A continuació de actualitzar la data_diagnostic (de pacients_diagnostics) amb la data de mostra més antiga
+ farem una segona actualització de data_diagnostic. Ara aquest camp és el de pacients_diagnostics_mostra
+
+La taula pacients_diagnostics_mostra també inclou el camp data_diagnostic i també s´ha d´actualitzar amb la data de mostra més antiga per aquest pacient i diagnòstic. 
+
+Es revisaran totes les mostres del pacient, microorganisme, mecanisme i tipus de mecanisme
+
+i s´actualitzarà el camp data_diagnostic amb la data de mostra més antiga per aquest pacient i diagnòstic. 
+
+
+La consulta és aquesta:
+
+UPDATE pacients_diagnostics_mostra pdm  
+SET data_diagnostic = (  
+	SELECT MIN(pdm_sub.data_mostra)  
+	FROM pacients_diagnostics_mostra pdm_sub  
+	JOIN mostra_microorganisme mm ON mm.pacient_diagnostic_mostra_id = pdm_sub.id 		
+	WHERE mm.pacient_diagnostic_id  IN  (  
+		SELECT id  
+		FROM pacients_diagnostics  
+		WHERE npat = MODULAB.PACIENT_SAP  
+			AND microorganisme = MICROORGANISME.CODI 
+			AND mecanisme = MODULAB.MECANISME_RESISTENCIAX_ID  
+			AND tipus_mecanisme = MECANISME.TIPUS_MECANISME 
+	)  
+)  
+WHERE pdm.id IN (  
+	SELECT pdm_sub.id  
+	FROM pacients_diagnostics_mostra pdm_sub  
+	JOIN mostra_microorganisme mm ON mm.pacient_diagnostic_mostra_id = pdm_sub.id 		
+	WHERE mm.pacient_diagnostic_id IN (  
+		SELECT id  
+		FROM pacients_diagnostics  
+		WHERE npat = MODULAB.PACIENT_SAP  
+			AND microorganisme = MICROORGANISME.CODI 
+			AND mecanisme = MODULAB.MECANISME_RESISTENCIAX_ID  
+			AND tipus_mecanisme = MECANISME.TIPUS_MECANISME  
+		)  
+
+); 
+
+---
+
+ProcessarResultatPositiu retorna objecte resultat però les dades s´han d´actualitzar a totes les accions que es fan actualment:
+pacients creats, diagnostics creats, mostres creades, ....
+. 
+
+---
+
+A ProcessarResultatPositiu, després de les actualitzacions de data diagnostic, s´ha de comprovar, i si es necessari crear, la mostra
+
+Es comprovarà si hi ha un registre del tipus de mostra a taula tipusmostra _m : 
+
+SELECT *  
+FROM tipusmostra _m 
+WHERE UPPER(codi) = UPPER(MOSTRA_DESCRIPCIO) AND actiu = 1; 
+
+ 
+
+Si no existeix, es farà un insert a tipus mostra amb les següents dades: 
+
+codi = MODULAB.MOSTRA_DESCRIPCIO 
+descripcio = MODULAB.MOSTRA_DESCRIPCIO 
+Dt_create = Now() 
+Dt_update = Now() 
+actiu= ‘1’ 
+Comportament = 0 
+dies_vigencia_positiu = 455 
+
+
+----
+
+A ProcessarResultatPositiu, després de comprovar i si cal crear a tipusmostra _m , s´ha de fer el mateix amb la prova
+
+Es comprovarà si hi ha un registre del tipus de prova a taula tipusprova : 
+
+SELECT *  
+
+FROM tipusprova 
+
+WHERE UPPER(codi) = UPPER(PROVA_DESCRIPCIO) AND actiu = 1; 
 
 
 
+Si no existeix, es farà un insert a tipusprova amb les següents dades: 
+
+codi = PROVA_DESCRIPCIO 
+descripcio = PROVA_DESCRIPCIO 
+Comportament = 0 
+Dt_create = Now() 
+Dt_update = Now() 
+actiu= ‘1’ 
+Comportament = 0 
+
+---
+
+modificar CrearMostraDiagnostic . treure el parametre d´entrada esmostrapositiva. afegir dos nous parametres: 
+mecanismeid i esmicroorganismeespecial
+
+el calcul 
+
+                        // Determinar si la mostra és positiva. La mostra és positiva si té mecanisme o el microorganisme és especial
+                        bool esMostraPositiva = !string.IsNullOrWhiteSpace(mecanismeId) || 
+                                               (resultatMostra.EsMicroorganismeEspecial.HasValue && 
+                                                resultatMostra.EsMicroorganismeEspecial.Value);
+
+s´ha de fer dintre de crearmostradiagnostic
 
 
 
+---
+
+Ara començarem el desenvolupament del tractament de les mostres amb un unic resultat negatiu.
+
+Començarem amb processarmostranegativausecase. revisar que el codi actual es correcte.
+
+Recorda que 
+
+el resultat d´una mostra es POSITIVA : si al resultat de la mostra surt un microorganisme amb mecanisme de resistència (p.ex. BLEE, VIM, ...), o bé un microorganisme especial (p.ex. Acinetobacter baumannii) 
+
+el resultat d´una mostra es NEGATIVA es el contrari, es a dir : si a la mostra no hi surt res o només surt microorganisme sense mecanisme de resistència i que no són especials. 
+
+Un cop revisat el codi de processarmostranegativausecase, afegir esquelet per ProcessarResultatNegatiu. Podrem agafar de model processarresultatpositiu, tot i que hi haurà canvis.
+
+En aquest cas no tindrem mecanismes de resistencia.
+
+El primer que farem, per veure si hem d´incorporar el resultat de la mostra, seran unes comprovacions sobre el tipus de mostra (mostra) que després t´especificaré.
+
+Si es superen aquestes comprovacions, incorporarem el resultat de la mostra: pacients_diagnostics, pacients_diagnostics_mostra, mostra_microorganisme, tipus mostra, tipus prova
+
+----
+
+ObtenirDiagnosticsPositiusPacientPerTipusMostra recupera els diagnostics positius de un pacient per un tipus de mostra concret.
+
+Necesito modificar o bé crear una nova consulta que faci el mateix, però que discrimini els positius que tenen una determinada etiqueta (pdm.etiqueta)
+
+Això és per quan es detecta un positiu, es vol fer negatius dels altres positius. En cas contrari, faria el positiu, i a continuació faria el negatiu d´aquest positiu.
+
+----
+
+A ProcessarResultatNegatiu, anem a desenvolupar les comprovacions de la fase 1
+
+Per veure si ens interessa o no incorporar el negatiu, s’han de fer dos comprovacions, que es detallen a continuació.  
+
+Si es compleix alguna de les dues comprovacions, llavors voldrà dir que si que ens interessa incorporar el negatiu. 
+
+
+Comencem per la primer comprovació:
+
+Comprovació 1 Tipus de mostra a incorporar sempre que el pacient tingui algun positiu. 
+
+Hi ha uns tipus de mostra (Comportament = 1) que els voldrem incorporar sempre que el pacient hagi tingut algun positiu previ (per qualsevol tipus de mostra).  
+
+P.ex: Frotis rectal, Exsudat per faringui / amígdales, Exrudat per nasal, Exsudat per axil·lar 
+
+Primer comprovarem si tipus mostra té comportament 1
+
+SELECT comportament  
+FROM tipusmostra _m 
+WHERE UPPER(codi) = UPPER(MOSTRA_DESCRIPCIO) AND dt_delete IS NULL AND actiu = 1; 
+
+Si comportament es 1, comprovarem si el pacient té algun positiu previ (per qualsevol tipus de mostra)
+
+Executarem aquesta consulta:
+
+SELECT COUNT(*) AS positius_algun_tipus_mostra  
+FROM pacients_diagnostics_mostra pdm 
+JOIN tipusmostra_m tm ON pdm.tipus_mostra _m = tm.codi 
+WHERE pdm.npat = ' MODULAB.PACIENT_SAP ' 
+	AND pdm.valoracio = '2' --Positiu 
+	AND pdm.dt_delete IS NULL  
+	AND tm.dt_delete IS NULL 
+
+Si el comportament no és 1, continuarem endavant amb la segons comprovació
+ 
+
+Ara farem la segona comprovació
+
+Comprovació 2 Tipus de mostra a incorporar si el pacient ha tingut algun positiu per aquest tipus de mostra, i el positiu és vigent. 
+
+Si el comportament del tipus de mostra no és 1, consultarem l´historial del pacient per veure si, té algun positiu per aquest tipus de mostra, i aquest positiu encara és vigent. 
+
+S´incorpora el concepte de tipus de mostres equivalents. Per comptabilitzar el numero de positius vigents, per aquest tipus de mostra, ara afegirem els tipus de mostra equivalents. 
+
+La consulta per veure si cal incorporar el negatiu, segons la segona comprovació, és: 
+
+SELECT COUNT(*) AS positius_vigents_tipus_mostra_i_equivalents 
+FROM pacients_diagnostics_mostra pdm		 
+JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.descripcio 		 
+WHERE pdm.npat = ' MODULAB.PACIENT_SAP' 
+	AND ( 
+		UPPER(tm.descripcio) = UPPER(mostra_descripcio) 
+		 OR tm.id IN ( 
+			 SELECT tipusmostra_id_equivalent 
+			 FROM tipusmostra_equivalents 
+			 WHERE tipusmostra_id = ( 
+				 SELECT id  
+				 FROM tipusmostra_m tmm  
+				 WHERE UPPER(tmm.descripcio) = UPPER(mostra_descripcio) 
+		 	) 
+		) 
+ ) 
+ AND pdm.valoracio = '2' 
+ AND ( 
+ 	tm.dies_vigencia_positiu IS NULL 
+ 	OR pdm.data_mostra >= DATE_SUB(CURRENT_DATE, INTERVAL tm.dies_vigencia_positiu DAY) 
+ ) 
+
+
+Si alguna de les dues comprovacions es positiva, voldrà dir que volem incorporar el negatiu.  
+
+Per incorporar el negatiu posteriorment, ens interesará recordar quina de les dues comprovacions ha sortit positiu 
+
+-- 
+
+Un cop fetes les comprovacions, si alguna de les dues comprovacions es positiva, voldrà dir que volem incorporar la mostra negativa per desactivar algun mostra positiva del pacient.
+
+Ara recuperarem els diagnostics positius a desactivar.
+
+Si comprovacio 1 ha estat positiva, recuperarem els diferents diagnostics positius del pacient, per qualsevol tipus de mostra
+
+SELECT DISTINCT pd.id
+FROM pacients_diagnostics_mostra pdm 
+INNER JOIN mostra_microorganisme mm ON pdm.id = mm.pacient_diagnostic_mostra_id
+INNER JOIN pacients_diagnostics pd ON mm.pacient_diagnostic_id = pd.id
+INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi
+WHERE pdm.npat = 'MODULAB.PACIENT_SAP' 
+	AND pdm.valoracio = '2'
+	AND pdm.dt_delete IS NULL
+	AND pd.dt_delete IS NULL  
+	AND tm.dt_delete IS NULL 
+
+
+Si comprovació 1 ha estat negativa, i comprovació 2 ha estat positiva, recuperarem els diferents diagnostics positius del pacient, per al tipus de mostra actual
+
+SELECT DISTINCT pd.id
+FROM pacients_diagnostics_mostra pdm		 
+INNER JOIN mostra_microorganisme mm ON pdm.id = mm.pacient_diagnostic_mostra_id
+INNER JOIN pacients_diagnostics pd ON mm.pacient_diagnostic_id = pd.id
+INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi
+WHERE pdm.npat = 'MODULAB.PACIENT_SAP' 
+	AND pdm.valoracio = '2'
+	AND pdm.dt_delete IS NULL
+	AND pd.dt_delete IS NULL  
+	AND tm.dt_delete IS NULL 	
+	AND ( 
+		UPPER(tm.descripcio) = UPPER('MODULAB.MOSTRA_DESCRIPCIO') 
+		 OR tm.id IN ( 
+			 SELECT tipusmostra_id_equivalent 
+			 FROM tipusmostra_equivalents 
+			 WHERE tipusmostra_id = ( 
+				 SELECT id  
+				 FROM tipusmostra_m tmm  
+				 WHERE UPPER(tmm.descripcio) = UPPER('MODULAB.MOSTRA_DESCRIPCIO') 
+		 	) 
+		) 
+	 ) 
+	 AND ( 
+	 	tm.dies_vigencia_positiu IS NULL 
+	 	OR pdm.data_mostra >= DATE_SUB(CURRENT_DATE, INTERVAL tm.dies_vigencia_positiu DAY) 
+	 ) 
+
+
+--
+
+Falta desenvolupar, a MultiRDbServiceExtensions.cs,  ObtenirDiagnosticsPositiusPacientAlgunTipusMostra i ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents
+
+segons aquestes consultes:
+
+ObtenirDiagnosticsPositiusPacientAlgunTipusMostra 
+
+SELECT DISTINCT pd.id
+FROM pacients_diagnostics_mostra pdm 
+INNER JOIN mostra_microorganisme mm ON pdm.id = mm.pacient_diagnostic_mostra_id
+INNER JOIN pacients_diagnostics pd ON mm.pacient_diagnostic_id = pd.id
+INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi
+WHERE pdm.npat = 'MODULAB.PACIENT_SAP' 
+	AND pdm.valoracio = '2'
+	AND pdm.dt_delete IS NULL
+	AND pd.dt_delete IS NULL  
+	AND tm.dt_delete IS NULL 
+
+ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents
+
+SELECT DISTINCT pd.id
+FROM pacients_diagnostics_mostra pdm		 
+INNER JOIN mostra_microorganisme mm ON pdm.id = mm.pacient_diagnostic_mostra_id
+INNER JOIN pacients_diagnostics pd ON mm.pacient_diagnostic_id = pd.id
+INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi
+WHERE pdm.npat = 'MODULAB.PACIENT_SAP' 
+	AND pdm.valoracio = '2'
+	AND pdm.dt_delete IS NULL
+	AND pd.dt_delete IS NULL  
+	AND tm.dt_delete IS NULL 	
+	AND ( 
+		UPPER(tm.descripcio) = UPPER('MODULAB.MOSTRA_DESCRIPCIO') 
+		 OR tm.id IN ( 
+			 SELECT tipusmostra_id_equivalent 
+			 FROM tipusmostra_equivalents 
+			 WHERE tipusmostra_id = ( 
+				 SELECT id  
+				 FROM tipusmostra_m tmm  
+				 WHERE UPPER(tmm.descripcio) = UPPER('MODULAB.MOSTRA_DESCRIPCIO') 
+		 	) 
+		) 
+	 ) 
+	 AND ( 
+	 	tm.dies_vigencia_positiu IS NULL 
+	 	OR pdm.data_mostra >= DATE_SUB(CURRENT_DATE, INTERVAL tm.dies_vigencia_positiu DAY) 
+	 ) 
+
+Vull que facis funcions noves, sense tocar cap altra funció existent
+
+-- 
+
+A ProcessarResultatNegatiu, abans de la comprovacio 1, hauriem de comprovar si tenim el pacient a la
+taula de pacients.
+
+Si no existeix, no cal continuar endavant amb la resta de comprovacions i amb la incorporació.
+
+S'ha inserir auditoria amb codi NMRCM
+
+---
+
+Quan una mostra té mes d´un resultat, no gestiona bé el inserirregistreauditoria. Per exemple agafa com a 
+microorganisme el primer valor, i pot ser que sigui diferent.
+
+Necessito que a InserirRegistreAuditoria, afegeixes un parametre mes, que serà el resultat de la mostra.
+
+Així ja podrem agafar el microorganisme del resultat que s´esta gestionant.
+
+Revisa tots els llocs en que es fa us d´aquesta funció, i a les diferents crides, fes-ho amb el resultat
+
+----
+
+S´ha de modificar la clasificació de la mostra 
+
+// FASE 3: Classificar mostra (un sol positiu, múltiples negatius, mixta, ...)
+var classificacio = _classificarMostraUseCase.Executar(mostra);
+
+per que clasifiqui correctament la mostra segons el nombre total de positius i de negatius. Ara no ho fa del tot be amb mostres amb mes d´un resultat.
+
+Recorda que una mostra pot tenir un o més resultats. I dintre d´un resultat hi pot haver o no microorganisme, i hi pot haver o no fins a 5 mecanismes de resistencia
+
+Un resultat pot tenir o no microorganisme. També pot tenir o no, fins a 5 mecanismes de resistencia.
+
+Has d´anar acumulant els diferents positius i negatius.
+
+Si a un resultat no hi surt microorganisme, és un negatiu.
+Si a un resultat hi surt un microorganisme no especial sense cap mecanisme de resistencia, es un negatiu
+Si a un resultat hi surt un microorganisme no especial amb un mecanisme de resistencia, es un positiu
+Si a un resultat hi surt un microorganisme no especial amb dos, tres, cuatre o cinq mecanismes de resistencia, seria 2,3,4 o 5 positius
+Si a un resultat hi surt un microorganisme especial, sense mecanisme de resistencia, es un positiu
+Si a un resultat hi surt un microorganisme especial, amb 1,2,3,4 o 5 mecanismes de resistencia, seria 1,2,3,4 o 5 positius
+
+---
+
+Modificar els textos que s´incorporen al log. Alguns tenen espais a l´esquerra. S´han de treure aquests espais en blanc.
+
+Voldria que els textos tinguessin indentació segons el nivell de rutina / subrutina / ...
+
+Això és per facilitat la lectura del log
+
+Em pots fer una proposta 
+
+---
+
+Ara començarem a desenvolupar el procés per mostres mixtes: amb positius i negatius.
+
+Primer processarem la part de la mostra amb els positius igual que es fa amb les mostres que tenen un o mes positius
+
+A continuació processarem la part de la mostra amb els negatius igual que es fa amb les mostres que tenen un o mes negatius.
+
+-----
+
+Has d´afegir un nou parametre opcional a PacientTePositiusVigentsTipusMostraIEquivalents , que és la etiqueta.
+
+A la consulta que es fa, si existeix aquest parametre, també hauria de filtra per aquesta etiqueta
+
+
+---
+
+Ara incorporarem la taula integracio_modulab_resultats
+
+Aquesta inclou un codi de resultat de la integració, i una descripció.
+
+Cada cop que es fa InserirAuditoriaIntegracioModulab, en el que hi ha el parametre del codi, hauria
+d´escriure al log la descripció del resultat
+
+----
+
+A ProcessarMostresUseCase, ExecutarAsync, un cop recuperat el tipus d´incorporació (nova, validada, re validada, ...)
+s´han de fer unes accions o unes altres.
+
+Pots revisar si anteriorment es van especificar aquestes accions 
+
+----
+Començarem amb el tractament de les mostres repetides.
+
+Si data_resultat = DATA_RESULTAT i data_validació = DATA_VALIDACIO  voldrà dir que es un cas repetit (no hi ha cap canvi) (p. Ex quan es fan dos carregues de dades una a continuació d´un altra). 
+
+En aquest cas, no s´ha de fer res. 
+
+No es continuarà endavant amb el tractament de la mostra. 
+
+Inserir auditoria amb estat --> EMCR (ESTAT MOSTRA CAS REPETIT)
+
+--- 
+
+Tractament de mostres antigues
+
+En podem trobar, durant uns dies, que hi hagi mostres a l´historial (amb el mateix numero d´etiqueta), però que no tenen incorporat, ni data de mostra, ni data de validació. 
+
+Si data_resultat = NULL i data_validat = NULL voldrà dir que tenim registrat una/mes mostra/es que es va incorporar sense data resultat ni data validat 
+(anterior a aquest canvi que estem fent).  
+
+Com que es un tema temporal (passats uns dies ja no es trobaran casos), simplement actualitzarem les dates (resultat i validació) existents de les mostres. 
+
+UPDATE pacients_diagnostics_mostra  
+SET data_resultat = DATA_RESULTAT,  
+data_validacio = DATA_VALIDACIO  (pot ser NULL) 
+estat_integracio_m = CASE  
+WHEN DATA_VALIDACIO IS NOT NULL THEN 'V'  
+ELSE 'P' END 
+WHERE pdm.etiqueta = ' ETIQUETA_ID' 
+AND pdm.dt_delete IS NULL 
+
+
+No es continuarà endavant amb el tractament de la mostra. 
+
+Inserir auditoria amb estat --> EMCA (ESTAT MOSTRA CAS ANTIC) 
+
+----
+
+MOSTRA DES VALIDADA 
+
+Si DATA_VALIDACIO (de modulab) = NULL i data_validació (de multir mysql) <> NULL voldrà dir que es un cas des validat. 
+
+Es a dir, a històric tenia data de validació i ara l´estem captant sense data de validació. 
+
+No s ´hauria de donar, però el contemplem per si acàs. 
+
+Hem de mirar si hi ha hagut canvis a la mostra (entre el que arriba de modulab i el que hi ha a multir)
+
+Si la mostra actual i la nova son idèntiques, voldrà dir que no hi ha hagut canvis. Actualitzarem la data de validació de la mostra actual, a NULL i també l´estat_integracio. 
+
+UPDATE pacients_diagnostics_mostra  
+SET data_validacio = NULL , 
+estat_integracio_m = 'P' 
+WHERE pdm.etiqueta = ' ETIQUETA_ID' 
+AND pdm.dt_delete IS NULL 
+
+En aquest cas (no hi ha hagut canvis), no es continua endavant amb el procés. Inserir auditoria amb estat--> EMCD (ESTAT MOSTRA CAS DESVALIDAT SENSE CANVIS) 
+
+ 
+Si la mostra actual i la nova són diferents, voldrà dir que si que hi ha hagut canvis. 
+
+Guardar historial, esborrar les dades actuals de la mostra i continua endavant amb el tractament de la mostra. 
+
+
+-----
+
+
+Mostra validada
+
+Tenim una mostra sense validar a historial, i ara arriba la mostra amb data de validació 
+
+Si data_validació (de multir) es NULL i DATA_VALIDACIO (de modulab) <> NULL  voldrà dir que la mostra que estem processant
+és una validació d´una mostra ja existent (que no estava validada) 
+
+
+Hem de mirar si hi ha canvis entre la mostra de modulab i la mostra de multir 
+
+Si no hi ha canvis: 
+
+Si la mostra actual i la nova son idèntiques, actualitzarem la data de validació de multir (amb la nova data de validació) i també actualitzarem l´estat_integracio. 
+
+
+No es continuarà endavant amb el tractament de la mostra. 
+
+Inserir auditoria amb estat --> EMCV (ESTAT MOSTRA CAS VALIDAT SENSE CANVIS) 
+
+ 
+
+Si si hi ha hagut canvis: 
+
+Si la mostra actual i la nova són diferents,  Guardar historial, esborrar les dades actuals de la mostra i continua endavant amb el tractament de la mostra. 
+
+A continuació continuar endavant amb el procés de la mostra
+
+---
+FALTA
+Necesito que completis CompararMostres. Recorda que una mostra es composa d'un o mes resultats. Cada resultat pot tenir un microorganisme i fins a 5 mecanismes de resistencia.
+
+CompararMostres hauria de comparar tipus de prova i tipus de mostra, però sobre tot que les combinacions microorganisme i mecanisme de resistencia siguin les mateixes.
+
+Pot ser que hagi canviat l'ordre de les combinacions microorganismes i mecanisme de resistencia. En cas que hagi canviat l´ordre, no es considera que siguin diferents.
+
+----
+
+FALTA
+Pots revisar tot el codi per veure on es fa anar la taula pacients_diagnostics_mostra_historial. 
+
+En versions anteriors de codi hi havia un sistema per desar versions dels canvis de l´historial. Ara no ho veig
+
+---
+FALTA
+en rutina TractarMostraValidada, al GuardarHistorialMostra no s´estan desant els camps:
+
+combinacions_noves, data_resultat_nova, data_validacio_nova
+
+---
+
+FALTA
+a TractarMostraValidada, al compararmostres, només s´haurien de comparar les combinacions microorganisme - mecanisme de resistencia que siguin positives, es a dir
+que tinguin mecanisme de resistencia, o be que el microorganisme sigui especial
+
+
+------
+
+A ProcessarMostraPositivaUserCase i mes concretament a ProcessarResultatPositiu hi ha un error.
+
+Quan el positiu és per que el microorganisme es especial, pot no tenir mecanismes de resistencia.
+
+En el cas de microorganisme especial sense mecanismes de resistencia, quan fa el foreach, no l´està tractant
+
+-----
+
+A ProcessarMostresUseCase, al final de ExecutarAsync s'ensenya el resum amb 
+_logger.Info($"Processament finalitzat: {resum}");
+
+pero aquest resum no ensenya tota la informació. Per exemple les mostres validades.
+
+Sol ensenya 
+
+Processament finalitzat: Processament: 0 mostres | Noves: 0 | Repetides: 0 | Errors: 0 | Durada: 183.06s
 

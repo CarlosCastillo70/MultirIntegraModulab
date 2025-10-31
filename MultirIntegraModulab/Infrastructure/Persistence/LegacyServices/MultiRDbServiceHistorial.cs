@@ -5,6 +5,7 @@ using System.Data;
 using System.Linq;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Enums;
+using MultirIntegraModulab.Application.Helpers;
 
 namespace MultirIntegraModulab
 {
@@ -109,7 +110,7 @@ namespace MultirIntegraModulab
 
                     string sql = @"SELECT COUNT(*) 
                                   FROM pacients_diagnostics_mostra_historial 
-                                  WHERE etiqueta_id = @etiquetaId 
+                                  WHERE etiqueta = @etiquetaId 
                                   AND dt_delete IS NULL";
 
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -147,13 +148,14 @@ namespace MultirIntegraModulab
                 {
                     conn.Open();
 
-                    string sql = @"SELECT id, etiqueta_id, pacient_sap, data_canvi, tipus_canvi, 
-                                         estat_abans_canvi, estat_despres_canvi, microorganisme, 
-                                         mecanisme_resistencia, observacions, dt_create
+                    string sql = @"SELECT id, etiqueta, versio, tipus_canvi, 
+                                         combinacions_anteriors, data_resultat_anterior, data_validacio_anterior,
+                                         combinacions_noves, data_resultat_nova, data_validacio_nova,
+                                         data_canvi, proces_origen, dt_create
                                   FROM pacients_diagnostics_mostra_historial 
-                                  WHERE etiqueta_id = @etiquetaId 
+                                  WHERE etiqueta = @etiquetaId 
                                   AND dt_delete IS NULL
-                                  ORDER BY data_canvi DESC, dt_create DESC";
+                                  ORDER BY versio DESC, data_canvi DESC, dt_create DESC";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -166,17 +168,17 @@ namespace MultirIntegraModulab
                                 var registre = new RegistreHistorialMostra
                                 {
                                     Id = reader.GetInt32("id"),
-                                    // Usar EtiquetaOriginal en lugar de EtiquetaId
-                                    EtiquetaOriginal = reader["etiqueta_id"]?.ToString(),
-                                    PacientSap = reader["pacient_sap"]?.ToString(),
-                                    DataCanvi = reader["data_canvi"] as DateTime?,
+                                    EtiquetaOriginal = reader["etiqueta"]?.ToString(),
+                                    Versio = reader["versio"] != DBNull.Value ? Convert.ToInt32(reader["versio"]) : 0,
                                     TipusCanvi = reader["tipus_canvi"]?.ToString(),
-                                    EstatAbansCanvi = reader["estat_abans_canvi"]?.ToString(),
-                                    // Usar una propiedad válida en lugar de EstatDespresCanvi
-                                    Observacions = reader["estat_despres_canvi"]?.ToString(),
-                                    Microorganisme = reader["microorganisme"]?.ToString(),
-                                    MecanismeResistencia = reader["mecanisme_resistencia"]?.ToString(),
-                                    // Concatenar observaciones si es necesario
+                                    CombinacionsAnteriors = reader["combinacions_anteriors"]?.ToString(),
+                                    DataResultatAnterior = reader["data_resultat_anterior"] as DateTime?,
+                                    DataValidacioAnterior = reader["data_validacio_anterior"] as DateTime?,
+                                    CombinacionsNoves = reader["combinacions_noves"]?.ToString(),
+                                    DataResultatNova = reader["data_resultat_nova"] as DateTime?,
+                                    DataValidacioNova = reader["data_validacio_nova"] as DateTime?,
+                                    DataCanvi = reader["data_canvi"] as DateTime?,
+                                    ProcesOrigen = reader["proces_origen"]?.ToString(),
                                     DataCreacio = reader["dt_create"] != DBNull.Value ? Convert.ToDateTime(reader["dt_create"]) : DateTime.MinValue
                                 };
 
@@ -272,12 +274,12 @@ namespace MultirIntegraModulab
 
                         if (filesAfectades > 0)
                         {
-                            Logger.Info($"Registre d'historial (v{versioNova}) guardat per {etiquetaId}: {tipusCanvi}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}📋 Registre d'historial (v{versioNova}) guardat per {etiquetaId}: {tipusCanvi}");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($"No s'han afectat files guardant historial per {etiquetaId}");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'han afectat files guardant historial per {etiquetaId}");
                             return false;
                         }
                     }
@@ -398,7 +400,7 @@ namespace MultirIntegraModulab
 
                         if (registresNetejats > 0)
                         {
-                            Logger.Info($"Netejats {registresNetejats} registres d'historial anteriors a {diesRetencio} dies");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🗑️ Netejats {registresNetejats} registres d'historial anteriors a {diesRetencio} dies");
                         }
 
                         return registresNetejats;

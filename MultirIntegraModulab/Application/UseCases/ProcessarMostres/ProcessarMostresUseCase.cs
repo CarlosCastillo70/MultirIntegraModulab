@@ -672,7 +672,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 else
                 {
                     // CAS 2: Hi ha canvis - guardar historial, esborrar i continuar
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Mostra que es vol incorporar i l´existent, són diferents - guardant historial, esborrant dades i continuant amb l´incorporació...");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ La mostra que es vol incorporar i l´existent, SÓN DIFERENTS - guardant historial, esborrant dades i continuant amb l´incorporació...");
                     
                     // Mostrar canvis detectats
                     foreach (var canvi in resultatComparacio.CanvisDetectats)
@@ -721,7 +721,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
                     // Continuar processament per re-processar la mostra amb les noves dades
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}➡️ Continuant processament amb noves dades...");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}➡️ Continuant processament de la mostra amb les noves dades...");
                     return true; // Continuar processament
                 }
             }

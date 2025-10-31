@@ -76,7 +76,7 @@ namespace MultirIntegraModulab.Configuration
                 MySqlConnectionString = ObtenirConnectionString("MySqlMultiR");
 
                 // AppSettings
-                DiesEndarreraCarrega = ObtenirAppSettingInt("DiesEndarreraCarrega", 1);
+                DiesEndarreraCarrega = ObtenirAppSettingInt("DiesEndarreraCarrega", 2);
                 LimitResultatsProves = ObtenirAppSettingInt("LimitResultatsProves", 50);
                 EntornProduccion = ObtenirAppSettingBool("EntornProduccion", false);
 

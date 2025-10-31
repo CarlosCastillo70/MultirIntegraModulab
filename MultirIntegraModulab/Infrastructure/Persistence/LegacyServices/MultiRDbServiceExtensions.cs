@@ -1311,7 +1311,7 @@ namespace MultirIntegraModulab
                             {
                                 return new MostraDiagnosticExistent
                                 {
-                                    Id = reader.getInt32("id"),
+                                    Id = reader.GetInt32("id"),
                                     PacientSap = reader["npat"]?.ToString(),
                                     DataMostra = reader["data_mostra"] as DateTime?,
                                     TipusMostra = reader["tipus_mostra_m"]?.ToString(),
@@ -1787,7 +1787,7 @@ namespace MultirIntegraModulab
                         }
                     }
 
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstics positius per pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) per pacient {pacientSap}");
                 }
             }
             catch (Exception ex)
@@ -1867,7 +1867,7 @@ namespace MultirIntegraModulab
                         }
                     }
 
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstics positius vigents per pacient {pacientSap} i tipus mostra '{tipusMostra}' o equivalents");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) vigent(s) per pacient {pacientSap} i tipus mostra '{tipusMostra}' o equivalents");
                 }
             }
             catch (Exception ex)
@@ -1955,7 +1955,7 @@ namespace MultirIntegraModulab
                         }
                     }
 
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstics positius per pacient {pacientSap} i tipus mostra '{tipusMostra}'{infoEtiqueta}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) per pacient {pacientSap} i tipus mostra '{tipusMostra}'{infoEtiqueta}");
                 }
 
             }
@@ -1969,6 +1969,7 @@ namespace MultirIntegraModulab
 
         /// <summary>
         /// Esborra les dades d'una mostra desvalidada (soft delete)
+        /// També esborra els diagnòstics orfes (que no tenen cap altra mostra associada)
         /// </summary>
         /// <param name="etiquetaId">Etiqueta de la mostra a esborrar</param>
         /// <returns>True si s'ha esborrat correctament</returns>
@@ -1990,11 +1991,51 @@ namespace MultirIntegraModulab
                     {
                         try
                         {
-                            // 1. Soft delete de pacients_diagnostics_mostra
-                            string sqlMostra = @"UPDATE pacients_diagnostics_mostra 
-                                                SET dt_delete = NOW(), dt_update = NOW()
-                                                WHERE etiqueta = @etiqueta 
-                                                AND dt_delete IS NULL";
+                            // 0. Obtenir els diagnòstics associats a aquesta mostra
+                            var diagnosticsIds = new List<int>();
+                            
+                            string sqlDiagnostics = @"
+                                SELECT DISTINCT mm.pacient_diagnostic_id
+                                FROM mostra_microorganisme mm
+                                INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id
+                                WHERE pdm.etiqueta = @etiqueta
+                                  AND pdm.dt_delete IS NULL";
+
+                            using (var cmdDiag = new MySqlCommand(sqlDiagnostics, conn, transaction))
+                            {
+                                cmdDiag.Parameters.AddWithValue("@etiqueta", etiquetaId);
+                                
+                                using (var reader = cmdDiag.ExecuteReader())
+                                {
+                                    while (reader.Read())
+                                    {
+                                        diagnosticsIds.Add(reader.GetInt32(0));
+                                    }
+                                }
+                            }
+
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnosticsIds.Count} diagnòstic(s) associat(s) a la mostra {etiquetaId}");
+
+                            // 1. Esborrar mostra_microorganisme (DELETE directe ja que no té dt_delete)
+                            string sqlMostraMicro = @"
+                                DELETE mm
+                                FROM mostra_microorganisme mm
+                                INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id
+                                WHERE pdm.etiqueta = @etiqueta";
+
+                            using (var cmdMicro = new MySqlCommand(sqlMostraMicro, conn, transaction))
+                            {
+                                cmdMicro.Parameters.AddWithValue("@etiqueta", etiquetaId);
+                                int filesAfectades = cmdMicro.ExecuteNonQuery();
+                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Esborrades {filesAfectades} files de mostra_microorganisme per etiqueta {etiquetaId}");
+                            }
+
+                            // 2. Soft delete de pacients_diagnostics_mostra
+                            string sqlMostra = @"
+                                UPDATE pacients_diagnostics_mostra 
+                                SET dt_delete = NOW(), dt_update = NOW()
+                                WHERE etiqueta = @etiqueta 
+                                  AND dt_delete IS NULL";
 
                             using (var cmdMostra = new MySqlCommand(sqlMostra, conn, transaction))
                             {
@@ -2003,18 +2044,57 @@ namespace MultirIntegraModulab
                                 Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Esborrades {filesAfectades} files de pacients_diagnostics_mostra per etiqueta {etiquetaId}");
                             }
 
-                            // 2. Soft delete de mostra_microorganisme (utilitzant etiqueta indirectament)
-                            string sqlMostraMicro = @"UPDATE mostra_microorganisme mm
-                                                     INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id
-                                                     SET mm.dt_delete = NOW(), mm.dt_update = NOW()
-                                                     WHERE pdm.etiqueta = @etiqueta
-                                                     AND mm.dt_delete IS NULL";
-
-                            using (var cmdMicro = new MySqlCommand(sqlMostraMicro, conn, transaction))
+                            // 3. Esborrar diagnòstics orfes (soft delete)
+                            // Per cada diagnòstic associat, comprovar si té altres mostres
+                            int diagnosticsOrfesEsborrats = 0;
+                            
+                            foreach (var diagnosticId in diagnosticsIds)
                             {
-                                cmdMicro.Parameters.AddWithValue("@etiqueta", etiquetaId);
-                                int filesAfectades = cmdMicro.ExecuteNonQuery();
-                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Esborrades {filesAfectades} files de mostra_microorganisme per etiqueta {etiquetaId}");
+                                // Comprovar si aquest diagnòstic té altres mostres associades
+                                string sqlComprovarMostres = @"
+                                    SELECT COUNT(*) 
+                                    FROM mostra_microorganisme mm
+                                    INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id
+                                    WHERE mm.pacient_diagnostic_id = @diagnosticId
+                                      AND pdm.dt_delete IS NULL";
+
+                                int nombreMostres = 0;
+                                using (var cmdComprovar = new MySqlCommand(sqlComprovarMostres, conn, transaction))
+                                {
+                                    cmdComprovar.Parameters.AddWithValue("@diagnosticId", diagnosticId);
+                                    nombreMostres = Convert.ToInt32(cmdComprovar.ExecuteScalar());
+                                }
+
+                                // Si no té cap altra mostra, esborrar el diagnòstic (soft delete)
+                                if (nombreMostres == 0)
+                                {
+                                    string sqlEsborrarDiagnostic = @"
+                                        UPDATE pacients_diagnostics
+                                        SET dt_delete = NOW(), dt_update = NOW()
+                                        WHERE id = @diagnosticId
+                                          AND dt_delete IS NULL";
+
+                                    using (var cmdEsborrar = new MySqlCommand(sqlEsborrarDiagnostic, conn, transaction))
+                                    {
+                                        cmdEsborrar.Parameters.AddWithValue("@diagnosticId", diagnosticId);
+                                        int filesAfectades = cmdEsborrar.ExecuteNonQuery();
+                                        
+                                        if (filesAfectades > 0)
+                                        {
+                                            diagnosticsOrfesEsborrats++;
+                                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Esborrat diagnòstic orfe {diagnosticId} (no té cap altra mostra associada)");
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Diagnòstic {diagnosticId} mantingut (té {nombreMostres} altra(es) mostra(es) associada(es))");
+                                }
+                            }
+
+                            if (diagnosticsOrfesEsborrats > 0)
+                            {
+                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Total diagnòstics orfes esborrats: {diagnosticsOrfesEsborrats}");
                             }
 
                             transaction.Commit();

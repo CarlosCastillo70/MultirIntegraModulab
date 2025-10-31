@@ -111,7 +111,7 @@ namespace MultirIntegraModulab
                     Console.WriteLine("⚠️ No s'han trobat mostres per processar");
                 }
 
-                loggerService.Info("✅ Aplicació finalitzada correctament");
+                loggerService.Info("✅ Execució finalitzada correctament");
                 Console.WriteLine("\n✅ Aplicació finalitzada correctament");
                 Console.WriteLine("\nPrem qualsevol tecla per sortir...");
                 Console.ReadKey();
@@ -230,7 +230,7 @@ namespace MultirIntegraModulab
             Console.WriteLine($"   • Errors: {resum.MostresAmbError}");
             Console.WriteLine($"   • Durada: {resum.DuradaProcessament.TotalSeconds:F2}s");
 
-            logger.Info($"Processament finalitzat: {resum}");
+            // logger.Info($"Processament finalitzat: {resum}");
         }
     }
 }
