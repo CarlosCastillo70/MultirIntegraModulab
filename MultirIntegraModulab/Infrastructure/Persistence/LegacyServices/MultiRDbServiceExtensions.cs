@@ -1073,7 +1073,7 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@microorganisme", microorganisme ?? "");
                         cmd.Parameters.AddWithValue("@mecanisme", mecanisme ?? "");
                         cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanisme ?? "");
-                        
+						
                         var result = cmd.ExecuteScalar();
                         int nouDiagnosticId = result != null ? Convert.ToInt32(result) : 0;
                         
@@ -1311,7 +1311,7 @@ namespace MultirIntegraModulab
                             {
                                 return new MostraDiagnosticExistent
                                 {
-                                    Id = reader.GetInt32("id"),
+                                    Id = reader.getInt32("id"),
                                     PacientSap = reader["npat"]?.ToString(),
                                     DataMostra = reader["data_mostra"] as DateTime?,
                                     TipusMostra = reader["tipus_mostra_m"]?.ToString(),
@@ -1358,25 +1358,12 @@ namespace MultirIntegraModulab
                 return resultat;
             }
 
-            // 1. COMPARAR DATES DE RESULTAT I VALIDACIÓ
+            // 1. COMPARAR DATA DE RESULTAT
             var dataResultatEntrant = mostraEntrant.DataUltimResultat;
             if (mostraExistent.DataResultat != dataResultatEntrant)
             {
                 resultat.HiHaCanvis = true;
                 resultat.CanvisDetectats.Add($"Data resultat: {mostraExistent.DataResultat:dd/MM/yyyy HH:mm} -> {dataResultatEntrant:dd/MM/yyyy HH:mm}");
-            }
-
-            var dataValidacioEntrant = mostraEntrant.Resultats.FirstOrDefault()?.DataValidacio;
-            if (mostraExistent.DataValidacio != dataValidacioEntrant)
-            {
-                resultat.HiHaCanvis = true;
-                var textAnterior = mostraExistent.DataValidacio.HasValue 
-                    ? mostraExistent.DataValidacio.Value.ToString("dd/MM/yyyy HH:mm") 
-                    : "NULL";
-                var textNou = dataValidacioEntrant.HasValue 
-                    ? dataValidacioEntrant.Value.ToString("dd/MM/yyyy HH:mm") 
-                    : "NULL";
-                resultat.CanvisDetectats.Add($"Data validació: {textAnterior} -> {textNou}");
             }
 
             // 2. COMPARAR TIPUS DE MOSTRA
@@ -1436,7 +1423,7 @@ namespace MultirIntegraModulab
         /// Obté les combinacions de microorganisme + mecanismes d'una mostra existent a la BD
         /// NOMÉS obtenim diagnòstics positius: amb mecanisme de resistència
         /// </summary>
-        private List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMicroorganismeMecanisme(string etiquetaId)
+        public List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMicroorganismeMecanisme(string etiquetaId)
         {
             var combinacions = new List<CombinacioMicroorganismeMecanisme>();
 
@@ -1544,7 +1531,7 @@ namespace MultirIntegraModulab
         /// Obté les combinacions de microorganisme + mecanismes d'una mostra entrant
         /// NOMÉS retorna les combinacions POSITIVES: amb mecanisme de resistència o microorganisme especial
         /// </summary>
-        private List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMostraEntrant(Mostra mostra)
+        public List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMostraEntrant(Mostra mostra)
         {
             var combinacions = new List<CombinacioMicroorganismeMecanisme>();
 
@@ -1634,7 +1621,7 @@ namespace MultirIntegraModulab
         /// Classe auxiliar per representar una combinació microorganisme + mecanismes
         /// Cada combinació representa un parell únic de microorganisme + 1 mecanisme (o sense mecanisme si és especial)
         /// </summary>
-        private class CombinacioMicroorganismeMecanisme
+        public class CombinacioMicroorganismeMecanisme
         {
             public string Microorganisme { get; set; }
             public List<string> Mecanismes { get; set; }

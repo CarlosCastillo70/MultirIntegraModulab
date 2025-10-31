@@ -88,6 +88,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             {
                 try
                 {
+                    resum.TotalProcessats++;
+
                     _logger.Info($"▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄");
                     _logger.Info($" Processant mostra del pacient {mostra.PacientSap} , amb etiqueta : {mostra.EtiquetaId}");
                     _logger.Info($"▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀");
@@ -108,10 +110,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     ActualitzarResumPerTipus(resum, tipusIncorporacio);
 
 
+
                     // FASE 3: Tractament specifíc segons tipus d´incorporació
                     if (!TractarTipusIncorporacio(mostra, tipusIncorporacio, resum))
                     {
                         // Si retorna false, cal ometre el processament posterior (continue)
+                        _logger.Info($"✅ Mostra {mostra.EtiquetaId} no processada degut al tipus d´incorporació");
                         continue;
                     }
 
@@ -523,57 +527,83 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         }
 
         /// <summary>
-        /// Obté les combinacions microorganisme+mecanisme d'una mostra existent en format text
+        /// Obté les combinacions microorganisme+mecanisme d'una mostra existent en format text (JSON)
+        /// Utilitza el mètode ObtenirCombinacionsMicroorganismeMecanisme de MultiRDbService
         /// </summary>
         private string ObtenirCombinacionsTextMostraExistent(MostraDiagnosticExistent mostraExistent)
         {
-            if (mostraExistent == null)
+            if (mostraExistent == null || string.IsNullOrWhiteSpace(mostraExistent.Etiqueta))
                 return null;
 
-            // Aquí hauries d'obtenir les combinacions de la base de dades
-            // Per ara retornem un text simple amb la informació disponible
-            return $"Tipus mostra: {mostraExistent.TipusMostra}, " +
-                   $"Data resultat: {mostraExistent.DataResultat:dd/MM/yyyy HH:mm}, " +
-                   $"Data validació: {mostraExistent.DataValidacio?.ToString("dd/MM/yyyy HH:mm") ?? "NULL"}";
+            try
+            {
+                // Obtenir les combinacions reals de la base de dades
+                // Aquest mètode ja està implementat a MultiRDbServiceExtensions.cs
+                var combinacions = _multiRRepository.ObtenirCombinacionsMicroorganismeMecanisme(mostraExistent.Etiqueta);
+
+                if (combinacions == null || !combinacions.Any())
+                    return null;
+
+                // Convertir a format JSON-like
+                var combinacionsText = combinacions.Select(c =>
+                {
+                    if (c.Mecanismes != null && c.Mecanismes.Any())
+                    {
+                        return $"{c.Microorganisme}+[{string.Join(",", c.Mecanismes)}]";
+                    }
+                    else
+                    {
+                        return c.Microorganisme;
+                    }
+                }).ToList();
+
+                return string.Join("; ", combinacionsText);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Error obtenint combinacions mostra existent {mostraExistent.Etiqueta}: {ex.Message}", ex);
+                return null;
+            }
         }
 
         /// <summary>
-        /// Obté les combinacions microorganisme+mecanisme d'una mostra entrant en format text
+        /// Obté les combinacions microorganisme+mecanisme d'una mostra entrant en format text (JSON)
+        /// Utilitza el mètode ObtenirCombinacionsMostraEntrant de MultiRDbService
         /// </summary>
         private string ObtenirCombinacionsTextMostraEntrant(Mostra mostra)
         {
             if (mostra == null || !mostra.Resultats.Any())
                 return null;
 
-            var combinacions = new List<string>();
-            
-            foreach (var resultat in mostra.Resultats)
+            try
             {
-                var microorganisme = resultat.AillamentDescripcio ?? "Sense microorganisme";
-                var mecanismes = new List<string>();
-                
-                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia1Id))
-                    mecanismes.Add(resultat.MecanismeResistencia1Id);
-                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia2Id))
-                    mecanismes.Add(resultat.MecanismeResistencia2Id);
-                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia3Id))
-                    mecanismes.Add(resultat.MecanismeResistencia3Id);
-                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia4Id))
-                    mecanismes.Add(resultat.MecanismeResistencia4Id);
-                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia5Id))
-                    mecanismes.Add(resultat.MecanismeResistencia5Id);
-                
-                if (mecanismes.Any())
+                // Obtenir les combinacions reals de la mostra entrant
+                // Aquest mètode ja està implementat a MultiRDbServiceExtensions.cs
+                var combinacions = _multiRRepository.ObtenirCombinacionsMostraEntrant(mostra);
+
+                if (combinacions == null || !combinacions.Any())
+                    return null;
+
+                // Convertir a format JSON-like
+                var combinacionsText = combinacions.Select(c =>
                 {
-                    combinacions.Add($"{microorganisme}+[{string.Join(",", mecanismes)}]");
-                }
-                else
-                {
-                    combinacions.Add(microorganisme);
-                }
+                    if (c.Mecanismes != null && c.Mecanismes.Any())
+                    {
+                        return $"{c.Microorganisme}+[{string.Join(",", c.Mecanismes)}]";
+                    }
+                    else
+                    {
+                        return c.Microorganisme;
+                    }
+                }).ToList();
+
+                return string.Join("; ", combinacionsText);
             }
-            
-            return string.Join("; ", combinacions);
+            catch (Exception ex)
+            {
+                _logger.Error($"Error obtenint combinacions mostra entrant {mostra.EtiquetaId}: {ex.Message}", ex);
+                return null;
+            }
         }
 
         /// <summary>
@@ -604,7 +634,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 if (!resultatComparacio.HiHaCanvis)
                 {
                     // CAS 1: No hi ha canvis - només actualitzar data_validacio amb la nova data
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Mostres idèntiques - actualitzant data_validacio...");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Mostra a incorporar és idèntica a la existent a l´historial - actualitzant data_validacio...");
 
                     // Obtenir la nova data de validació
                     var novaDataValidacio = mostra.Resultats.FirstOrDefault()?.DataValidacio;
@@ -642,7 +672,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 else
                 {
                     // CAS 2: Hi ha canvis - guardar historial, esborrar i continuar
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Mostres diferents - guardant historial i esborrant dades...");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Mostra que es vol incorporar i l´existent, són diferents - guardant historial, esborrant dades i continuant amb l´incorporació...");
                     
                     // Mostrar canvis detectats
                     foreach (var canvi in resultatComparacio.CanvisDetectats)

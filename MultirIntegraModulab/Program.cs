@@ -111,7 +111,7 @@ namespace MultirIntegraModulab
                     Console.WriteLine("⚠️ No s'han trobat mostres per processar");
                 }
 
-                loggerService.Info("\n✅ Aplicació finalitzada correctament");
+                loggerService.Info("✅ Aplicació finalitzada correctament");
                 Console.WriteLine("\n✅ Aplicació finalitzada correctament");
                 Console.WriteLine("\nPrem qualsevol tecla per sortir...");
                 Console.ReadKey();

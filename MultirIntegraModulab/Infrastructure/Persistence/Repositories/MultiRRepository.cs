@@ -71,6 +71,12 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public ResultatComparacioMostres CompararMostres(MostraDiagnosticExistent mostraExistent, Mostra mostraEntrant) =>
             _multiRDbService.CompararMostres(mostraExistent, mostraEntrant);
 
+        public List<MultiRDbService.CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMicroorganismeMecanisme(string etiquetaId) =>
+            _multiRDbService.ObtenirCombinacionsMicroorganismeMecanisme(etiquetaId);
+
+        public List<MultiRDbService.CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMostraEntrant(Mostra mostra) =>
+            _multiRDbService.ObtenirCombinacionsMostraEntrant(mostra);
+
         // Microorganismes
         public bool? EsMicroorganismeEspecial(string microorganismeDescripcio) => 
             _multiRDbService.EsMicroorganismeEspecial(microorganismeDescripcio);

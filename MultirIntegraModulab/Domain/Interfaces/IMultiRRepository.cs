@@ -121,6 +121,22 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// </summary>
         bool EsborrarDadesMostra(string etiquetaId);
 
+        /// <summary>
+        /// Obté les combinacions de microorganisme + mecanismes d'una mostra existent a la BD
+        /// NOMÉS obtenim diagnòstics positius: amb mecanisme de resistència
+        /// </summary>
+        /// <param name="etiquetaId">Etiqueta de la mostra</param>
+        /// <returns>Llista de combinacions microorganisme + mecanismes</returns>
+        List<MultiRDbService.CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMicroorganismeMecanisme(string etiquetaId);
+
+        /// <summary>
+        /// Obté les combinacions de microorganisme + mecanismes d'una mostra entrant
+        /// NOMÉS retorna les combinacions POSITIVES: amb mecanisme de resistència o microorganisme especial
+        /// </summary>
+        /// <param name="mostra">Mostra entrant</param>
+        /// <returns>Llista de combinacions microorganisme + mecanismes</returns>
+        List<MultiRDbService.CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMostraEntrant(Mostra mostra);
+
         // Microorganismes
         bool? EsMicroorganismeEspecial(string microorganismeDescripcio);
         Microorganisme ObtenirMicroorganisme(string descripcio);

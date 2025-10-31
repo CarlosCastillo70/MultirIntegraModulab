@@ -63,7 +63,7 @@ namespace MultirIntegraModulab.Application.DTOs
         public DateTime DataIniciProcessament { get; set; }
 
         /// <summary>
-        /// Temps de finalització del processament
+        /// Temps de finalitzaciÃ³ del processament
         /// </summary>
         public DateTime DataFiProcessament { get; set; }
 
@@ -87,7 +87,13 @@ namespace MultirIntegraModulab.Application.DTOs
         {
             return $"Processament: {TotalProcessats} mostres | " +
                    $"Noves: {NovesIncorporacions} | " +
+                   $"Antigues: {MostresAntigues} | " +
                    $"Repetides: {MostresRepetides} | " +
+                   $"Desvalidades: {MostresDesvalidades} | " +
+                   $"Validades: {MostresValidades} | " +
+                   $"Revalidades: {MostresRevalidades} | " +
+                   $"Positives: {MostresPositives} | " +
+                   $"Negatives: {MostresNegatives} | " +
                    $"Errors: {MostresAmbError} | " +
                    $"Durada: {DuradaProcessament.TotalSeconds:F2}s";
         }

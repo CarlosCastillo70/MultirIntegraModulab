@@ -281,6 +281,8 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
                          (DETALL.DATA_VALIDACIO_TRUNC >= trunc(sysdate-:diesEndarrera) OR DETALL.DATA_RESULTAT_TRUNC >= trunc(sysdate-:diesEndarrera)) 
                         )
 
+AND PA.PACIENT_SAP = '10746652'
+
                 ORDER BY PET.ETIQUETA_ID";
 
             // Afegir clàusula ROWNUM si hi ha límit especificat
