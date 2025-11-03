@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 
-  FITXER D'EXEMPLE DE CONFIGURACI�
+  FITXER D'EXEMPLE DE CONFIGURACIÓ
   ==================================
-  Aquest �s un fitxer d'exemple. Per utilitzar-lo:
+  Aquest és un fitxer d'exemple. Per utilitzar-lo:
   1. Copia aquest fitxer a "App.config"
   2. Modifica els valors segons el teu entorn
   3. NO commitejis App.config amb credencials reals al control de versions
@@ -30,22 +30,22 @@
   <!-- Application Settings -->
   <appSettings>
     <!-- ============================================ -->
-    <!-- CONFIGURACI� DE C�RREGA DE DADES -->
+    <!-- CONFIGURACIÓ DE CÀRREGA DE DADES -->
     <!-- ============================================ -->
     
     <!-- Dies enrere per carregar resultats de mostres -->
     <add key="DiesEndarreraCarrega" value="2" />
     
-    <!-- L�mit de resultats per proves (0 = il�limitat) -->
-    <!-- En producci�, posar a 0 -->
+    <!-- Límit de resultats per proves (0 = il·limitat) -->
+    <!-- En producció, posar a 0 -->
     <add key="LimitResultatsProves" value="50" />
     
-    <!-- Indica si l'aplicaci� s'executa en producci� -->
-    <!-- true = Sense l�mits, false = Amb l�mits de proves -->
+    <!-- Indica si l'aplicació s'executa en producció -->
+    <!-- true = Sense límits, false = Amb límits de proves -->
     <add key="EntornProduccion" value="false" />
 
     <!-- ============================================ -->
-    <!-- CONFIGURACI� DE LOGGING -->
+    <!-- CONFIGURACIÓ DE LOGGING -->
     <!-- ============================================ -->
     
     <!-- Directori on es guardaran els logs -->
@@ -55,27 +55,58 @@
     <add key="LogLevel" value="Info" />
 
     <!-- ============================================ -->
-    <!-- CONFIGURACI� DE CACHE -->
+    <!-- CONFIGURACIÓ D'EMAIL -->
     <!-- ============================================ -->
     
-    <!-- Minuts de vig�ncia de la cache de microorganismes -->
+    <!-- Enviar email amb log al finalitzar -->
+    <add key="EnviarEmailLog" value="true" />
+    
+    <!-- Servidor SMTP -->
+    <add key="SmtpServer" value="smtp.exemple.com" />
+    
+    <!-- Port SMTP (normalment 587 per TLS o 465 per SSL) -->
+    <add key="SmtpPort" value="587" />
+    
+    <!-- Usuari SMTP -->
+    <add key="SmtpUsuari" value="usuari@exemple.com" />
+    
+    <!-- Password SMTP -->
+    <add key="SmtpPassword" value="[TU_PASSWORD_SMTP]" />
+    
+    <!-- Usar SSL/TLS -->
+    <add key="SmtpUsarSSL" value="true" />
+    
+    <!-- Email remitent (From) -->
+    <add key="EmailFrom" value="multir@exemple.com" />
+    
+    <!-- Emails destinataris (separats per ;) -->
+    <add key="EmailsDestinataris" value="admin1@exemple.com;admin2@exemple.com" />
+    
+    <!-- Enviar email només si hi ha errors -->
+    <add key="EmailNomesEnErrors" value="false" />
+
+    <!-- ============================================ -->
+    <!-- CONFIGURACIÓ DE CACHE -->
+    <!-- ============================================ -->
+    
+    <!-- Minuts de vigència de la cache de microorganismes -->
     <add key="MinutsVigenciaCache" value="30" />
 
     <!-- ============================================ -->
-    <!-- CONFIGURACI� DE MANTENIMENT -->
+    <!-- CONFIGURACIÓ DE MANTENIMENT -->
     <!-- ============================================ -->
     
-    <!-- Dies de retenci� de l'historial de mostres -->
+    <!-- Dies de retenció de l'historial de mostres -->
     <add key="DiesRetencioHistorial" value="90" />
 
     <!-- ============================================ -->
-    <!-- CONFIGURACI� DE PROCESSAMENT -->
+    <!-- CONFIGURACIÓ DE PROCESSAMENT -->
     <!-- ============================================ -->
     
-    <!-- Processar mostres en paral�lel (experimental) -->
+    <!-- Processar mostres en paral·lel (experimental) -->
     <add key="ProcessarMostresEnParalel" value="false" />
     
-    <!-- M�xim grau de paral�lelisme si est� activat -->
+    <!-- Màxim grau de paral·lelisme si està activat -->
     <add key="MaxGrauParalelisme" value="4" />
   </appSettings>
 
@@ -85,7 +116,7 @@
 
   <runtime>
     <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
-      <!-- Binding redirects si s�n necessaris -->
+      <!-- Binding redirects si són necessaris -->
     </assemblyBinding>
   </runtime>
 </configuration>

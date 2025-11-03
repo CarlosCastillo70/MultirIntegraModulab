@@ -1,31 +1,51 @@
 namespace MultirIntegraModulab.Domain.Interfaces
 {
     /// <summary>
-    /// Port (interfÌcie) per al sistema de configuraciÛ
-    /// Permet canviar la font de configuraciÛ sense afectar el domini
+    /// Port (interf√≠cie) per al sistema de configuraci√≥
+    /// Permet canviar la font de configuraci√≥ sense afectar el domini
     /// </summary>
     public interface IConfigurationService
     {
+        // Configuraci√≥ d'entorn
+        string Entorn { get; }
+        bool EsEntornProduccio { get; }
+        bool EsEntornPreproduccio { get; }
+
         // Connection Strings
         string OracleConnectionString { get; }
         string MySqlConnectionString { get; }
 
-        // ConfiguraciÛ de c‡rrega
+        // WebServices
+        string WebServicePacientsUrl { get; }
+        int WebServiceTimeout { get; }
+
+        // Configuraci√≥ de c√†rrega
         int DiesEndarreraCarrega { get; }
         int LimitResultatsProves { get; }
         bool EntornProduccion { get; }
 
-        // ConfiguraciÛ de logging
+        // Configuraci√≥ de logging
         string LogDirectory { get; }
         string LogLevel { get; }
 
-        // ConfiguraciÛ de cache
+        // Configuraci√≥ d'email
+        bool EnviarEmailLog { get; }
+        string SmtpServer { get; }
+        int SmtpPort { get; }
+        string SmtpUsuari { get; }
+        string SmtpPassword { get; }
+        bool SmtpUsarSSL { get; }
+        string EmailFrom { get; }
+        System.Collections.Generic.List<string> EmailsDestinataris { get; }
+        bool EmailNomesEnErrors { get; }
+
+        // Configuraci√≥ de cache
         int MinutsVigenciaCache { get; }
 
-        // ConfiguraciÛ de manteniment
+        // Configuraci√≥ de manteniment
         int DiesRetencioHistorial { get; }
 
-        // ConfiguraciÛ de processament
+        // Configuraci√≥ de processament
         bool ProcessarMostresEnParalel { get; }
         int MaxGrauParalelisme { get; }
 

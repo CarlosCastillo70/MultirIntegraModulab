@@ -1696,7 +1696,7 @@ Si la mostra actual i la nova són diferents,  Guardar historial, esborrar les d
 A continuació continuar endavant amb el procés de la mostra
 
 ---
-FALTA
+
 Necesito que completis CompararMostres. Recorda que una mostra es composa d'un o mes resultats. Cada resultat pot tenir un microorganisme i fins a 5 mecanismes de resistencia.
 
 CompararMostres hauria de comparar tipus de prova i tipus de mostra, però sobre tot que les combinacions microorganisme i mecanisme de resistencia siguin les mateixes.
@@ -1705,20 +1705,19 @@ Pot ser que hagi canviat l'ordre de les combinacions microorganismes i mecanisme
 
 ----
 
-FALTA
 Pots revisar tot el codi per veure on es fa anar la taula pacients_diagnostics_mostra_historial. 
 
 En versions anteriors de codi hi havia un sistema per desar versions dels canvis de l´historial. Ara no ho veig
 
 ---
-FALTA
+
 en rutina TractarMostraValidada, al GuardarHistorialMostra no s´estan desant els camps:
 
 combinacions_noves, data_resultat_nova, data_validacio_nova
 
 ---
 
-FALTA
+
 a TractarMostraValidada, al compararmostres, només s´haurien de comparar les combinacions microorganisme - mecanisme de resistencia que siguin positives, es a dir
 que tinguin mecanisme de resistencia, o be que el microorganisme sigui especial
 
@@ -1741,4 +1740,154 @@ pero aquest resum no ensenya tota la informació. Per exemple les mostres valida
 Sol ensenya 
 
 Processament finalitzat: Processament: 0 mostres | Noves: 0 | Repetides: 0 | Errors: 0 | Durada: 183.06s
+
+---
+
+A EsborrarDadesMostra s´intenta fer Soft delete de mostra_microorganisme però aquesta taula no conté 
+dt_delete ni dt_update
+
+---
+
+revisa indentacio a 
+multirdbservcehistorial
+
+---
+
+Un diagnostic (pacients_diagnostics) pot tenir un o mes mostres (pacients_diagnostics_mostra)
+
+I una mostra (pacients_diagnostics_mostra) es pot relacionar amb un o mes diagnostics.
+
+Per tenir aquesta relació, hi ha la taula mostra_microorganisme.
+
+Al fer EsborrarDadesMostra també s´hauria de fer un soft delete del registre de pacients_diagnostics relacionat
+
+sempre que aquest diagnostic no estigui relacionat amb altres mostres, i per tant, si s´esborra el diagnostic, les mostres queden orfes.
+
+Per tant, abans d'esborrar el diagnostic, comprovar que no hi hagi cap altre registre a mostra_microorganisme 
+
+amb l´id del diagnostic
+
+-----
+
+un cop finalitzat tot el procés vull enviar un email amb el log a una llista d´emails
+
+
+-----
+
+ActualitzarDataDiagnosticPacientsDiagnostics falla si mecanismeId o bé tipusmecanisme arriben com a null
+
+En aquests casos, els camps mecanisme i tipus_mecanisme, a la taula pacients_diagnostics tenen com a valor ''
+
+
+Pasa el mateix a ActualitzarDataDiagnosticPacientsDiagnosticsMostra
+
+---
+
+A program.cs, main, s´inicialitza la variable
+
+                            var emailService = new EmailService(
+                                configService.SmtpServer,
+                                configService.SmtpPort,
+                                configService.SmtpUsuari,
+                                configService.SmtpPassword,
+                                configService.SmtpUsarSSL,
+                                configService.EmailFrom,
+                                configService.EmailsDestinataris,
+                                loggerService
+                            );
+però després no es recuperen les dades de app.config
+
+---
+
+Per executar l´aplicatiu hi haurà dos entorns : producció i preproducció. En cada entorn hi haurà diferents conexions a les bases de dades modulab i multiR. També hi podrà haver diferent conexio als webservices
+
+
+---
+
+  a determinartipusincorporaciousecase , al Executar, al obtenir les dates de validacio i de resultat de la mostra, per la data de validacio es fa ús de obtenirdatavalidaciomaxima. 
+
+  Fer el mateix per la data de resultat, es a dir, obtenir la data de resultat maxima
+
+                var dataResultatOracle = mostra.DataUltimResultat;
+                var dataValidacioOracle = ObtenirDataValidacioMaxima(mostra);
+
+---
+
+a mostra hi ha la dataprimerresultat i la DataUltimResultat. entenc que si una mostra es composa per mes d´un resultat, i les dates de resultat dels diferents resultats són diferents,
+a la dataprimerresultat s'agafarà la data de resultats mes antiga dels diferents resultats i a dataultimresultat s´agafarà la data de resultats mes nova dels diferents resultats.
+
+es així ?
+
+
+----
+
+a procesarmostrapositivausecase, al ProcessarResultatPositiu, quan es fa 
+                        // Mostra diagnòstic no existeix. Es procedeix a crear-la
+                        int nouMostraDiagnosticId = _multiRRepository.CrearMostraDiagnostic(
+                            mostra.PacientSap,
+                            resultatMostra.DataPeticioTrunc,
+                            resultatMostra.MostraDescripcio,
+                            resultatMostra.ProvaDescripcio,
+                            mostra.EtiquetaId,
+                            mostra.DataUltimResultat, // agafar data resultat de la mostra (no del resultat, ja que per una mostra poden haver diferents valors)
+                            resultatMostra.DataValidacio,
+                            mecanismeId,
+                            resultatMostra.EsMicroorganismeEspecial);
+
+a resultatmostra.dataultimresultat està arribant la data mes antiga. 
+Pots revisar-ho 
+
+
+
+
+-----
+
+algo no està funcionant. tinc una mostra amb dos resultats:
+
+resultat 1 amb dataresultat 2025-10-31 07:24:38.000
+resultat 2 amb dataresultat 2025-10-31 07:24:28.000
+
+a int nouMostraDiagnosticId = _multiRRepository.CrearMostraDiagnostic
+
+mostra.DataUltimResultat té com a valor mostra.DataUltimResultat = {10/31/2025 7:24:28 AM}
+
+
+------
+
+al processarmostresusecase executarasync, arriba la coleccio de mostres. 
+
+en quin punt es carreguen aquesta colecció ?
+
+
+---
+
+al fer int nouMostraDiagnosticId = _multiRRepository.CrearMostraDiagnostic(
+
+en diferents punts del programa, com a dataresultat s´hauria de recuperar els diferents
+resultats de la mostra, i desar la data mes gran de les diferents dataresultat.
+
+es a dir, si una mostra té dos resultats:
+
+resultat 1 amb dataresultat 2025-10-31 07:24:38.000
+resultat 2 amb dataresultat 2025-10-31 07:24:28.000
+
+al fer createmostradiagnostic hauria de desar la data mes gran : 2025-10-31 07:24:38.000
+
+----
+
+en aquest cas, a mostra.dataultimresultat arriba 2025-10-31 07:24:28.000 quan hauria d´arribar 07:24:38.000 
+
+-----
+
+al fer int nouMostraDiagnosticId = _multiRRepository.CrearMostraDiagnostic(
+
+en diferents punts del programa, 
+necessito una funció que recalculi la dataresultat mes recent de les dataresultat dels diferents
+resultats de la mostra que s´esta processant
+
+---- 
+
+es mes facil. necessito una funcio que, donat un objecte de tipus Mostra, revisi els resultats, 
+i retorni el dataresultat mes recent
+
 

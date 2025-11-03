@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using MultirIntegraModulab.Infrastructure.Configuration;
 using MultirIntegraModulab.Infrastructure.ExternalServices.Logger;
 using MultirIntegraModulab.Infrastructure.ExternalServices.Pacient;
+using MultirIntegraModulab.Infrastructure.ExternalServices.Email;
 using MultirIntegraModulab.Infrastructure.Persistence.Repositories;
 using MultirIntegraModulab.Application.Services;
 using MultirIntegraModulab.Domain.Entities;
@@ -27,7 +28,11 @@ namespace MultirIntegraModulab
             var loggerService = new LoggerService();
 
             loggerService.MarcarIniciExecucio();
-            loggerService.Info("=== Iniciant aplicació MultiR ===");
+            loggerService.Info("=== Iniciant aplicació d' integració de dades de Modulab a MultiR ===");
+
+            Application.DTOs.ResumProcessamentDto resum = null;
+            bool hiHaHagutError = false;
+            Exception errorGeneral = null;
             
             try
             {
@@ -49,7 +54,7 @@ namespace MultirIntegraModulab
                 var pacientWebService = new PacientWebServiceAdapter(
                     "http://10.80.160.178/flamma/ws/consultaPacient/consultaPacient.php", 
                     loggerService);
-                loggerService.Info("✅ Web service de pacients configurat");
+                loggerService.Info("✅ Web service SAP de pacients configurat");
 
                 // 1.6 Configurar servei d'aplicació
                 var processamentService = new ProcessamentMostresService(
@@ -97,10 +102,9 @@ namespace MultirIntegraModulab
                     loggerService.Info("🔄 Començem a processar les mostres ...");
                     Console.WriteLine("\n🔄 Processant mostres...");
 
-
                     // Processar mostres utilitzant el servei d'aplicació
                     // --------------------------------------------------
-                    var resum = await processamentService.ProcessarMostresAsync(mostres);
+                    resum = await processamentService.ProcessarMostresAsync(mostres);
 
                     // Mostrar resultats
                     MostrarResumProcessament(resum, loggerService);
@@ -113,20 +117,104 @@ namespace MultirIntegraModulab
 
                 loggerService.Info("✅ Execució finalitzada correctament");
                 Console.WriteLine("\n✅ Aplicació finalitzada correctament");
-                Console.WriteLine("\nPrem qualsevol tecla per sortir...");
-                Console.ReadKey();
             }
             catch (Exception ex)
             {
+                hiHaHagutError = true;
+                errorGeneral = ex;
+                
                 loggerService.Error("\n❌ Error general en l'aplicació", ex);
                 Console.WriteLine($"\n❌ Error general: {ex.Message}");
                 Console.WriteLine($"Detalls: {ex.StackTrace}");
-                Console.WriteLine("\nPrem qualsevol tecla per sortir...");
-                Console.ReadKey();
             }
             finally
             {
                 loggerService.MarcarFinalExecucio();
+
+                // ===========================================================
+                // FASE 5: ENVIAMENT D'EMAIL (SI ESTÀ CONFIGURAT)
+                // ===========================================================
+                
+                if (configService.EnviarEmailLog)
+                {
+                    try
+                    {
+                        // Determinar si s'ha d'enviar l'email
+                        bool enviarEmail = true;
+                        
+                        if (configService.EmailNomesEnErrors && !hiHaHagutError && 
+                            (resum == null || resum.MostresAmbError == 0))
+                        {
+                            enviarEmail = false;
+                            loggerService.Info("ℹ️ No s'envia email perquè no hi ha errors (EmailNomesEnErrors=true)");
+                        }
+
+                        if (enviarEmail)
+                        {
+                            Console.WriteLine("\n📧 Enviant email amb el resum del processament...");
+                            
+                            var emailService = new EmailService(
+                                configService.SmtpServer,
+                                configService.SmtpPort,
+                                configService.SmtpUsuari,
+                                configService.SmtpPassword,
+                                configService.SmtpUsarSSL,
+                                configService.EmailFrom,
+                                configService.EmailsDestinataris,
+                                loggerService
+                            );
+
+                            // Obtenir la ruta del log d'avui
+                            string logFilePath = loggerService.ObtenirRutaLogAvui();
+
+                            bool emailEnviat = false;
+
+                            if (hiHaHagutError && errorGeneral != null)
+                            {
+                                // Enviar email d'error
+                                emailEnviat = emailService.EnviarEmailError(
+                                    "S'ha produït un error crític durant l'execució de la integració Modulab",
+                                    errorGeneral,
+                                    logFilePath
+                                );
+                            }
+                            else if (resum != null)
+                            {
+                                // Enviar email amb resum normal
+                                emailEnviat = emailService.EnviarEmailResumProcessament(
+                                    resum,
+                                    logFilePath
+                                );
+                            }
+                            else
+                            {
+                                // Cas sense resum ni error (per exemple, no hi havia mostres)
+                                emailEnviat = emailService.EnviarEmailAmbLog(
+                                    "MultiR - Integració Modulab - Sense mostres a processar",
+                                    "No s'han trobat mostres per processar en aquesta execució.",
+                                    logFilePath
+                                );
+                            }
+
+                            if (emailEnviat)
+                            {
+                                Console.WriteLine("✅ Email enviat correctament");
+                            }
+                            else
+                            {
+                                Console.WriteLine("⚠️ No s'ha pogut enviar l'email (revisa el log per més detalls)");
+                            }
+                        }
+                    }
+                    catch (Exception exEmail)
+                    {
+                        loggerService.Error("❌ Error enviant email", exEmail);
+                        Console.WriteLine($"⚠️ Error enviant email: {exEmail.Message}");
+                    }
+                }
+
+                //Console.WriteLine("\nPrem qualsevol tecla per sortir...");
+                //Console.ReadKey();
             }
         }
 
@@ -223,7 +311,7 @@ namespace MultirIntegraModulab
             Application.DTOs.ResumProcessamentDto resum,
             LoggerService logger)
         {
-            Console.WriteLine($"\n?? RESUM DEL PROCESSAMENT:");
+            Console.WriteLine($"\n📊 RESUM DEL PROCESSAMENT:");
             Console.WriteLine($"   • Total processats: {resum.TotalProcessats}");
             Console.WriteLine($"   • Noves incorporacions: {resum.NovesIncorporacions}");
             Console.WriteLine($"   • Repetides: {resum.MostresRepetides}");

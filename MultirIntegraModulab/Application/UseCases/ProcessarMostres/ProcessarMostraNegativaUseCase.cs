@@ -43,7 +43,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
     }
 
     /// <summary>
-    /// Tipus de comprovació que ha determinat que cal incorporar un negatiu
+    /// Tipus de comprobació que ha determinat que cal incorporar un negatiu
     /// </summary>
     public enum TipusComprovacioNegatiu
     {
@@ -342,7 +342,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         resultatMostra.MostraDescripcio,
                         resultatMostra.ProvaDescripcio,
                         mostra.EtiquetaId,
-                        resultatMostra.DataResultat,
+                        mostra.DataUltimResultat, // agafar data resultat de la mostra (no del resultat, ja que per una mostra poden haver diferents valors)
                         resultatMostra.DataValidacio,
                         "", // sense mecanisme
                         resultatMostra.EsMicroorganismeEspecial);

@@ -91,7 +91,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     resum.TotalProcessats++;
 
                     _logger.Info($"▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄");
-                    _logger.Info($" Processant mostra del pacient {mostra.PacientSap} , amb etiqueta : {mostra.EtiquetaId}");
+                    _logger.Info($" Processant mostra del pacient {mostra.PacientSap} i etiqueta : {mostra.EtiquetaId}");
                     _logger.Info($"▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀");
 
                     // FASE 1: Validar mostra (existència dades bàsiques)

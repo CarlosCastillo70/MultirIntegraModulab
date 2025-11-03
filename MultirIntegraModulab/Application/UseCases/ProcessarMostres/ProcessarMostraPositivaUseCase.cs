@@ -230,6 +230,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             ResultatMostra resultatMostra,
             ResultatProcessamentPositiu resultat)
         {
+
             // Construir text de la llista de mecanismes 
             var mecanismes = new List<string>();
             if (!string.IsNullOrWhiteSpace(resultatMostra.MecanismeResistencia1Id))
@@ -267,7 +268,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     (resultatMostra.MecanismeResistencia5Id, resultatMostra.MecanismeResistenciaDescrip5)
                 };
 
-                // CORRECCIO: Si el microorganisme és especial i no té cap mecanisme,
+                // Si el microorganisme és especial i no té cap mecanisme,
                 // afegir un mecanisme "buit" per garantir que es processa
                 var mecanismesAProcessar = mecanismesResultat
                     .Where(m => !string.IsNullOrWhiteSpace(m.Item1))
@@ -339,14 +340,14 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     if (mostraDiagnosticId == 0)
                     {
-                        // Mostra diagnòstic no existeix. Es procedeix a crear-la
+
                         int nouMostraDiagnosticId = _multiRRepository.CrearMostraDiagnostic(
                             mostra.PacientSap,
                             resultatMostra.DataPeticioTrunc,
                             resultatMostra.MostraDescripcio,
                             resultatMostra.ProvaDescripcio,
                             mostra.EtiquetaId,
-                            resultatMostra.DataResultat,
+                            mostra.DataUltimResultat, // agafar data resultat de la mostra (no del resultat, ja que per una mostra poden haver diferents valors)
                             resultatMostra.DataValidacio,
                             mecanismeId,
                             resultatMostra.EsMicroorganismeEspecial);
@@ -546,7 +547,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     resultatMostra.MostraDescripcio,
                     resultatMostra.ProvaDescripcio,
                     mostra.EtiquetaId,
-                    resultatMostra.DataResultat,
+                    mostra.DataUltimResultat, // agafar data resultat de la mostra (no del resultat, ja que per una mostra poden haver diferents valors)
                     resultatMostra.DataValidacio,
                     null, // Sense mecanisme (negativa)
                     false); // No és microorganisme especial

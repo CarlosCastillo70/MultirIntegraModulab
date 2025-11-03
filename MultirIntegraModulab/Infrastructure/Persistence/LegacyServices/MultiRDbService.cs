@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using MySql.Data.MySqlClient;
@@ -10,9 +11,14 @@ namespace MultirIntegraModulab
     public partial class MultiRDbService : IDbService
     {
         private readonly string _connectionString;
-        private static Dictionary<string, bool> _cacheMicroorganismesEspecials = new Dictionary<string, bool>();
+        
+        // Utilitzar ConcurrentDictionary per thread-safety
+        private static ConcurrentDictionary<string, bool> _cacheMicroorganismesEspecials = new ConcurrentDictionary<string, bool>();
         private static DateTime _ultimaCarregaCache = DateTime.MinValue;
-        private static readonly int MINUTS_VIGENCIA_CACHE = 30; // Caché vàlida per 30 minuts
+        private static readonly object _lockCache = new object();
+        
+        // Caché vàlida per 30 minuts (pot venir de configuració)
+        private static readonly int MINUTS_VIGENCIA_CACHE = 30;
 
         public MultiRDbService(string connectionString)
         {
@@ -34,7 +40,7 @@ namespace MultirIntegraModulab
 
         public string GetDatabaseType()
         {
-            return "MySQL";
+            return "MultirR (MySQL)";
         }
 
         public int GetTableRecordCount(string tableName)
@@ -107,49 +113,55 @@ namespace MultirIntegraModulab
 
         /// <summary>
         /// Carrega tots els microorganismes especials a la caché en memòria
+        /// Thread-safe amb lock
         /// </summary>
         public void CarregarMicroorganismesEspecials()
         {
-            try
+            lock (_lockCache)
             {
-                using (var conn = new MySqlConnection(_connectionString))
+                try
                 {
-                    conn.Open();
-                    
-                    string sql = @"
-                        SELECT CODI, DESCRIPCIO, ESPECIAL 
-                        FROM microorganismes 
-                        WHERE DT_DELETE IS NULL 
-                        AND ACTIU = 1 
-                        AND ESPECIAL = 1
-                        ORDER BY DESCRIPCIO";
-
-                    using (var cmd = new MySqlCommand(sql, conn))
-                    using (var reader = cmd.ExecuteReader())
+                    using (var conn = new MySqlConnection(_connectionString))
                     {
-                        _cacheMicroorganismesEspecials.Clear();
+                        conn.Open();
                         
-                        while (reader.Read())
+                        string sql = @"
+                            SELECT CODI, DESCRIPCIO, ESPECIAL 
+                            FROM microorganismes 
+                            WHERE DT_DELETE IS NULL 
+                            AND ACTIU = 1 
+                            AND ESPECIAL = 1
+                            ORDER BY DESCRIPCIO";
+
+                        using (var cmd = new MySqlCommand(sql, conn))
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            string descripcio = reader["DESCRIPCIO"].ToString();
-                            _cacheMicroorganismesEspecials[descripcio.ToLower().Trim()] = true;
+                            _cacheMicroorganismesEspecials.Clear();
+                            
+                            while (reader.Read())
+                            {
+                                string descripcio = reader["DESCRIPCIO"].ToString();
+                                string clau = descripcio.ToLower().Trim();
+                                _cacheMicroorganismesEspecials.TryAdd(clau, true);
+                            }
                         }
                     }
+                    
+                    _ultimaCarregaCache = DateTime.Now;
+                    Console.WriteLine($"📋 Carregats {_cacheMicroorganismesEspecials.Count} microorganismes especials a la caché");
                 }
-                
-                _ultimaCarregaCache = DateTime.Now;
-                Console.WriteLine($"?? Carregats {_cacheMicroorganismesEspecials.Count} microorganismes especials a la caché");
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"? Error carregant microorganismes especials: {ex.Message}");
-                throw;
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Error carregant microorganismes especials: {ex.Message}");
+                    Logger.Error($"Error carregant microorganismes especials: {ex.Message}", ex);
+                    throw;
+                }
             }
         }
 
         /// <summary>
         /// Comprova si un microorganisme és especial utilitzant la caché
+        /// Thread-safe
         /// </summary>
         /// <param name="microorganismeDescripcio">Descripció del microorganisme</param>
         /// <returns>True si és especial, False si no ho és, null si no es troba</returns>
@@ -167,9 +179,9 @@ namespace MultirIntegraModulab
             string descripcioNormalitzada = microorganismeDescripcio.ToLower().Trim();
             
             // Buscar coincidència exacta
-            if (_cacheMicroorganismesEspecials.ContainsKey(descripcioNormalitzada))
+            if (_cacheMicroorganismesEspecials.TryGetValue(descripcioNormalitzada, out bool esEspecial))
             {
-                return _cacheMicroorganismesEspecials[descripcioNormalitzada];
+                return esEspecial;
             }
 
             // Buscar coincidència parcial (conté)
@@ -195,41 +207,48 @@ namespace MultirIntegraModulab
             if (string.IsNullOrWhiteSpace(descripcio))
                 return null;
 
-            using (var conn = new MySqlConnection(_connectionString))
+            try
             {
-                conn.Open();
-                
-                string sql = @"
-                    SELECT ID, CODI, DESCRIPCIO, DT_DELETE, ACTIU, DIES_VIGENCIA, ESPECIAL
-                    FROM microorganismes 
-                    WHERE DESCRIPCIO = @descripcio 
-                    AND DT_DELETE IS NULL 
-                    AND ACTIU = 1
-                    LIMIT 1";
-
-                using (var cmd = new MySqlCommand(sql, conn))
+                using (var conn = new MySqlConnection(_connectionString))
                 {
-                    cmd.Parameters.AddWithValue("@descripcio", descripcio.Trim());
+                    conn.Open();
                     
-                    using (var reader = cmd.ExecuteReader())
+                    string sql = @"
+                        SELECT ID, CODI, DESCRIPCIO, DT_DELETE, ACTIU, DIES_VIGENCIA, ESPECIAL
+                        FROM microorganismes 
+                        WHERE DESCRIPCIO = @descripcio 
+                        AND DT_DELETE IS NULL 
+                        AND ACTIU = 1
+                        LIMIT 1";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
                     {
-                        if (reader.Read())
+                        cmd.Parameters.AddWithValue("@descripcio", descripcio.Trim());
+                        
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            return new Microorganisme
+                            if (reader.Read())
                             {
-                                Id = Convert.ToInt32(reader["ID"]),
-                                Codi = reader["CODI"].ToString(),
-                                Descripcio = reader["DESCRIPCIO"].ToString(),
-                                DtDelete = reader["DT_DELETE"] != DBNull.Value 
-                                    ? Convert.ToDateTime(reader["DT_DELETE"]) 
-                                    : (DateTime?)null,
-                                Actiu = Convert.ToInt32(reader["ACTIU"]),
-                                DiesVigencia = Convert.ToInt32(reader["DIES_VIGENCIA"]),
-                                Especial = Convert.ToBoolean(reader["ESPECIAL"])
-                            };
+                                return new Microorganisme
+                                {
+                                    Id = Convert.ToInt32(reader["ID"]),
+                                    Codi = reader["CODI"].ToString(),
+                                    Descripcio = reader["DESCRIPCIO"].ToString(),
+                                    DtDelete = reader["DT_DELETE"] != DBNull.Value 
+                                        ? Convert.ToDateTime(reader["DT_DELETE"]) 
+                                        : (DateTime?)null,
+                                    Actiu = Convert.ToInt32(reader["ACTIU"]),
+                                    DiesVigencia = Convert.ToInt32(reader["DIES_VIGENCIA"]),
+                                    Especial = Convert.ToBoolean(reader["ESPECIAL"])
+                                };
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error obtenint microorganisme '{descripcio}': {ex.Message}", ex);
             }
 
             return null;
@@ -243,37 +262,44 @@ namespace MultirIntegraModulab
         {
             var microorganismes = new List<Microorganisme>();
 
-            using (var conn = new MySqlConnection(_connectionString))
+            try
             {
-                conn.Open();
-                
-                string sql = @"
-                    SELECT ID, CODI, DESCRIPCIO, DT_DELETE, ACTIU, DIES_VIGENCIA, ESPECIAL
-                    FROM microorganismes 
-                    WHERE DT_DELETE IS NULL 
-                    AND ACTIU = 1 
-                    AND ESPECIAL = 1
-                    ORDER BY DESCRIPCIO";
-
-                using (var cmd = new MySqlCommand(sql, conn))
-                using (var reader = cmd.ExecuteReader())
+                using (var conn = new MySqlConnection(_connectionString))
                 {
-                    while (reader.Read())
+                    conn.Open();
+                    
+                    string sql = @"
+                        SELECT ID, CODI, DESCRIPCIO, DT_DELETE, ACTIU, DIES_VIGENCIA, ESPECIAL
+                        FROM microorganismes 
+                        WHERE DT_DELETE IS NULL 
+                        AND ACTIU = 1 
+                        AND ESPECIAL = 1
+                        ORDER BY DESCRIPCIO";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        microorganismes.Add(new Microorganisme
+                        while (reader.Read())
                         {
-                            Id = Convert.ToInt32(reader["ID"]),
-                            Codi = reader["CODI"].ToString(),
-                            Descripcio = reader["DESCRIPCIO"].ToString(),
-                            DtDelete = reader["DT_DELETE"] != DBNull.Value 
-                                ? Convert.ToDateTime(reader["DT_DELETE"]) 
-                                : (DateTime?)null,
-                            Actiu = Convert.ToInt32(reader["ACTIU"]),
-                            DiesVigencia = Convert.ToInt32(reader["DIES_VIGENCIA"]),
-                            Especial = Convert.ToBoolean(reader["ESPECIAL"])
-                        });
+                            microorganismes.Add(new Microorganisme
+                            {
+                                Id = Convert.ToInt32(reader["ID"]),
+                                Codi = reader["CODI"].ToString(),
+                                Descripcio = reader["DESCRIPCIO"].ToString(),
+                                DtDelete = reader["DT_DELETE"] != DBNull.Value 
+                                    ? Convert.ToDateTime(reader["DT_DELETE"]) 
+                                    : (DateTime?)null,
+                                Actiu = Convert.ToInt32(reader["ACTIU"]),
+                                DiesVigencia = Convert.ToInt32(reader["DIES_VIGENCIA"]),
+                                Especial = Convert.ToBoolean(reader["ESPECIAL"])
+                            });
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error obtenint microorganismes especials: {ex.Message}", ex);
             }
 
             return microorganismes;
@@ -290,12 +316,17 @@ namespace MultirIntegraModulab
 
         /// <summary>
         /// Neteja la caché de microorganismes
+        /// Thread-safe
         /// </summary>
         public void NetejarCacheMicroorganismes()
         {
-            _cacheMicroorganismesEspecials.Clear();
-            _ultimaCarregaCache = DateTime.MinValue;
-            Console.WriteLine("?? Caché de microorganismes netejada");
+            lock (_lockCache)
+            {
+                _cacheMicroorganismesEspecials.Clear();
+                _ultimaCarregaCache = DateTime.MinValue;
+                Console.WriteLine("🧹 Caché de microorganismes netejada");
+                Logger.Info("Caché de microorganismes netejada");
+            }
         }
 
         /// <summary>

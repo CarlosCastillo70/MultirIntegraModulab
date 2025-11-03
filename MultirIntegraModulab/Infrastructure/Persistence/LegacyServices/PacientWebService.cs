@@ -8,17 +8,18 @@ namespace MultirIntegraModulab
 {
     /// <summary>
     /// Servei per consultar dades de pacients a través del web service Flamma
+    /// La URL i el timeout es configuren segons l'entorn (producció o preproducció)
     /// </summary>
     public class PacientWebService : IDisposable
     {
         private readonly string _webServiceUrl;
         private readonly HttpClient _httpClient;
 
-        public PacientWebService(string webServiceUrl = "http://10.80.160.178/flamma/ws/consultaPacient/consultaPacient.php")
+        public PacientWebService(string webServiceUrl, int timeoutSeconds = 30)
         {
-            _webServiceUrl = webServiceUrl;
+            _webServiceUrl = webServiceUrl ?? throw new ArgumentNullException(nameof(webServiceUrl));
             _httpClient = new HttpClient();
-            _httpClient.Timeout = TimeSpan.FromSeconds(30); // Timeout de 30 segons
+            _httpClient.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
         }
 
         /// <summary>

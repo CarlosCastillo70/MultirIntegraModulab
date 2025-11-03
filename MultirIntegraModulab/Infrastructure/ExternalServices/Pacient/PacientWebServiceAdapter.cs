@@ -7,15 +7,16 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Pacient
 {
     /// <summary>
     /// Adapter que implementa la interfície IPacientWebService utilitzant el servei legacy PacientWebService
+    /// Utilitza la configuració d'entorn per obtenir la URL del WebService
     /// </summary>
     public class PacientWebServiceAdapter : IPacientWebService
     {
         private readonly PacientWebService _pacientWebService;
         private readonly ILoggerService _logger;
 
-        public PacientWebServiceAdapter(string webServiceUrl, ILoggerService logger)
+        public PacientWebServiceAdapter(string webServiceUrl, ILoggerService logger, int timeoutSeconds = 30)
         {
-            _pacientWebService = new PacientWebService(webServiceUrl);
+            _pacientWebService = new PacientWebService(webServiceUrl, timeoutSeconds);
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 

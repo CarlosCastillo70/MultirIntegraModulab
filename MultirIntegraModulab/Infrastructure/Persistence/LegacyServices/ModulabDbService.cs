@@ -34,7 +34,7 @@ namespace MultirIntegraModulab
 
         public string GetDatabaseType()
         {
-            return "Oracle";
+            return "Modulab (Oracle)";
         }
 
         public int GetTableRecordCount(string tableName)
@@ -71,7 +71,7 @@ namespace MultirIntegraModulab
             {
                 try
                 {
-                    _logger.Info("📋 Precarregant microorganismes especials des de MySQL...");
+                    _logger.Info("📋 Precarregant en caché els microorganismes especials des de MultiR...");
                     Console.WriteLine("📋 Precarregant microorganismes especials...");
                     
                     mysqlService.CarregarMicroorganismesEspecials();
@@ -101,7 +101,7 @@ namespace MultirIntegraModulab
 
                     if (limitRegistres > 0)
                     {
-                        _logger.Info($"🔎 Executant consulta Oracle amb límit de {limitRegistres} registres");
+                        _logger.Info($"🔎 Executant consulta Modulab (Oracle) amb límit de {limitRegistres} registres");
                         Console.WriteLine($"🔎 Recupero les dades de Modulab, de {diesEndarrera} dies enrera, amb límit de {limitRegistres} registres (pot trigar una estona)...");
                     }
                     else
@@ -112,7 +112,7 @@ namespace MultirIntegraModulab
 
                     using (var reader = cmd.ExecuteReader())
                     {
-                        _logger.Info("✅ Consulta Oracle executada correctament. Processant registres...");
+                        _logger.Info("✅ Consulta Modulab (Oracle) executada correctament. Processant registres...");
                         Console.WriteLine("✅ Dades recuperades. Continuo endavant");
 
                         while (reader.Read())
@@ -280,9 +280,6 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
                          AND
                          (DETALL.DATA_VALIDACIO_TRUNC >= trunc(sysdate-:diesEndarrera) OR DETALL.DATA_RESULTAT_TRUNC >= trunc(sysdate-:diesEndarrera)) 
                         )
-
-AND PA.PACIENT_SAP = '10746652'
-
                 ORDER BY PET.ETIQUETA_ID";
 
             // Afegir clàusula ROWNUM si hi ha límit especificat

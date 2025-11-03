@@ -7,8 +7,8 @@ using MultirIntegraModulab.Domain.Interfaces;
 namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
 {
     /// <summary>
-    /// Implementació del repositori per accedir a dades de Modulab (Oracle)
-    /// Aquesta classe adapta ModulabDbService a la interfície del domini
+    /// ImplementaciÃ³ del repositori per accedir a dades de Modulab (Oracle)
+    /// Aquesta classe adapta ModulabDbService a la interfÃ­cie del domini
     /// </summary>
     public class ModulabRepository : IModulabRepository
     {
@@ -30,9 +30,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         {
             try
             {
-                _logger.Info($"Carregant mostres de Modulab: {diesEndarrera} dies enrere, límit: {limitRegistres}");
+                _logger.Info($"Carregant mostres de Modulab: {diesEndarrera} dies enrere i lÃ­mit: {limitRegistres} (0 = sense lÃ­mit)");
                 
-                // El mètode és síncron a ModulabDbService, però el wrappem per consistència
+                // El mÃ¨tode Ã©s sÃ­ncron a ModulabDbService, perÃ² el wrappem per consistÃ¨ncia
                 var resultat = await Task.Run(() => 
                     _modulabDbService.CarregarResultatsDeMostres(diesEndarrera, _multiRDbService, limitRegistres));
                 
@@ -47,7 +47,7 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         }
 
         /// <summary>
-        /// Carrega les mostres per un pacient específic
+        /// Carrega les mostres per un pacient especÃ­fic
         /// </summary>
         public async Task<ColeccioMostres> CarregarMostresPerPacientAsync(string pacientSap, int diesEndarrera)
         {
@@ -91,13 +91,13 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         }
 
         /// <summary>
-        /// Carrega resultats de mostres dels últims X dies
+        /// Carrega resultats de mostres dels Ãºltims X dies
         /// </summary>
         public ColeccioMostres CarregarResultats(int diesEndarrera, int limit = 0)
         {
             try
             {
-                _logger.Info($"Carregant mostres de Modulab: {diesEndarrera} dies enrere, límit: {limit}");
+                _logger.Info($"Carregant mostres de Modulab: {diesEndarrera} dies enrere, lÃ­mit: {limit}");
                 
                 var resultat = _modulabDbService.CarregarResultatsDeMostres(diesEndarrera, _multiRDbService, limit);
                 
@@ -112,7 +112,7 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         }
 
         /// <summary>
-        /// Carrega resultats per un pacient específic
+        /// Carrega resultats per un pacient especÃ­fic
         /// </summary>
         public ColeccioMostres CarregarResultatsPerPacient(string pacientSap, int diesEndarrera, int limit = 0)
         {
@@ -154,7 +154,7 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         }
 
         /// <summary>
-        /// Obté la data actual del sistema Oracle
+        /// ObtÃ© la data actual del sistema Oracle
         /// </summary>
         public DateTime GetCurrentDate()
         {
@@ -162,7 +162,7 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         }
 
         /// <summary>
-        /// Obté el tipus de base de dades
+        /// ObtÃ© el tipus de base de dades
         /// </summary>
         public string GetDatabaseType()
         {

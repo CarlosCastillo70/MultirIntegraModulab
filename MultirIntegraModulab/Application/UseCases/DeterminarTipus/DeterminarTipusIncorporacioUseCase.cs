@@ -42,7 +42,7 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
             try
             {
                 // Obtenir les dates de la mostra de Modulab (Oracle)
-                var dataResultatOracle = mostra.DataUltimResultat;
+                var dataResultatOracle = ObtenirDataResultatMaxima(mostra);
                 var dataValidacioOracle = ObtenirDataValidacioMaxima(mostra);
 
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}DataResultat = {dataResultatOracle:dd/MM/yyyy HH:mm}, DataValidacio = {dataValidacioOracle?.ToString("dd/MM/yyyy HH:mm") ?? "null"}");
@@ -56,7 +56,7 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                 // Convertir TipusEstatResultat a TipusIncorporacio
                 var tipusIncorporacio = ConvertirTipusEstat(tipusEstat);
 
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Tipus d'incorporació : '{tipusIncorporacio.ToString().ToUpper()}' (estat: {tipusEstat})");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Tipus d'incorporació : '{tipusIncorporacio.ToString().ToUpper()}'");
 
                 return tipusIncorporacio;
             }
@@ -65,6 +65,19 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                 _logger.Error($"Error determinant tipus incorporació per mostra {mostra.EtiquetaId}", ex);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Obté la data de resultat màxima de la mostra
+        /// </summary>
+        private DateTime? ObtenirDataResultatMaxima(Mostra mostra)
+        {
+            if (mostra.Resultats == null || !mostra.Resultats.Any())
+            {
+                return null;
+            }
+
+            return mostra.Resultats.Max(r => r.DataResultat);
         }
 
         /// <summary>
