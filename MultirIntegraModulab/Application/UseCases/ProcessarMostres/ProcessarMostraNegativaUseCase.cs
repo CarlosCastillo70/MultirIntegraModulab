@@ -1,6 +1,7 @@
-using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
 using MultirIntegraModulab.Application.Helpers;
+using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
 using MultirIntegraModulab.Domain.Entities;
+using MultirIntegraModulab.Domain.Enums;
 using MultirIntegraModulab.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -375,7 +376,25 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                             diagnosticId,
                             mostraDiagnosticIdFinal);
 
-                        if (!existeixMostraMicroorganisme)
+                        if (existeixMostraMicroorganisme)
+                        {
+                            // Si existeix, és un duplicat. Ho deixem auditat i no fem res més per aquest mecanisme
+                            bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                                mostra,
+                                "DMM",
+                                resultatMostra);
+
+                            if (auditoriaCreada)
+                            {
+                                resultat.AuditoriasCreades++;
+                            }
+
+                            resultat.RelacionsDuplicades++;
+
+                            // Continuar amb el següent diagnostic a neutralitzar
+                            continue;
+                        }
+                        else
                         {
                             // Si no existeix, crear-lo
                             bool mostraMicroorganismeCreat = _multiRRepository.CrearMostraMicroorganisme(
@@ -385,6 +404,15 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                             if (mostraMicroorganismeCreat)
                             {
                                 resultat.RelacionsCreades++;
+
+                                // Ho deixem auditat i continuem endavant
+                                bool auditoriaCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "OKN", resultatMostra);
+
+                                if (auditoriaCreadaOk)
+                                {
+                                    resultat.AuditoriasCreades++;
+                                }
+
                             }
                         }
 
@@ -417,12 +445,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 // ------------------------------------
 
                 // Si arribem aquí indica que s´ha fet tota la gestió. Deixem registre auditoria (OK Negatiu)
-                bool auditoriaCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "OKN", resultatMostra);
+                //bool auditoriaCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "OKN", resultatMostra);
 
-                if (auditoriaCreadaOk)
-                {
-                    resultat.AuditoriasCreades++;
-                }
+                //if (auditoriaCreadaOk)
+                //{
+                //    resultat.AuditoriasCreades++;
+                //}
 
                 // Incrementar comptador de resultats processats
                 resultat.ResultatsProcessats++;
