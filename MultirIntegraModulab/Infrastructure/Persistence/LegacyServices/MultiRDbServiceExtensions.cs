@@ -1360,7 +1360,24 @@ namespace MultirIntegraModulab
 
             // 1. COMPARAR DATA DE RESULTAT
             var dataResultatEntrant = mostraEntrant.DataUltimResultat;
-            if (mostraExistent.DataResultat != dataResultatEntrant)
+            
+            // Comparar dates amb tolerància de segons (menys d'1 minut = no es considera canvi)
+            bool datesResultatDiferents = false;
+            if (mostraExistent.DataResultat.HasValue && dataResultatEntrant.HasValue)
+            {
+                // Calcular diferència absoluta en segons
+                var diferencia = Math.Abs((mostraExistent.DataResultat.Value - dataResultatEntrant.Value).TotalSeconds);
+                
+                // Si la diferència és 60 segons o més, es considera diferent
+                datesResultatDiferents = diferencia >= 60;
+            }
+            else if (mostraExistent.DataResultat.HasValue != dataResultatEntrant.HasValue)
+            {
+                // Una és null i l'altra no, es considera diferent
+                datesResultatDiferents = true;
+            }
+            
+            if (datesResultatDiferents)
             {
                 resultat.HiHaCanvis = true;
                 resultat.CanvisDetectats.Add($"Data resultat: {mostraExistent.DataResultat:dd/MM/yyyy HH:mm} -> {dataResultatEntrant:dd/MM/yyyy HH:mm}");
