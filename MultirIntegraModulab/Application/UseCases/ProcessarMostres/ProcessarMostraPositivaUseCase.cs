@@ -459,7 +459,10 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var diagnosticsPositius = _multiRRepository.ObtenirDiagnosticsPositiusPacientPerTipusMostra(
                         mostra.PacientSap,
                         resultatMostra.MostraDescripcio,
-                        mostra.EtiquetaId);
+                        mostra.EtiquetaId,
+                        microorganismeCodi,
+                        mecanismeId ?? ""
+                        );
 
                     if (diagnosticsPositius == null || diagnosticsPositius.Count == 0)
                     {
@@ -531,10 +534,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             int diagnosticPositiuId)
         {
             // 1. Crear la mostra diagnòstic (sense mecanisme, és negativa)
+
+            // Comprovar si ja existeix la mostra diagnòstic negativa
             int mostraDiagnosticId = _multiRRepository.ComprovarMostraDiagnosticExisteix(
                 mostra.PacientSap,
                 resultatMostra.DataPeticioTrunc,
-                resultatMostra.MostraDescripcio);
+                resultatMostra.MostraDescripcio,
+                "1");
 
             int mostraDiagnosticIdFinal = mostraDiagnosticId;
 

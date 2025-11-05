@@ -40,8 +40,8 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public int CrearDiagnosticPacient(string pacientSap, string microorganisme, string mecanisme, string tipusMecanisme) => 
             _multiRDbService.CrearDiagnosticPacient(pacientSap, microorganisme, mecanisme, tipusMecanisme);
 
-        public List<int> ObtenirDiagnosticsPositiusPacientPerTipusMostra(string pacientSap, string tipusMostra, string etiquetaExcloure = null) =>
-            _multiRDbService.ObtenirDiagnosticsPositiusPacientPerTipusMostra(pacientSap, tipusMostra, etiquetaExcloure);
+        public List<int> ObtenirDiagnosticsPositiusPacientPerTipusMostra(string pacientSap, string tipusMostra, string etiquetaExcloure = null, string microorganisme = null, string mecanisme = null) =>
+            _multiRDbService.ObtenirDiagnosticsPositiusPacientPerTipusMostra(pacientSap, tipusMostra, etiquetaExcloure, microorganisme, mecanisme);
 
         public List<int> ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(string pacientSap) =>
             _multiRDbService.ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(pacientSap);
@@ -53,8 +53,8 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
             _multiRDbService.ObtenirInformDiagnostic(diagnosticId);
 
         // Mostres diagnòstic
-        public int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra) => 
-            _multiRDbService.ComprovarMostraDiagnosticExisteix(pacientSap, dataMostra, tipusMostra);
+        public int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra, string valoracio = null) => 
+            _multiRDbService.ComprovarMostraDiagnosticExisteix(pacientSap, dataMostra, tipusMostra, valoracio);
 
         public int CrearMostraDiagnostic(string pacientSap, DateTime? dataMostra, string tipusMostra, 
             string tipusProva, string etiqueta, DateTime? dataResultat, DateTime? dataValidacio, 

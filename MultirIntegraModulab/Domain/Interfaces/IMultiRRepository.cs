@@ -58,8 +58,10 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <param name="pacientSap">Identificador del pacient</param>
         /// <param name="tipusMostra">Tipus de mostra (MOSTRA_DESCRIPCIO)</param>
         /// <param name="etiquetaExcloure">Etiqueta a excloure de la cerca (opcional)</param>
+        /// <param name="microorganisme">Microorganisme per filtrar (opcional)</param>
+        /// <param name="mecanisme">Mecanisme de resistència per filtrar (opcional)</param>
         /// <returns>Llista d'IDs de diagnòstics positius. Retorna llista buida si no n'hi ha</returns>
-        List<int> ObtenirDiagnosticsPositiusPacientPerTipusMostra(string pacientSap, string tipusMostra, string etiquetaExcloure = null);
+        List<int> ObtenirDiagnosticsPositiusPacientPerTipusMostra(string pacientSap, string tipusMostra, string etiquetaExcloure = null, string microorganisme = null, string mecanisme = null);
 
         /// <summary>
         /// Obté els IDs de tots els diagnòstics positius d'un pacient per qualsevol tipus de mostra
@@ -90,8 +92,12 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <summary>
         /// Comprova si existeix una mostra diagnòstic
         /// </summary>
+        /// <param name="pacientSap">SAP del pacient</param>
+        /// <param name="dataMostra">Data de la mostra</param>
+        /// <param name="tipusMostra">Tipus de mostra</param>
+        /// <param name="valoracio">Valoració de la mostra (opcional). Si té valor, es filtra per aquesta valoració</param>
         /// <returns>ID de la mostra si existeix, 0 si no existeix</returns>
-        int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra);
+        int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra, string valoracio = null);
 
         /// <summary>
         /// Crea una nova mostra diagnòstic
