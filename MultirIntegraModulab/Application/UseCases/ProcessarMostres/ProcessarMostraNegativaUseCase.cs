@@ -205,7 +205,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {mostra.PacientSap} SI existeix a la taula de pacients");
 
 
-            // Comprovació 1: Tipus de mostra a incorporar sempre que el pacient tingui algun positiu
+            // Comprovació 1: Tipus de mostra a incorporarSempre que el pacient tingui algun positiu
             // ------------------------------------
 
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 1: Positius vigents per qualsevol tipus de mostra");
@@ -318,6 +318,10 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             else
             {
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnosticsPositiusANeutralitzar.Count} diagnòstics positius a neutralitzar");
+                
+                // Mostrar els IDs dels diagnòstics trobats
+                string idsDiagnostics = string.Join(", ", diagnosticsPositiusANeutralitzar);
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics: [{idsDiagnostics}]");
 
                 // S´han trobat diagnòstics positius a neutralitzar, procedim a crear la mostra diagnòstic per al negatiu
                 // Procedim a crear la mostra diagnòstic per al negatiu (serà la mateixa per a tots els diagnòstics positius)

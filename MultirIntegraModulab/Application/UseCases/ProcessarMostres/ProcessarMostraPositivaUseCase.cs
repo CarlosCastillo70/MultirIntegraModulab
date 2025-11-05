@@ -476,7 +476,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                         if (altresDiagnosticsPositius.Count != 0)
                         {
-                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}📋 Creant mostres NEGATIVES per {altresDiagnosticsPositius.Count} diagnòstic(s) diferent(s)...");
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}📋 Creant mostra NEGATIVA per {altresDiagnosticsPositius.Count} diagnòstic(s) diferent(s)...");
 
                             // Per cada altre diagnòstic positiu, crear una mostra negativa
                             foreach (int altDiagnosticId in altresDiagnosticsPositius)
@@ -496,7 +496,36 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                     _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ No s'ha pogut crear mostra negativa per diagnòstic #{altDiagnosticId}");
                                 }
                             }
+
+                            // Actualitzar la data_diagnostic (de pacients_diagnostics) amb la data de mostra més antiga
+                            bool dataActualitzadaDiagnosticNegatiu = _multiRRepository.ActualitzarDataDiagnosticPacientsDiagnostics(
+                                mostra.PacientSap,
+                                microorganismeCodi,
+                                mecanismeId,
+                                mecanismeDescrip ?? mecanismeId);
+
+                            // Actualitzar la data_diagnostic (de pacients_diagnostics_mostra) amb la data de mostra més antiga
+                            bool dataActualitzadaMostraNegatiu = _multiRRepository.ActualitzarDataDiagnosticPacientsDiagnosticsMostra(
+                                mostra.PacientSap,
+                                microorganismeCodi,
+                                mecanismeId,
+                                mecanismeDescrip ?? mecanismeId);
+
+                            
+                            // Deixem registre auditoria del negatiu creat (OK Negativa)
+                            bool auditoriaNegatiuCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                                mostra,
+                                "OKN",
+                                resultatMostra,
+                                new MecanismeResistenciaInfo { Id = mecanismeId });
+
+                            if (auditoriaNegatiuCreadaOk)
+                            {
+                                resultat.AuditoriasCreades++;
+                            }
+
                         }
+
                     }
 
 
