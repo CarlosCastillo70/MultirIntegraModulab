@@ -205,7 +205,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {mostra.PacientSap} SI existeix a la taula de pacients");
 
 
-            // Comprovació 1: Tipus de mostra a incorporarSempre que el pacient tingui algun positiu
+            // Comprovació 1: Tipus de mostra a incorporar sempre que el pacient tingui algun positiu
             // ------------------------------------
 
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 1: Positius vigents per qualsevol tipus de mostra");
@@ -323,9 +323,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 string idsDiagnostics = string.Join(", ", diagnosticsPositiusANeutralitzar);
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics: [{idsDiagnostics}]");
 
+                
                 // S´han trobat diagnòstics positius a neutralitzar, procedim a crear la mostra diagnòstic per al negatiu
                 // Procedim a crear la mostra diagnòstic per al negatiu (serà la mateixa per a tots els diagnòstics positius)
-
 
                 // Pacients_diagnostics_mostres
                 // ------------------------------------
@@ -442,19 +442,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     }
 
-
                 }
 
-                // Final OK (de negatiu)
-                // ------------------------------------
-
-                // Si arribem aquí indica que s´ha fet tota la gestió. Deixem registre auditoria (OK Negatiu)
-                //bool auditoriaCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "OKN", resultatMostra);
-
-                //if (auditoriaCreadaOk)
-                //{
-                //    resultat.AuditoriasCreades++;
-                //}
 
                 // Incrementar comptador de resultats processats
                 resultat.ResultatsProcessats++;

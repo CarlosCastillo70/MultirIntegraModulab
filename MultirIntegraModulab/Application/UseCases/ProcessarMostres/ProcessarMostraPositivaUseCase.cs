@@ -1,8 +1,9 @@
-using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
 using MultirIntegraModulab.Application.Helpers;
+using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Enums;
 using MultirIntegraModulab.Domain.Interfaces;
+using Mysqlx;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -495,33 +496,34 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                 {
                                     _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ No s'ha pogut crear mostra negativa per diagnòstic #{altDiagnosticId}");
                                 }
-                            }
 
-                            // Actualitzar la data_diagnostic (de pacients_diagnostics) amb la data de mostra més antiga
-                            bool dataActualitzadaDiagnosticNegatiu = _multiRRepository.ActualitzarDataDiagnosticPacientsDiagnostics(
-                                mostra.PacientSap,
-                                microorganismeCodi,
-                                mecanismeId,
-                                mecanismeDescrip ?? mecanismeId);
 
-                            // Actualitzar la data_diagnostic (de pacients_diagnostics_mostra) amb la data de mostra més antiga
-                            bool dataActualitzadaMostraNegatiu = _multiRRepository.ActualitzarDataDiagnosticPacientsDiagnosticsMostra(
-                                mostra.PacientSap,
-                                microorganismeCodi,
-                                mecanismeId,
-                                mecanismeDescrip ?? mecanismeId);
+                                // Actualitzar la data_diagnostic (de pacients_diagnostics) amb la data de mostra més antiga
+                                bool dataActualitzadaDiagnosticNegatiu = _multiRRepository.ActualitzarDataDiagnosticPacientsDiagnostics(
+                                    mostra.PacientSap,
+                                    microorganismeCodi,
+                                    mecanismeId,
+                                    mecanismeDescrip ?? mecanismeId);
 
-                            
-                            // Deixem registre auditoria del negatiu creat (OK Negativa)
-                            bool auditoriaNegatiuCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(
-                                mostra,
-                                "OKN",
-                                resultatMostra,
-                                new MecanismeResistenciaInfo { Id = mecanismeId });
+                                // Actualitzar la data_diagnostic (de pacients_diagnostics_mostra) amb la data de mostra més antiga
+                                bool dataActualitzadaMostraNegatiu = _multiRRepository.ActualitzarDataDiagnosticPacientsDiagnosticsMostra(
+                                    mostra.PacientSap,
+                                    microorganismeCodi,
+                                    mecanismeId,
+                                    mecanismeDescrip ?? mecanismeId);
 
-                            if (auditoriaNegatiuCreadaOk)
-                            {
-                                resultat.AuditoriasCreades++;
+                                // Deixem registre auditoria del negatiu creat segons un positiu (OK Negativa contraresta Positiu)
+                                bool auditoriaNegatiuCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                                    mostra,
+                                    "OKNCP",
+                                    resultatMostra,
+                                    new MecanismeResistenciaInfo { Id = mecanismeId });
+
+                                if (auditoriaNegatiuCreadaOk)
+                                {
+                                    resultat.AuditoriasCreades++;
+                                }
+
                             }
 
                         }
