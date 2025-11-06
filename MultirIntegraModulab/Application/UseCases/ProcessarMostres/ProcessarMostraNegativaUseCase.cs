@@ -300,7 +300,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             if (tipusComprovacio == TipusComprovacioNegatiu.Comprovacio1)
             {
                 // Comprovació 1: Recuperar tots els diagnòstics positius del pacient (qualsevol tipus mostra)
-                diagnosticsPositiusANeutralitzar = _multiRRepository.ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(mostra.PacientSap);
+                diagnosticsPositiusANeutralitzar = _multiRRepository.ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(mostra.PacientSap, mostra.EtiquetaId);
             }
             else if (tipusComprovacio == TipusComprovacioNegatiu.Comprovacio2)
             {

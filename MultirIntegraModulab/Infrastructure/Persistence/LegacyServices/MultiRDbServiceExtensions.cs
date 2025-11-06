@@ -1773,8 +1773,9 @@ namespace MultirIntegraModulab
         /// Un diagnòstic positiu és aquell que té valoració = '2'
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
+        /// <param name="etiqueta">Etiqueta a excloure de la cerca (opcional)</param>
         /// <returns>Llista d'IDs de diagnòstics positius. Retorna llista buida si no n'hi ha</returns>
-        public List<int> ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(string pacientSap)
+        public List<int> ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(string pacientSap, string etiqueta = null)
         {
             var diagnostics = new List<int>();
 
@@ -1788,7 +1789,11 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔍 Recuperant diagnòstics positius del pacient {pacientSap} per qualsevol tipus de mostra");
+                    string infoEtiqueta = string.IsNullOrWhiteSpace(etiqueta)
+                        ? ""
+                        : $" excloent etiqueta '{etiqueta}'";
+
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔍 Recuperant diagnòstics positius del pacient {pacientSap} per qualsevol tipus de mostra{infoEtiqueta}");
 
                     conn.Open();
 
@@ -1802,12 +1807,26 @@ namespace MultirIntegraModulab
                             AND pdm.valoracio = '2'
                             AND pdm.dt_delete IS NULL
                             AND pd.dt_delete IS NULL  
-                            AND tm.dt_delete IS NULL
+                            AND tm.dt_delete IS NULL";
+
+                    // Afegir condició per excloure etiqueta si s'ha proporcionat
+                    if (!string.IsNullOrWhiteSpace(etiqueta))
+                    {
+                        sql += @"
+                            AND pdm.etiqueta != @etiqueta";
+                    }
+
+                    sql += @"
                         ORDER BY pd.id";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
+
+                        if (!string.IsNullOrWhiteSpace(etiqueta))
+                        {
+                            cmd.Parameters.AddWithValue("@etiqueta", etiqueta);
+                        }
 
                         using (var reader = cmd.ExecuteReader())
                         {
@@ -1818,7 +1837,7 @@ namespace MultirIntegraModulab
                         }
                     }
 
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) per pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) per pacient {pacientSap}{infoEtiqueta}");
                 }
             }
             catch (Exception ex)

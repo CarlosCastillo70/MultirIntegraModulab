@@ -68,8 +68,9 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// Utilitzat per la Comprovació 1 de mostres negatives (comportament = 1)
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
+        /// <param name="etiqueta">Etiqueta a excloure de la cerca (opcional)</param>
         /// <returns>Llista d'IDs de diagnòstics positius. Retorna llista buida si no n'hi ha</returns>
-        List<int> ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(string pacientSap);
+        List<int> ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(string pacientSap, string etiqueta = null);
 
         /// <summary>
         /// Obté els IDs dels diagnòstics positius vigents d'un pacient per un tipus de mostra 
