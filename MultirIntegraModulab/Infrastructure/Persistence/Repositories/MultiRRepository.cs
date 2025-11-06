@@ -46,8 +46,8 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public List<int> ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(string pacientSap) =>
             _multiRDbService.ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(pacientSap);
 
-        public List<int> ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra) =>
-            _multiRDbService.ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(pacientSap, tipusMostra);
+        public List<int> ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiqueta = null) =>
+            _multiRDbService.ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(pacientSap, tipusMostra, etiqueta);
 
         public DiagnosticInfo ObtenirInformDiagnostic(int diagnosticId) =>
             _multiRDbService.ObtenirInformDiagnostic(diagnosticId);

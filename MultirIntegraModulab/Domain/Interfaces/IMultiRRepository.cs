@@ -78,8 +78,9 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
         /// <param name="tipusMostra">Tipus de mostra (MOSTRA_DESCRIPCIO)</param>
+        /// <param name="etiqueta">Etiqueta a excloure de la cerca (opcional)</param>
         /// <returns>Llista d'IDs de diagnòstics positius vigents. Retorna llista buida si no n'hi ha</returns>
-        List<int> ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra);
+        List<int> ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiqueta = null);
 
         /// <summary>
         /// Obté informació d'un diagnòstic concret

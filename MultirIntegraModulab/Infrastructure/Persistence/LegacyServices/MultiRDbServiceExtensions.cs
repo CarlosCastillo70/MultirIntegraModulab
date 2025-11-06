@@ -409,7 +409,7 @@ namespace MultirIntegraModulab
                         
                         if (filsAfectades > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Actualitzada data validació per l'etiqueta {etiquetaId}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Actualitzada data validació per mostra amb etiqueta {etiquetaId}");
                             return true;
                         }
                         else
@@ -1836,8 +1836,9 @@ namespace MultirIntegraModulab
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
         /// <param name="tipusMostra">Tipus de mostra (MOSTRA_DESCRIPCIO)</param>
+        /// <param name="etiqueta">Etiqueta a excloure de la cerca (opcional)</param>
         /// <returns>Llista d'IDs de diagnòstics positius vigents. Retorna llista buida si no n'hi ha</returns>
-        public List<int> ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra)
+        public List<int> ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiqueta = null)
         {
             var diagnostics = new List<int>();
 
@@ -1851,7 +1852,11 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🔍 Recuperant diagnòstics positius vigents del pacient {pacientSap} per tipus mostra '{tipusMostra}' o equivalents (Comprovació 2)");
+                    string infoEtiqueta = string.IsNullOrWhiteSpace(etiqueta)
+                        ? ""
+                        : $" excloent etiqueta '{etiqueta}'";
+
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🔍 Recuperant diagnòstics positius vigents del pacient {pacientSap} per tipus mostra '{tipusMostra}' o equivalents{infoEtiqueta} (Comprovació 2)");
                     conn.Open();
 
                     string sql = @"
@@ -1864,8 +1869,16 @@ namespace MultirIntegraModulab
                             AND pdm.valoracio = '2'
                             AND pdm.dt_delete IS NULL
                             AND pd.dt_delete IS NULL  
-                            AND tm.dt_delete IS NULL 	
+                            AND tm.dt_delete IS NULL";
 
+                    // Afegir condició per excloure etiqueta si s'ha proporcionat
+                    if (!string.IsNullOrWhiteSpace(etiqueta))
+                    {
+                        sql += @"
+                            AND pdm.etiqueta != @etiqueta";
+                    }
+
+                    sql += @"
                             AND ( 
                                 UPPER(tm.descripcio) = UPPER(@tipusMostra) 
                                 OR tm.id IN ( 
@@ -1889,6 +1902,11 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
                         cmd.Parameters.AddWithValue("@tipusMostra", tipusMostra);
 
+                        if (!string.IsNullOrWhiteSpace(etiqueta))
+                        {
+                            cmd.Parameters.AddWithValue("@etiqueta", etiqueta);
+                        }
+
                         using (var reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -1898,7 +1916,7 @@ namespace MultirIntegraModulab
                         }
                     }
 
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) vigent(s) per pacient {pacientSap} i tipus mostra '{tipusMostra}' o equivalents");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) vigent(s) per pacient {pacientSap} i tipus mostra '{tipusMostra}' o equivalents{infoEtiqueta}");
                 }
             }
             catch (Exception ex)

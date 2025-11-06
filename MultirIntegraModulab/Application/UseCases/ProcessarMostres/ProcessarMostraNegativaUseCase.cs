@@ -307,7 +307,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 // Comprovació 2: Recuperar diagnòstics positius vigents per aquest tipus de mostra o equivalents
                 diagnosticsPositiusANeutralitzar = _multiRRepository.ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(
                     mostra.PacientSap, 
-                    resultatMostra.MostraDescripcio);
+                    resultatMostra.MostraDescripcio, 
+                    mostra.EtiquetaId);
             }
 
 
@@ -319,28 +320,28 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             {
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnosticsPositiusANeutralitzar.Count} diagnòstics positius a neutralitzar");
                 
-                // Mostrar els IDs dels diagnòstics trobats
+                // Mostrar els IDs dels diagnòstics positius trobats, que s'han de neutralitzar
                 string idsDiagnostics = string.Join(", ", diagnosticsPositiusANeutralitzar);
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics: [{idsDiagnostics}]");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics positius: [{idsDiagnostics}]");
 
                 
-                // S´han trobat diagnòstics positius a neutralitzar, procedim a crear la mostra diagnòstic per al negatiu
-                // Procedim a crear la mostra diagnòstic per al negatiu (serà la mateixa per a tots els diagnòstics positius)
+                // S´han trobat diagnòstics positius a neutralitzar, procedim a crear la mostra diagnòstic per al negatiu que neutralitzarà els positius
+                // Procedim a crear la mostra diagnòstic per al negatiu que neutralitzarà els positius (serà la mateixa per a tots els diagnòstics positius)
 
                 // Pacients_diagnostics_mostres
                 // ------------------------------------
 
-                // Comprovar si ja existeix la mostra diagnòstic
+                // Comprovar si ja existeix la mostra diagnòstic negativa que neutralitzarà els positius
                 int mostraDiagnosticId = _multiRRepository.ComprovarMostraDiagnosticExisteix(
                     mostra.PacientSap,
                     resultatMostra.DataPeticioTrunc,
-                    resultatMostra.MostraDescripcio);
+                    resultatMostra.MostraDescripcio, "1");
 
                 int mostraDiagnosticIdFinal = mostraDiagnosticId;
 
                 if (mostraDiagnosticId == 0)
                 {
-                    // Mostra diagnòstic no existeix. Es procedeix a crear-la
+                    // Mostra diagnòstic negatiu no existeix. Es procedeix a crear-la
                     int nouMostraDiagnosticId = _multiRRepository.CrearMostraDiagnostic(
                         mostra.PacientSap,
                         resultatMostra.DataPeticioTrunc,
