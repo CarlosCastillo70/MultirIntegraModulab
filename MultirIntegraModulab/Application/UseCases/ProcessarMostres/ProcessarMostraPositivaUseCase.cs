@@ -482,6 +482,39 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                             // Per cada altre diagnòstic positiu, crear una mostra negativa
                             foreach (int altDiagnosticId in altresDiagnosticsPositius)
                             {
+
+                                // Comprovar si el pacient té algun negatiu, per al tipus de mostra, amb la mateixa etiqueta
+                                // Mostres amb més d´un positiu, si no es fa aquesta comprovació, afegirà tants negatius com positius entrin
+                                // Sol ha d´entrar el primer negatiu que contraresti el positiu.
+
+                                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Comprovant si ja existeix un negatiu incorporat amb la mateixa etiqueta...");
+
+                                // Comprovar si ja existeix una mostra negativa (valoració '1') amb aquesta etiqueta específica
+                                int mostraNegativaExistent = _multiRRepository.ComprovarMostraDiagnosticPerEtiqueta(
+                                    mostra.PacientSap,
+                                    resultatMostra.MostraDescripcio,
+                                    "1", // Valoració '1' = negatiu
+                                    mostra.EtiquetaId); // Etiqueta específica de la mostra actual
+
+
+                                if (mostraNegativaExistent > 0)
+                                {
+                                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ JA existeix un negatiu per aquesta mostra (ID: {mostraNegativaExistent})");
+                                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}No cal incorporar més negatius de la mateixa etiqueta");
+
+                                    // Inserir auditoria amb codi NMRCM (ja s'ha incorporat un negatiu per aquesta mostra)
+                                    bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCM", resultatMostra);
+
+                                    if (auditoriaCreada)
+                                    {
+                                        resultat.AuditoriasCreades++;
+                                    }
+
+                                    return;
+                                }
+
+
+                                // Crea la mostra negativa
                                 bool mostraNegativaCreada = CrearMostraNegativaPerDiagnostic(
                                     mostra,
                                     resultatMostra,

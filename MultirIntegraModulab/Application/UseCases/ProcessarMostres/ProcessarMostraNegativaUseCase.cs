@@ -228,7 +228,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             {
                 if (comportament.HasValue)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus de mostra amb comportament {comportament.Value} (no aplica comprovació 1)");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus de mostra amb comportament {comportament.Value} NO aplica comprovació 1");
                 }
                 else
                 {
@@ -250,6 +250,39 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 
                 if (pacientTePositiusVigents)
                 {
+
+                    // Comprovar si el pacient té algun negatiu, per al tipus de mostra, amb la mateixa etiqueta
+                    // Mostres amb més d´un negatiu, si no es fa aquesta comprovació, afegirà tants negatius com negatius entrin
+                    // Sol ha d´entrar el primer negatiu que contraresti el positiu.
+
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Comprovant si ja existeix un negatiu incorporat amb la mateixa etiqueta...");
+
+                    // Comprovar si ja existeix una mostra negativa (valoració '1') amb aquesta etiqueta específica
+                    int mostraNegativaExistent = _multiRRepository.ComprovarMostraDiagnosticPerEtiqueta(
+                        mostra.PacientSap,
+                        resultatMostra.MostraDescripcio,
+                        "1", // Valoració '1' = negatiu
+                        mostra.EtiquetaId); // Etiqueta específica de la mostra actual
+
+                    if (mostraNegativaExistent > 0)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ JA existeix un negatiu per aquesta mostra (ID: {mostraNegativaExistent})");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}No cal incorporar més negatius de la mateixa etiqueta");
+
+                        // Inserir auditoria amb codi NMRCM (ja s'ha incorporat un negatiu per aquesta mostra)
+                        bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCM", resultatMostra);
+
+                        if (auditoriaCreada)
+                        {
+                            resultat.AuditoriasCreades++;
+                        }
+
+                        resultat.ResultatsNoIncorporats++;
+                        return;
+                    }
+
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ No existeix cap negatiu previ per aquesta mostra → Continuar amb la incorporació del negatiu");
+
                     calIncorporarNegatiu = true;
                     tipusComprovacio = TipusComprovacioNegatiu.Comprovacio2;
                 }
@@ -304,7 +337,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
             else if (tipusComprovacio == TipusComprovacioNegatiu.Comprovacio2)
             {
-                // Comprovació 2: Recuperar diagnòstics positius vigents per aquest tipus de mostra o equivalents
+                // Comprovació 2: Recuperar diagnòstics positius vigents per aquest tipus de mostra o equivalents (amb diferent etiqueta que la que s´esta processant)
                 diagnosticsPositiusANeutralitzar = _multiRRepository.ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(
                     mostra.PacientSap, 
                     resultatMostra.MostraDescripcio, 

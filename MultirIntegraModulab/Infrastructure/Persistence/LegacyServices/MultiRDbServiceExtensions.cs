@@ -630,7 +630,7 @@ namespace MultirIntegraModulab
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error comprovant combinació no incorporar {microorganisme}-{mecanisme}: {ex.Message}", ex);
+                Logger.Error($"Error comprobant combinació no incorporar {microorganisme}-{mecanisme}: {ex.Message}", ex);
                 return false;
             }
         }
@@ -1116,7 +1116,7 @@ namespace MultirIntegraModulab
 
             if (!dataMostra.HasValue)
             {
-                Logger.Warning("ComprovarMostraDiagnostic Existeix: dataMostra és null");
+                Logger.Warning("ComprovarMostraDiagnosticExisteix: dataMostra és null");
                 return 0;
             }
 
@@ -1131,10 +1131,10 @@ namespace MultirIntegraModulab
                     string sql = @"SELECT id 
                                   FROM pacients_diagnostics_mostra 
                                   WHERE npat = @pacientSap 
-                                  AND data_mostra = @dataMostra 
+                                  AND data_mostra = @dataMostra
                                   AND tipus_mostra_m = @tipusMostra";
                     
-                    // Si s'ha proporcionat valoracio, afegir filtre
+                    // Afegir filtre per valoració si s'ha proporcionat
                     if (!string.IsNullOrWhiteSpace(valoracio))
                     {
                         sql += " AND valoracio = @valoracio";
@@ -1158,6 +1158,7 @@ namespace MultirIntegraModulab
                         
                         string infoValoracio = !string.IsNullOrWhiteSpace(valoracio) ? $" + valoració '{valoracio}'" : "";
                         Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Mostra del pacient {pacientSap} + data {dataMostra:dd/MM/yyyy} + tipus '{tipusMostra}'{infoValoracio}: {(mostraId > 0 ? $"JA existeix (ID: {mostraId})" : "NO existeix")}");
+                        
                         return mostraId;
                     }
                 }
@@ -1170,18 +1171,82 @@ namespace MultirIntegraModulab
         }
 
         /// <summary>
-        /// Crea un nou registre de pacients_diagnostics_mostra
+        /// Comprova si existeix una mostra diagnòstic amb una etiqueta específica
         /// </summary>
         /// <param name="pacientSap">SAP del pacient</param>
-        /// <param name="dataMostra">Data de la mostra</param>
         /// <param name="tipusMostra">Tipus de mostra</param>
-        /// <param name="tipusProva">Tipus de prova</param>
-        /// <param name="etiqueta">Etiqueta de la mostra</param>
-        /// <param name="dataResultat">Data del resultat</param>
-        /// <param name="dataValidacio">Data de validació (pot ser null)</param>
-        /// <param name="mecanismeId">ID del mecanisme de resistència (pot ser null)</param>
-        /// <param name="esMicroorganismeEspecial">Indica si el microorganisme és especial (pot ser null)</param>
-        /// <returns>ID del nou registre si s'ha creat correctament, 0 si ha fallat</returns>
+        /// <param name="valoracio">Valoració de la mostra (1=negatiu, 2=positiu)</param>
+        /// <param name="etiqueta">Etiqueta específica de la mostra</param>
+        /// <returns>ID de la mostra si existeix, 0 si no existeix</returns>
+        public int ComprovarMostraDiagnosticPerEtiqueta(string pacientSap, string tipusMostra, string valoracio, string etiqueta)
+        {
+            if (string.IsNullOrWhiteSpace(pacientSap))
+            {
+                Logger.Warning("ComprovarMostraDiagnosticPerEtiqueta: pacientSap és null o buit");
+                return 0;
+            }
+
+            if (string.IsNullOrWhiteSpace(tipusMostra))
+            {
+                Logger.Warning("ComprovarMostraDiagnosticPerEtiqueta: tipusMostra és null o buit");
+                return 0;
+            }
+
+            if (string.IsNullOrWhiteSpace(valoracio))
+            {
+                Logger.Warning("ComprovarMostraDiagnosticPerEtiqueta: valoracio és null o buit");
+                return 0;
+            }
+
+            if (string.IsNullOrWhiteSpace(etiqueta))
+            {
+                Logger.Warning("ComprovarMostraDiagnosticPerEtiqueta: etiqueta és null o buit");
+                return 0;
+            }
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    
+                    string sql = @"SELECT id 
+                                  FROM pacients_diagnostics_mostra 
+                                  WHERE npat = @pacientSap 
+                                  AND tipus_mostra_m = @tipusMostra
+                                  AND valoracio = @valoracio
+                                  AND etiqueta = @etiqueta
+                                  AND dt_delete IS NULL";
+                    
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
+                        cmd.Parameters.AddWithValue("@tipusMostra", tipusMostra ?? "");
+                        cmd.Parameters.AddWithValue("@valoracio", valoracio);
+                        cmd.Parameters.AddWithValue("@etiqueta", etiqueta);
+                        
+                        var result = cmd.ExecuteScalar();
+                        int mostraId = result != null ? Convert.ToInt32(result) : 0;
+                        
+                        if (mostraId > 0)
+                        {
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mostra trobada per pacient {pacientSap}, tipus '{tipusMostra}', valoració '{valoracio}', etiqueta '{etiqueta}' (ID: {mostraId})");
+                        }
+                        
+                        return mostraId;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error comprovant mostra diagnòstic per etiqueta {etiqueta}: {ex.Message}", ex);
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Crea un nou registre de pacients_diagnostics_mostra
+        /// </summary>
         public int CrearMostraDiagnostic(string pacientSap, DateTime? dataMostra, string tipusMostra, 
             string tipusProva, string etiqueta, DateTime? dataResultat, DateTime? dataValidacio, 
             string mecanismeId, bool? esMicroorganismeEspecial)
@@ -1813,7 +1878,7 @@ namespace MultirIntegraModulab
                     if (!string.IsNullOrWhiteSpace(etiqueta))
                     {
                         sql += @"
-                            AND pdm.etiqueta != @etiqueta";
+                            AND (pdm.etiqueta != @etiqueta OR pdm.etiqueta IS NULL)";
                     }
 
                     sql += @"
@@ -1863,7 +1928,7 @@ namespace MultirIntegraModulab
 
             if (string.IsNullOrWhiteSpace(pacientSap) || string.IsNullOrWhiteSpace(tipusMostra))
             {
-                Logger.Warning("ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents: pacientSap o tipusMostra és null o buit");
+                Logger.Warning("ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents: pacientSap o tipusMostra són nulls o buits");
                 return diagnostics;
             }
 
@@ -1894,7 +1959,7 @@ namespace MultirIntegraModulab
                     if (!string.IsNullOrWhiteSpace(etiqueta))
                     {
                         sql += @"
-                            AND pdm.etiqueta != @etiqueta";
+                            AND (pdm.etiqueta != @etiqueta OR pdm.etiqueta IS NULL)";
                     }
 
                     sql += @"
@@ -2007,7 +2072,7 @@ namespace MultirIntegraModulab
                     if (!string.IsNullOrWhiteSpace(etiquetaExcloure))
                     {
                         sql += @"
-                            AND pdm.etiqueta != @etiquetaExcloure";
+                            AND (pdm.etiqueta != @etiquetaExcloure OR pdm.etiqueta IS NULL)";
                     }
 
                     // Afegir condició per filtrar per microorganisme si s'ha proporcionat

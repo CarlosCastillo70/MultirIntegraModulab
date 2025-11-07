@@ -102,6 +102,16 @@ namespace MultirIntegraModulab.Domain.Interfaces
         int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra, string valoracio = null);
 
         /// <summary>
+        /// Comprova si existeix una mostra diagnòstic amb una etiqueta específica
+        /// </summary>
+        /// <param name="pacientSap">SAP del pacient</param>
+        /// <param name="tipusMostra">Tipus de mostra</param>
+        /// <param name="valoracio">Valoració de la mostra (1=negatiu, 2=positiu)</param>
+        /// <param name="etiqueta">Etiqueta específica de la mostra</param>
+        /// <returns>ID de la mostra si existeix, 0 si no existeix</returns>
+        int ComprovarMostraDiagnosticPerEtiqueta(string pacientSap, string tipusMostra, string valoracio, string etiqueta);
+
+        /// <summary>
         /// Crea una nova mostra diagnòstic
         /// </summary>
         /// <returns>ID de la nova mostra creada, 0 si ha fallat</returns>

@@ -56,6 +56,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra, string valoracio = null) => 
             _multiRDbService.ComprovarMostraDiagnosticExisteix(pacientSap, dataMostra, tipusMostra, valoracio);
 
+        public int ComprovarMostraDiagnosticPerEtiqueta(string pacientSap, string tipusMostra, string valoracio, string etiqueta) =>
+            _multiRDbService.ComprovarMostraDiagnosticPerEtiqueta(pacientSap, tipusMostra, valoracio, etiqueta);
+
         public int CrearMostraDiagnostic(string pacientSap, DateTime? dataMostra, string tipusMostra, 
             string tipusProva, string etiqueta, DateTime? dataResultat, DateTime? dataValidacio, 
             string mecanismeId, bool? esMicroorganismeEspecial) => 
