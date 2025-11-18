@@ -61,7 +61,8 @@ namespace MultirIntegraModulab
                     modulabRepository,
                     multiRRepository,
                     pacientWebService,
-                    loggerService
+                    loggerService,
+                    configService
                 );
 
                 // ===========================================================

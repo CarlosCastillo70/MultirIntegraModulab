@@ -24,6 +24,9 @@ namespace MultirIntegraModulab.Domain.Interfaces
         int LimitResultatsProves { get; }
         bool EntornProduccion { get; }
 
+        // Configuració de filtratge
+        System.Collections.Generic.List<string> EtiquetesMostresAProcessar { get; }
+
         // Configuració de logging
         string LogDirectory { get; }
         string LogLevel { get; }

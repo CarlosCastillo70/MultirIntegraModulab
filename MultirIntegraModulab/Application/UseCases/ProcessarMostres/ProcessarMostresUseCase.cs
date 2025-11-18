@@ -25,6 +25,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         private readonly IMultiRRepository _multiRRepository;
         private readonly IPacientWebService _pacientWebService;
         private readonly ILoggerService _logger;
+        private readonly IConfigurationService _configurationService;
         
         // Use Cases de validació i classificació
         private readonly ValidarMostraUseCase _validarMostraUseCase;
@@ -45,12 +46,14 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             IMultiRRepository multiRRepository,
             IPacientWebService pacientWebService,
             ILoggerService logger,
+            IConfigurationService configurationService,
             ValidarMostraUseCase validarMostraUseCase)
         {
             _modulabRepository = modulabRepository ?? throw new ArgumentNullException(nameof(modulabRepository));
             _multiRRepository = multiRRepository ?? throw new ArgumentNullException(nameof(multiRRepository));
             _pacientWebService = pacientWebService; // Pot ser null
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
             _validarMostraUseCase = validarMostraUseCase ?? throw new ArgumentNullException(nameof(validarMostraUseCase));
             
             // Inicialitzar Use Cases de validació
@@ -84,7 +87,33 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 return resum;
             }
 
-            foreach (var mostra in mostres.ObtenirTotesLesMostres())
+            // Obtenir etiquetes a filtrar (si n'hi ha)
+            var etiquetesAProcessar = _configurationService.EtiquetesMostresAProcessar;
+            var totesLesMostres = mostres.ObtenirTotesLesMostres();
+
+            // Filtrar mostres si hi ha etiquetes configurades
+            if (etiquetesAProcessar.Any())
+            {
+                totesLesMostres = totesLesMostres
+                    .Where(m => etiquetesAProcessar.Contains(m.EtiquetaId))
+                    .ToList();
+
+                _logger.Info($"🔍 Filtratge activat: processant {totesLesMostres.Count} mostra(es) de {mostres.NombreTotalMostres} totals");
+                _logger.Info($"   Etiquetes filtrades: {string.Join(", ", etiquetesAProcessar)}");
+
+                if (!totesLesMostres.Any())
+                {
+                    _logger.Warning("⚠️ Cap mostra compleix els criteris de filtratge");
+                    resum.DataFiProcessament = DateTime.Now;
+                    return resum;
+                }
+            }
+            else
+            {
+                _logger.Info($"📋 Processant totes les mostres: {totesLesMostres.Count} mostra(es)");
+            }
+
+            foreach (var mostra in totesLesMostres)
             {
                 try
                 {
@@ -93,6 +122,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _logger.Info($"▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄");
                     _logger.Info($" Processant mostra del pacient {mostra.PacientSap} i etiqueta : {mostra.EtiquetaId}");
                     _logger.Info($"▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀");
+
 
                     // FASE 1: Validar mostra (existència dades bàsiques)
                     if (!_validarMostraUseCase.Executar(mostra))

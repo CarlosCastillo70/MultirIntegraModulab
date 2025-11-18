@@ -1891,3 +1891,93 @@ es mes facil. necessito una funcio que, donat un objecte de tipus Mostra, revisi
 i retorni el dataresultat mes recent
 
 
+--- 
+
+afegir dos parametres mes a ObtenirDiagnosticsPositiusPacientPerTipusMostra
+parametre 1 : microorganisme
+parametre 2 : mecanisme de resistencia
+
+si hi ha aquests paramatres filtrar. 
+
+----
+
+no ens hem entés. el que vull és que a ObtenirDiagnosticsPositiusPacientPerTipusMostra  si es visualitzi al log la llista dels id trobats
+
+---
+
+ComprovarMostraDiagnosticExisteix ha d´incloure un nou parametre opcional: valoracio
+
+Si el parametre té valor, s´ha de filtrar per a les mostres que tinguin aquesta valoracio.
+
+Modificar també interficie
+
+-----
+
+a ProcessarResultatNegatiu despres de la linea 
+ _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnosticsPositiusANeutralitzar.Count} diagnòstics positius a neutralitzar")
+
+s´hauria de treure una llista amb els diferents id que s´han trobat
+
+
+-----
+
+ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents ha d´incloure un nou parametre opcional: etiqueta
+
+Si el parametre té valor, s´ha de filtrar per als diagnostics que no tinguin aquesta etiqueta
+
+Modificar també interficie
+
+-----
+
+ObtenirDiagnosticsPositiusPacientAlgunTipusMostra  ha d´incloure un nou parametre opcional: etiqueta
+
+Si el parametre té valor, s´ha de filtrar per als diagnostics que no tinguin aquesta etiqueta
+
+Modificar també interficie
+
+----
+
+ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents no funciona bé si hi ha un registre amb etiqueta a NULL. Al fer AND pdm.etiqueta != @etiqueta"; crec que no ho gestiona bé
+
+---
+
+A ProcessarMostraNegativaUseCase al ProcessarResultatNegatiu , si s´arriba a la comprovació 2, si el pacient té positius vigents per al mateix tipus de mostra
+s´ha de comprovar si el pacient ja té algun negatiu, per al tipus de mostra, i que tingui la mateixa etiqueta
+Això voldrà dir que la mostra actual es composa de mes d´un negatiu, i que algun dels negatius anteriors, ja han afegit el negatiu.
+No volem que entri més d´un negatiu per mostra.
+Mostres amb més d´un negatiu, si no es fa aquesta comprovació, afegirà tants negatius com negatius entrin
+Teoricament sol hauria d´entrar el primer negatiu que contraresti el positiu.
+
+---
+
+la comprovacio que has fet a la linea de codi int mostraNegativaExistent = _multiRRepository.ComprovarMostraDiagnosticExisteix
+no es correcta. 
+Necessito una funcio tingui com a parametres :
+pacient, tipus de mostra, valoracio, etiqueta
+ha de comprovar si el pacient te una mostra diagnostic amb el tipus de mostra i valoracio i que l´etiqueta sigui la que li passem per parametre
+
+
+---
+
+A processarMostraPositivaUseCase, ProcessarResultatPositiu, al buscar altres diagnostics positius del mateix tipus de mostra 
+no s´esta fent del tot be, i hi ha algun cas que no s´esta gestionant be.
+
+Em de buscar el altres diagnostics que tenen una mostra positiva (per al tipus de mostra).
+
+Hi ha un cas en que el pacient te una mostra amb dos positius.
+
+Al pacient li hem inserit el primer positiu per un microorganisme i mecanisme de resistencia (ja en tenia un altre anterior per al mateix microorganisme i mecanisme de resistencia)
+
+Després s´ha inserit un altre positiu (per un altre diagnostic i mecanisme). 
+
+Al intentar detectar altres positius, tot i filtrarse per diferent numero d´estiqueta, s´ha trobat l´altre positiu que hi havia previ al primer positiu inserit.
+
+En aquest cas, el primer positiu inserit, fa que descartem els altres positius anteriors
+
+No se quina opció seria millor:
+
+1) detectar tots els altres positius, i despres recorre'ls i, si per un positiu hi ha un altre positiu amb el numero d´etiqueta, descartar-lo.
+
+2) canviar la detecció a ObtenirDiagnosticsPositiusPacientPerTipusMostra
+
+

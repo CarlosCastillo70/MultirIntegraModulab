@@ -90,6 +90,15 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>Informació del diagnòstic o null si no existeix</returns>
         DiagnosticInfo ObtenirInformDiagnostic(int diagnosticId);
 
+        /// <summary>
+        /// Comprova si un diagnòstic té alguna mostra associada amb una etiqueta específica
+        /// </summary>
+        /// <param name="diagnosticId">ID del diagnòstic</param>
+        /// <param name="etiqueta">Etiqueta de la mostra a comprovar</param>
+        /// <param name="tipusMostra">Tipus de mostra per filtrar</param>
+        /// <returns>True si el diagnòstic té alguna mostra amb aquesta etiqueta, False en cas contrari</returns>
+        bool DiagnosticTeMostraAmbEtiqueta(int diagnosticId, string etiqueta, string tipusMostra);
+
         // Mostres diagnòstic
         /// <summary>
         /// Comprova si existeix una mostra diagnòstic
@@ -148,7 +157,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         List<MultiRDbService.CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMicroorganismeMecanisme(string etiquetaId);
 
         /// <summary>
-        /// Obté les combinacions de microorganisme + mecanismes d'una mostra entrant
+        /// Obté les combinacions de microorganisme + mecanismes d'una mostraentrant
         /// NOMÉS retorna les combinacions POSITIVES: amb mecanisme de resistència o microorganisme especial
         /// </summary>
         /// <param name="mostra">Mostra entrant</param>

@@ -19,6 +19,7 @@ namespace MultirIntegraModulab.Application.Services
         private readonly IMultiRRepository _multiRRepository;
         private readonly IPacientWebService _pacientWebService;
         private readonly ILoggerService _logger;
+        private readonly IConfigurationService _configurationService;
         private readonly ProcessarMostresUseCase _processarMostresUseCase;
         private readonly ValidarMostraUseCase _validarMostraUseCase;
         private readonly ClassificarMostraUseCase _classificarMostraUseCase;
@@ -27,12 +28,14 @@ namespace MultirIntegraModulab.Application.Services
             IModulabRepository modulabRepository,
             IMultiRRepository multiRRepository,
             IPacientWebService pacientWebService,
-            ILoggerService logger)
+            ILoggerService logger,
+            IConfigurationService configurationService)
         {
             _modulabRepository = modulabRepository ?? throw new ArgumentNullException(nameof(modulabRepository));
             _multiRRepository = multiRRepository ?? throw new ArgumentNullException(nameof(multiRRepository));
             _pacientWebService = pacientWebService; // Pot ser null
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
 
             // Inicialitzar Use Cases
             _validarMostraUseCase = new ValidarMostraUseCase(_logger);
@@ -41,7 +44,8 @@ namespace MultirIntegraModulab.Application.Services
                 _modulabRepository, 
                 _multiRRepository,
                 _pacientWebService,
-                _logger, 
+                _logger,
+                _configurationService,
                 _validarMostraUseCase);
         }
 

@@ -139,6 +139,22 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
 
         #endregion
 
+        #region Configuració de Filtratge
+
+        public List<string> EtiquetesMostresAProcessar
+        {
+            get 
+            { 
+                var etiquetes = LlegirStringConfiguracio("EtiquetesMostresAProcessar", "");
+                return etiquetes.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(e => e.Trim())
+                    .Where(e => !string.IsNullOrWhiteSpace(e))
+                    .ToList();
+            }
+        }
+
+        #endregion
+
         #region Configuració de Logging
 
         public string LogDirectory
@@ -336,6 +352,11 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
             string wsUrl = WebServicePacientsUrl;
             if (wsUrl.Length > 50)
                 wsUrl = wsUrl.Substring(0, 47) + "...";
+                
+            // Obtenir resum d'etiquetes a processar
+            var etiquetesResum = EtiquetesMostresAProcessar.Any() 
+                ? $"{EtiquetesMostresAProcessar.Count} etiqueta(es): {string.Join(", ", EtiquetesMostresAProcessar)}"
+                : "Totes les mostres";
 
             return $@"
 ==============================================
@@ -349,6 +370,9 @@ ENTORN:
 CÀRREGA DE DADES:
   - Dies enrere: {DiesEndarreraCarrega}
   - Límit resultats: {(LimitResultatsProves == 0 ? "Il·limitat" : LimitResultatsProves.ToString())}
+
+FILTRATGE DE MOSTRES:
+  - Etiquetes a processar: {etiquetesResum}
 
 LOGGING:
   - Directori: {LogDirectory}

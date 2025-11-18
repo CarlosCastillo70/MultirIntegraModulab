@@ -567,7 +567,7 @@ namespace MultirIntegraModulab
                     
                     string sql = @"INSERT INTO integracio_resultats 
                                   (etiqueta, pacient_sap, microorganisme, mecanisme, 
-                                   data_resultat, data_validacio, estat, observacions, 
+                                   data_resultat, data_validacio,estat, observacions, 
                                    incorpora_modulab, dt_create, dt_update) 
                                   VALUES 
                                   (@etiqueta, @pacientSap, @microorganisme, @mecanisme, 
@@ -1005,17 +1005,15 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"🔎 Comprovant / creant diagnostic {microorganisme} [{mecanisme} - {tipusMecanisme}]");
-
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Comprovant / creant diagnostic '{microorganisme}' ['{mecanisme}' - '{tipusMecanisme}']");
 
                     conn.Open();
                     
-                    string sql = @"SELECT id 
+                    string sql = @"SELECT MAX(id) 
                                   FROM pacients_diagnostics 
                                   WHERE npat = @pacientSap 
                                   AND microorganisme = @microorganisme 
                                   AND mecanisme = @mecanisme 
-                                  AND tipus_mecanisme = @tipusMecanisme 
                                   AND dt_delete IS NULL";
                     
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -1023,13 +1021,11 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
                         cmd.Parameters.AddWithValue("@microorganisme", microorganisme ?? "");
                         cmd.Parameters.AddWithValue("@mecanisme", mecanisme ?? "");
-                        cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanisme ?? "");
                         
                         var result = cmd.ExecuteScalar();
-                        int diagnosticId = result != null ? Convert.ToInt32(result) : 0;
+                        int diagnosticId = (result != null && result != DBNull.Value) ? Convert.ToInt32(result) : 0;
                         
-
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Diagnòstic del pacient {pacientSap} + {microorganisme} + {mecanisme}: {(diagnosticId > 0 ? $"JA existeix (ID: {diagnosticId})" : "NO existeix")}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Diagnòstic del pacient {pacientSap} + '{microorganisme}' + '{mecanisme}': {(diagnosticId > 0 ? $"JA existeix (ID: {diagnosticId})" : "NO existeix")}");
 
                         return diagnosticId;
                     }
@@ -1124,15 +1120,15 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"🔎 Comprovant / creant mostra diagnòstic de tipus '{tipusMostra}'");
-
                     conn.Open();
-                    
+
+                    // Obtenir les dades de la mostra existent
                     string sql = @"SELECT id 
                                   FROM pacients_diagnostics_mostra 
                                   WHERE npat = @pacientSap 
                                   AND data_mostra = @dataMostra
-                                  AND tipus_mostra_m = @tipusMostra";
+                                  AND tipus_mostra_m = @tipusMostra
+                                  AND dt_delete IS NULL";
                     
                     // Afegir filtre per valoració si s'ha proporcionat
                     if (!string.IsNullOrWhiteSpace(valoracio))
@@ -1140,7 +1136,7 @@ namespace MultirIntegraModulab
                         sql += " AND valoracio = @valoracio";
                     }
                     
-                    sql += " AND dt_delete IS NULL";
+                    sql += " ORDER BY dt_create DESC LIMIT 1";
                     
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -1239,7 +1235,7 @@ namespace MultirIntegraModulab
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error comprovant mostra diagnòstic per etiqueta {etiqueta}: {ex.Message}", ex);
+                Logger.Error($"Error comprobant mostra diagnòstic per etiqueta {etiqueta}: {ex.Message}", ex);
                 return 0;
             }
         }
@@ -1828,9 +1824,70 @@ namespace MultirIntegraModulab
             catch (Exception ex)
             {
                 Logger.Error($"Error obtenint informació del diagnòstic {diagnosticId}: {ex.Message}", ex);
+                return null;
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Comprova si un diagnòstic té alguna mostra associada amb una etiqueta específica
+        /// </summary>
+        /// <param name="diagnosticId">ID del diagnòstic</param>
+        /// <param name="etiqueta">Etiqueta de la mostra a comprovar</param>
+        /// <param name="tipusMostra">Tipus de mostra per filtrar</param>
+        /// <returns>True si el diagnòstic té alguna mostra amb aquesta etiqueta, False en cas contrari</returns>
+        public bool DiagnosticTeMostraAmbEtiqueta(int diagnosticId, string etiqueta, string tipusMostra)
+        {
+            if (diagnosticId <= 0)
+            {
+                Logger.Warning($"DiagnosticTeMostraAmbEtiqueta: diagnosticId invàlid ({diagnosticId})");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(etiqueta))
+            {
+                Logger.Warning("DiagnosticTeMostraAmbEtiqueta: etiqueta és null o buida");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(tipusMostra))
+            {
+                Logger.Warning("DiagnosticTeMostraAmbEtiqueta: tipusMostra és null o buit");
+                return false;
+            }
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+
+                    string sql = @"
+                        SELECT COUNT(*) 
+                        FROM mostra_microorganisme mm
+                        INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id
+                        WHERE mm.pacient_diagnostic_id = @diagnosticId
+                          AND pdm.etiqueta = @etiqueta
+                          AND pdm.tipus_mostra_m = @tipusMostra
+                          AND pdm.dt_delete IS NULL";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@diagnosticId", diagnosticId);
+                        cmd.Parameters.AddWithValue("@etiqueta", etiqueta);
+                        cmd.Parameters.AddWithValue("@tipusMostra", tipusMostra);
+
+                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error comprobant si diagnòstic {diagnosticId} té mostra amb etiqueta {etiqueta} i tipus {tipusMostra}: {ex.Message}", ex);
+                return false;
+            }
         }
 
         /// <summary>
@@ -2042,11 +2099,11 @@ namespace MultirIntegraModulab
 
                     string infoFiltres = "";
                     if (!string.IsNullOrWhiteSpace(microorganisme))
-                        infoFiltres += $" microorganisme '{microorganisme}'";
+                        infoFiltres += $" i microorganisme '{microorganisme}'";
                     if (!string.IsNullOrWhiteSpace(mecanisme))
-                        infoFiltres += $" mecanisme '{mecanisme}'";
+                        infoFiltres += $" i mecanisme '{mecanisme}'";
 
-                    Logger.Info($"🔎 Buscant altres diagnòstics positius per tipus mostra '{tipusMostra}' {infoEtiqueta} i excloent{infoFiltres}");
+                    Logger.Info($"🔎 Buscant altres diagnòstics positius per tipus mostra '{tipusMostra}' {infoEtiqueta} {infoFiltres}");
 
                     conn.Open();
 
@@ -2056,17 +2113,20 @@ namespace MultirIntegraModulab
                     // - Que tenen mostres del mateix tipus de mostra
                     // - Excloent l'etiqueta especificada si s'ha proporcionat
                     // - Filtrant per microorganisme i/o mecanisme si s'han proporcionat
+
+                    // TODOCC Falta incorporar que filtri per tancat = 1 (quan hi hagi el camp)
+
+
                     string sql = @"
                         SELECT DISTINCT pd.id
                         FROM pacients_diagnostics pd
                             INNER JOIN mostra_microorganisme mm ON pd.id = mm.pacient_diagnostic_id 
                             INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id 
                         WHERE pd.npat = @pacientSap 
-                            AND pd.mecanisme IS NOT NULL 
-                            AND pd.mecanisme != ''
+                            AND pdm.valoracio = '2'
                             AND pdm.tipus_mostra_m = @tipusMostra
-                            AND pd.dt_delete IS NULL
-                            AND pdm.dt_delete IS NULL";
+                            AND pdm.dt_delete IS NULL
+                            AND pd.dt_delete IS NULL";
 
                     // Afegir condició per excloure etiqueta si s'ha proporcionat
                     if (!string.IsNullOrWhiteSpace(etiquetaExcloure))
@@ -2121,13 +2181,13 @@ namespace MultirIntegraModulab
                         }
                     }
 
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) per pacient {pacientSap} i tipus mostra '{tipusMostra}'{infoEtiqueta} i excloent {infoFiltres}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) per pacient {pacientSap} i tipus mostra '{tipusMostra}'{infoEtiqueta} {infoFiltres}");
 
                     // Mostrar els IDs trobats al log
                     if (diagnostics.Any())
                     {
                         string idsText = string.Join(", ", diagnostics);
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs de diagnòstics trobats: [{idsText}]");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels altres diagnòstics positius trobats: [{idsText}]");
                     }
 
                 }
