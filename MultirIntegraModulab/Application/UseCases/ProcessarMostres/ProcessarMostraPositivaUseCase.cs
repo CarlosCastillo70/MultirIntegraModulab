@@ -179,7 +179,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     {
                         // Si la consulta al webservice no retorna dades per al pacient
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient {mostra.PacientSap} no trobat al web service");
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Inserint auditoria amb codi NPWS i aturant processament");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}💥 Inserint auditoria amb codi NPWS i aturant processament");
 
                         // Inserir a taula log amb codi NPWS (No trobat al Web Service de Pacients)
                         bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NPWS");
@@ -330,11 +330,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // Pacients_diagnostics_mostres
                     // ------------------------------------
 
-                    // Comprovar si ja existeix la mostra diagnòstic
+                    // Comprovar si ja existeix la mostra positiva
                     int mostraDiagnosticId = _multiRRepository.ComprovarMostraDiagnosticExisteix(
                         mostra.PacientSap,
                         resultatMostra.DataPeticioTrunc,
-                        resultatMostra.MostraDescripcio);
+                        resultatMostra.MostraDescripcio, "2");
 
                     int mostraDiagnosticIdFinal = mostraDiagnosticId;
 
@@ -452,9 +452,33 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
 
-                    // Buscar altres diagnostics positius del mateix tipus de mostra, per crear mostres negatives
+
+                    // Final OK del positiu
                     // ------------------------------------
-                    
+
+                    // Si arribem aquí indica que s´ha fet tota la gestió. Deixem registre auditoria (OK Positiva)
+                    bool auditoriaCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                        mostra,
+                        "OKP",
+                        resultatMostra,
+                        new MecanismeResistenciaInfo { Id = mecanismeId });
+
+                    if (auditoriaCreadaOk)
+                    {
+                        resultat.AuditoriasCreades++;
+                    }
+
+                    // Incrementar comptador de mecanismes processats
+                    resultat.MecanismesProcessats++;
+
+
+
+
+
+
+                    // Buscar altres diagnostics positius del mateix tipus de mostra, per crear mostres negatives que els contrarestin
+                    // ------------------------------------
+
                     // Obtenir tots els diagnòstics positius del pacient per aquest tipus de mostra (excloent l'actual)
                     var altresDiagnosticsPositius = _multiRRepository.ObtenirDiagnosticsPositiusPacientPerTipusMostra(
                         mostra.PacientSap,
@@ -531,6 +555,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
 
+                    // En aquest punt tenim la llista de positius a contrarestar
                     if (diagnosticsPositius == null || diagnosticsPositius.Count == 0)
                     {
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✔️ NO hi ha altres diagnòstics positius a contrarestar amb negatiu, per aquest pacient i tipus de mostra");
@@ -563,6 +588,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                 // Mostres amb més d´un positiu, si no es fa aquesta comprovació, afegirà tants negatius com positius entrin
                                 // Sol ha d´entrar el primer negatiu que contraresti el positiu.
 
+                                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Processant negatiu per al diagnòstic '{altDiagnosticId}'");
                                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Comprovant si ja existeix un negatiu incorporat amb la mateixa etiqueta...");
 
                                 // Comprovar si ja existeix una mostra negativa (valoració '1') amb aquesta etiqueta específica
@@ -578,39 +604,50 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ JA existeix un negatiu per aquesta mostra (ID: {mostraNegativaExistent})");
                                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}No cal incorporar més negatius de la mateixa etiqueta");
 
-                                    // Inserir auditoria amb codi NMRCM (ja s'ha incorporat un negatiu per aquesta mostra)
-                                    bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCM", resultatMostra);
+                                    // Crea, si cal, la mostra negativa, i la mostra_diagnòstic
+                                    // En aquest cas no cal crear la mostra, però si el mostra_diagnostic
+                                    bool mostraNegativaCreada = CrearMostraNegativaPerDiagnostic(
+                                            mostra,
+                                            resultatMostra,
+                                            altDiagnosticId);
 
-                                    if (auditoriaCreada)
-                                    {
-                                        resultat.AuditoriasCreades++;
-                                    }
+                                    // No deixem registre auditoria, ja que el negatiu ja existia
 
-                                    return;
                                 }
                                 else
                                 {
                                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}NO existeix un negatiu per aquest diagnòstic (ID: {altDiagnosticId}) i etiqueta {mostra.EtiquetaId}");
-                                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Incorporar negatiu");
-                                }
+                                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Procedint a crear negatiu");
 
+                                    // Crea la mostra negativa, i la mostra_diagnòstic
+                                    bool mostraNegativaCreada = CrearMostraNegativaPerDiagnostic(
+                                            mostra,
+                                            resultatMostra,
+                                            altDiagnosticId);
 
-                                // Crea la mostra negativa
-                                bool mostraNegativaCreada = CrearMostraNegativaPerDiagnostic(
+                                    if (mostraNegativaCreada)
+                                    {
+                                        resultat.MostresNegativesCreades++;
+                                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra negativa creada per contrarestar el positiu del diagnòstic {altDiagnosticId}");
+                                    }
+                                    else
+                                    {
+                                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ No s'ha pogut crear mostra negativa per contrarestar al diagnòstic {altDiagnosticId}");
+                                    }
+
+                                    // Deixem registre auditoria del negatiu creat segons un positiu (OK Negatiu contraresta Positiu)
+                                    bool auditoriaNegatiuCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(
                                         mostra,
+                                        "OKNCP",
                                         resultatMostra,
-                                        altDiagnosticId);
+                                        new MecanismeResistenciaInfo { Id = mecanismeId });
 
-                                if (mostraNegativaCreada)
-                                {
-                                    resultat.MostresNegativesCreades++;
-                                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra negativa creada per contrarestar el positiu del diagnòstic {altDiagnosticId}");
-                                }
-                                else
-                                {
-                                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ No s'ha pogut crear mostra negativa per contrarestar al diagnòstic {altDiagnosticId}");
-                                }
+                                    if (auditoriaNegatiuCreadaOk)
+                                    {
+                                        resultat.AuditoriasCreades++;
+                                    }
 
+                                }
 
                                 // Actualitzar la data_diagnostic (de pacients_diagnostics) amb la data de mostra més antiga
                                 bool dataActualitzadaDiagnosticNegatiu = _multiRRepository.ActualitzarDataDiagnosticPacientsDiagnostics(
@@ -626,50 +663,19 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                     mecanismeId,
                                     mecanismeDescrip ?? mecanismeId);
 
-                                // Deixem registre auditoria del negatiu creat segons un positiu (OK Negativa contraresta Positiu)
-                                bool auditoriaNegatiuCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(
-                                    mostra,
-                                    "OKNCP",
-                                    resultatMostra,
-                                    new MecanismeResistenciaInfo { Id = mecanismeId });
-
-                                if (auditoriaNegatiuCreadaOk)
-                                {
-                                    resultat.AuditoriasCreades++;
-                                }
-
                             }
 
                         }
 
                     }
 
-
-
-                    // Final OK
-                    // ------------------------------------
-
-                    // Si arribem aquí indica que s´ha fet tota la gestió. Deixem registre auditoria (OK Positiva)
-                    bool auditoriaCreadaOk = _multiRRepository.InserirAuditoriaIntegracioModulab(
-                        mostra,
-                        "OKP",
-                        resultatMostra,
-                        new MecanismeResistenciaInfo { Id = mecanismeId });
-
-                    if (auditoriaCreadaOk)
-                    {
-                        resultat.AuditoriasCreades++;
-                    }
-
-                    // Incrementar comptador de mecanismes processats
-                    resultat.MecanismesProcessats++;
                 }
             }
         }
 
 
         /// <summary>
-        /// Crea una mostra negativa per un diagnòstic positiu específic
+        /// Crea una mostra negativa (si cal) per un diagnòstic positiu específic
         /// Una mostra negativa és una mostra del mateix tipus però que NO conté 
         /// el microorganisme/mecanisme del diagnòstic positiu
         /// </summary>

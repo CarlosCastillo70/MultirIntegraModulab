@@ -152,12 +152,12 @@ namespace MultirIntegraModulab
                         if (result != null && result != DBNull.Value)
                         {
                             int comportament = Convert.ToInt32(result);
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus mostra {codiMostra} té comportament: {comportament}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus mostra '{codiMostra}' té comportament {comportament}");
                             return comportament;
                         }
                         else
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus mostra {codiMostra} no trobat o no actiu");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus mostra '{codiMostra}' no trobat o no actiu");
                             return null;
                         }
                     }
@@ -187,13 +187,17 @@ namespace MultirIntegraModulab
             Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Tipus de mostra amb comportament 1 (incorporar si el pacient té positius)");
 
             string sql = @"
-                SELECT COUNT(*) AS positius_algun_tipus_mostra  
-                FROM pacients_diagnostics_mostra pdm 
-                JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi 
-                WHERE pdm.npat = @pacientSap 
-                  AND pdm.valoracio = '2'
-                  AND pdm.dt_delete IS NULL  
-                  AND tm.dt_delete IS NULL";
+                        SELECT COUNT(DISTINCT pd.id)  AS positius_algun_tipus_mostra 
+                        FROM pacients_diagnostics_mostra pdm 
+                            INNER JOIN mostra_microorganisme mm ON pdm.id = mm.pacient_diagnostic_mostra_id
+                            INNER JOIN pacients_diagnostics pd ON mm.pacient_diagnostic_id = pd.id
+                            INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi
+                        WHERE pdm.npat = @pacientSap 
+                            AND pdm.valoracio = '2'
+                            AND pdm.dt_delete IS NULL
+                            AND pd.dt_delete IS NULL  
+                            AND tm.dt_delete IS NULL";
+
 
             try
             {
@@ -210,7 +214,7 @@ namespace MultirIntegraModulab
                         
                         if (tePositius)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✓ Comprovació 1 COMPLERTA: Pacient {pacientSap} té {count} diagnòstics positius previs → Cal incorporar el negatiu");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✓ Comprovació 1 COMPLERTA: Pacient {pacientSap} té {count} diagnòstics positius prèvis. SI cal incorporar el negatiu");
                         }
                         else
                         {

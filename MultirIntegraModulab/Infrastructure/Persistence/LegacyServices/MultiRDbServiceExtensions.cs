@@ -698,7 +698,7 @@ namespace MultirIntegraModulab
                     ? $" ({descripcioResultat})" 
                     : "";
 
-                Logger.Info($"🔄 Inserint auditoria amb codi '{codiResultat}'{textDescripcio}");
+                Logger.Info($"💥 Inserint auditoria amb codi '{codiResultat}'{textDescripcio}");
 
                 using (var conn = new MySqlConnection(_connectionString))
                 {
