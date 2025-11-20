@@ -576,9 +576,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 // Convertir a format JSON-like
                 var combinacionsText = combinacions.Select(c =>
                 {
-                    if (c.Mecanismes != null && c.Mecanismes.Any())
+                    if (!string.IsNullOrWhiteSpace(c.MecanismeResistencia))
                     {
-                        return $"{c.Microorganisme}+[{string.Join(",", c.Mecanismes)}]";
+                        return $"{c.Microorganisme}+{c.MecanismeResistencia}";
                     }
                     else
                     {
@@ -616,9 +616,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 // Convertir a format JSON-like
                 var combinacionsText = combinacions.Select(c =>
                 {
-                    if (c.Mecanismes != null && c.Mecanismes.Any())
+                    if (!string.IsNullOrWhiteSpace(c.MecanismeResistencia))
                     {
-                        return $"{c.Microorganisme}+[{string.Join(",", c.Mecanismes)}]";
+                        return $"{c.Microorganisme}+{c.MecanismeResistencia}";
                     }
                     else
                     {
@@ -642,7 +642,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// </summary>
         private bool TractarMostraValidada(Mostra mostra, TipusIncorporacio tipusIncorporacio)
         {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Mostra validada - comprovant canvis...");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Mostra validada. Comprovant canvis");
 
             try
             {

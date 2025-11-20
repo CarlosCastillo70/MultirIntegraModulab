@@ -1,11 +1,10 @@
+using MultirIntegraModulab.Application.Helpers;
+using MultirIntegraModulab.Domain.Entities;
+using MultirIntegraModulab.Domain.Enums;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
-using MultirIntegraModulab.Domain.Entities;
-using MultirIntegraModulab.Domain.Enums;
-using MultirIntegraModulab.Application.Helpers;
 
 namespace MultirIntegraModulab
 {
@@ -38,22 +37,22 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     string sql = @"SELECT codi, incorpora_modulab 
                                   FROM mecanismes 
                                   WHERE codi = @mecanismeCodi
                                   AND dt_delete IS NULL";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@mecanismeCodi", mecanismeCodi);
-                        
+
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
                             {
                                 estat.Existeix = true;
-                                estat.IncorporaModulab = reader["incorpora_modulab"] != DBNull.Value ? 
+                                estat.IncorporaModulab = reader["incorpora_modulab"] != DBNull.Value ?
                                     Convert.ToBoolean(reader["incorpora_modulab"]) : true;
                             }
                         }
@@ -90,28 +89,28 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     string sqlCheck = @"SELECT COUNT(*) 
                                        FROM mecanismes 
                                        WHERE codi = @mecanismeCodi
                                        AND dt_delete IS NULL";
-                    
+
                     using (var cmdCheck = new MySqlCommand(sqlCheck, conn))
                     {
                         cmdCheck.Parameters.AddWithValue("@mecanismeCodi", mecanismeCodi);
                         int count = Convert.ToInt32(cmdCheck.ExecuteScalar());
-                        
+
                         if (count > 0)
                         {
                             Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mecanisme '{mecanismeCodi}' JA existeix");
                             return true;
                         }
                     }
-                    
+
                     string sqlInsert = @"INSERT INTO mecanismes 
                                         (codi, descripcio, tipus_mecanisme) 
                                         VALUES (@mecanismeCodi, @mecanismeDescripcio, @mecanismeTipus)";
-                    
+
                     using (var cmdInsert = new MySqlCommand(sqlInsert, conn))
                     {
                         cmdInsert.Parameters.AddWithValue("@mecanismeCodi", mecanismeCodi);
@@ -119,7 +118,7 @@ namespace MultirIntegraModulab
                         cmdInsert.Parameters.AddWithValue("@mecanismeTipus", mecanismeDescripcio);
 
                         int filsAfectades = cmdInsert.ExecuteNonQuery();
-                        
+
                         if (filsAfectades > 0)
                         {
                             Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mecanisme '{mecanismeCodi}' creat correctament");
@@ -155,7 +154,7 @@ namespace MultirIntegraModulab
                                   FROM pacients_diagnostics_mostra pdm 
                                   WHERE pdm.etiqueta = @etiqueta 
                                   AND pdm.dt_delete IS NULL";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@etiqueta", etiquetaId);
@@ -185,11 +184,11 @@ namespace MultirIntegraModulab
                                   AND pdm.dt_delete IS NULL
                                   ORDER BY pdm.dt_create DESC
                                   LIMIT 1";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@etiqueta", etiquetaId);
-                        
+
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -197,11 +196,11 @@ namespace MultirIntegraModulab
                                 return new EstatResultat
                                 {
                                     EtiquetaId = reader["etiqueta"]?.ToString(),
-                                    DataResultat = reader["data_resultat"] != DBNull.Value 
-                                        ? Convert.ToDateTime(reader["data_resultat"]) 
+                                    DataResultat = reader["data_resultat"] != DBNull.Value
+                                        ? Convert.ToDateTime(reader["data_resultat"])
                                         : (DateTime?)null,
-                                    DataValidacio = reader["data_validacio"] != DBNull.Value 
-                                        ? Convert.ToDateTime(reader["data_validacio"]) 
+                                    DataValidacio = reader["data_validacio"] != DBNull.Value
+                                        ? Convert.ToDateTime(reader["data_validacio"])
                                         : (DateTime?)null
                                 };
                             }
@@ -213,16 +212,16 @@ namespace MultirIntegraModulab
             {
                 Logger.Error($"Error obtenint estat de {etiquetaId}: {ex.Message}", ex);
             }
-            
+
             return null;
         }
 
         public TipusEstatResultat ClassificarEstatResultat(string etiquetaId, DateTime? dataResultatOracle, DateTime? dataValidacioOracle)
         {
             // Es comprova si la mostra (etiqueta) existeix a MultiR
-            
+
             int count = ComprovarResultatExisteix(etiquetaId);
-            
+
             if (count == 0)
             {
                 return TipusEstatResultat.Nova;
@@ -239,25 +238,25 @@ namespace MultirIntegraModulab
                 return TipusEstatResultat.Antiga;
             }
 
-            if (estatMySQL.DataResultat == dataResultatOracle && 
+            if (estatMySQL.DataResultat == dataResultatOracle &&
                 estatMySQL.DataValidacio == dataValidacioOracle)
             {
                 return TipusEstatResultat.Repetida;
             }
 
-            if (estatMySQL.DataResultat.HasValue && estatMySQL.DataValidacio.HasValue && 
+            if (estatMySQL.DataResultat.HasValue && estatMySQL.DataValidacio.HasValue &&
                 dataResultatOracle.HasValue && !dataValidacioOracle.HasValue)
             {
                 return TipusEstatResultat.Desvalidada;
             }
 
-            if (estatMySQL.DataResultat.HasValue && !estatMySQL.DataValidacio.HasValue && 
+            if (estatMySQL.DataResultat.HasValue && !estatMySQL.DataValidacio.HasValue &&
                 dataValidacioOracle.HasValue)
             {
                 return TipusEstatResultat.Validada;
             }
 
-            if (estatMySQL.DataValidacio.HasValue && dataValidacioOracle.HasValue && 
+            if (estatMySQL.DataValidacio.HasValue && dataValidacioOracle.HasValue &&
                 estatMySQL.DataValidacio != dataValidacioOracle)
             {
                 return TipusEstatResultat.Revalidada;
@@ -341,7 +340,7 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     string sql = @"UPDATE pacients_diagnostics_mostra 
                                   SET data_resultat = @dataResultat,
                                       data_validacio = @dataValidacio,
@@ -352,15 +351,15 @@ namespace MultirIntegraModulab
                                       dt_update = NOW()
                                   WHERE etiqueta = @etiqueta 
                                   AND dt_delete IS NULL";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@etiqueta", etiquetaId);
                         cmd.Parameters.AddWithValue("@dataResultat", dataResultat);
                         cmd.Parameters.AddWithValue("@dataValidacio", dataValidacio.HasValue ? (object)dataValidacio.Value : DBNull.Value);
-                        
+
                         int filsAfectades = cmd.ExecuteNonQuery();
-                        
+
                         if (filsAfectades > 0)
                         {
                             Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Actualitzades {filsAfectades} files per l'etiqueta {etiquetaId}");
@@ -388,7 +387,7 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     string sql = @"UPDATE pacients_diagnostics_mostra 
                                   SET data_validacio = @dataValidacio,
                                       estat_integracio_m = CASE 
@@ -398,15 +397,15 @@ namespace MultirIntegraModulab
                                       dt_update = NOW()
                                   WHERE etiqueta = @etiqueta 
                                   AND dt_delete IS NULL";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@etiqueta", etiquetaId);
-                        cmd.Parameters.AddWithValue("@dataValidacio", 
+                        cmd.Parameters.AddWithValue("@dataValidacio",
                             (object)dataValidacio ?? DBNull.Value);
-                        
+
                         int filsAfectades = cmd.ExecuteNonQuery();
-                        
+
                         if (filsAfectades > 0)
                         {
                             Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Actualitzada data validació per mostra amb etiqueta {etiquetaId}");
@@ -443,37 +442,37 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     string sqlComprovar = @"SELECT COUNT(*) 
                                            FROM microorganismes 
                                            WHERE UPPER(descripcio) = UPPER(@descripcio)
                                            AND actiu = 1 
                                            AND dt_delete IS NULL";
-                    
+
                     using (var cmd = new MySqlCommand(sqlComprovar, conn))
                     {
                         cmd.Parameters.AddWithValue("@descripcio", microorganismeDescripcio.Trim());
-                        
+
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
-                        
+
                         if (count > 0)
                         {
                             return true;
                         }
                     }
-                    
+
                     Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🎉 Creant nou microorganisme (no existia previament): {microorganismeDescripcio}");
-                    
+
                     string sqlCrear = @"INSERT INTO microorganismes (codi, descripcio) 
                                        VALUES (@codi, @descripcio)";
-                    
+
                     using (var cmd = new MySqlCommand(sqlCrear, conn))
                     {
                         cmd.Parameters.AddWithValue("@codi", microorganismeDescripcio.Trim());
                         cmd.Parameters.AddWithValue("@descripcio", microorganismeDescripcio.Trim());
-                        
+
                         int filasAfectades = cmd.ExecuteNonQuery();
-                        
+
                         if (filasAfectades > 0)
                         {
                             Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Microorganisme {microorganismeDescripcio} creat correctament");
@@ -507,37 +506,37 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     // Comprovar si ja existeix
                     string sqlCheck = @"SELECT COUNT(*) 
                                        FROM mostra_microorganisme 
                                        WHERE etiqueta = @etiqueta 
                                        AND microorganisme = @microorganisme
                                        AND dt_delete IS NULL";
-                    
+
                     using (var cmdCheck = new MySqlCommand(sqlCheck, conn))
                     {
                         cmdCheck.Parameters.AddWithValue("@etiqueta", etiquetaId);
                         cmdCheck.Parameters.AddWithValue("@microorganisme", microorganismeDescripcio.Trim());
-                        
+
                         int count = Convert.ToInt32(cmdCheck.ExecuteScalar());
-                        
+
                         if (count > 0)
                         {
                             return false; // Ja existeix
                         }
                     }
-                    
+
                     // Inserir nova relació
                     string sqlInsert = @"INSERT INTO mostra_microorganisme 
                                         (etiqueta, microorganisme, dt_create, dt_update) 
                                         VALUES (@etiqueta, @microorganisme, NOW(), NOW())";
-                    
+
                     using (var cmdInsert = new MySqlCommand(sqlInsert, conn))
                     {
                         cmdInsert.Parameters.AddWithValue("@etiqueta", etiquetaId);
                         cmdInsert.Parameters.AddWithValue("@microorganisme", microorganismeDescripcio.Trim());
-                        
+
                         int filsAfectades = cmdInsert.ExecuteNonQuery();
                         return filsAfectades > 0;
                     }
@@ -550,7 +549,7 @@ namespace MultirIntegraModulab
             }
         }
 
-        public bool InserirIntegracioResultats(string etiquetaId, ResultatMostra registre, string mecanismeId, 
+        public bool InserirIntegracioResultats(string etiquetaId, ResultatMostra registre, string mecanismeId,
             string estat, string observacions, bool incorporaModulab)
         {
             if (string.IsNullOrWhiteSpace(etiquetaId) || registre == null)
@@ -564,7 +563,7 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     string sql = @"INSERT INTO integracio_resultats 
                                   (etiqueta, pacient_sap, microorganisme, mecanisme, 
                                    data_resultat, data_validacio,estat, observacions, 
@@ -573,7 +572,7 @@ namespace MultirIntegraModulab
                                   (@etiqueta, @pacientSap, @microorganisme, @mecanisme, 
                                    @dataResultat, @dataValidacio, @estat, @observacions, 
                                    @incorporaModulab, NOW(), NOW())";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@etiqueta", etiquetaId);
@@ -581,12 +580,12 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@microorganisme", registre.AillamentDescripcio ?? "");
                         cmd.Parameters.AddWithValue("@mecanisme", mecanismeId ?? "");
                         cmd.Parameters.AddWithValue("@dataResultat", registre.DataResultat);
-                        cmd.Parameters.AddWithValue("@dataValidacio", 
+                        cmd.Parameters.AddWithValue("@dataValidacio",
                             registre.DataValidacio.HasValue ? (object)registre.DataValidacio.Value : DBNull.Value);
                         cmd.Parameters.AddWithValue("@estat", estat ?? "");
                         cmd.Parameters.AddWithValue("@observacions", observacions ?? "");
                         cmd.Parameters.AddWithValue("@incorporaModulab", incorporaModulab);
-                        
+
                         int filsAfectades = cmd.ExecuteNonQuery();
                         return filsAfectades > 0;
                     }
@@ -611,18 +610,18 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     string sql = @"SELECT COUNT(*) 
                                   FROM microorganisme_mecanisme_no_incorporar 
                                   WHERE microorganisme = @microorganisme 
                                   AND mecanisme = @mecanisme
                                   AND dt_delete IS NULL";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@microorganisme", microorganisme.Trim());
                         cmd.Parameters.AddWithValue("@mecanisme", mecanisme.Trim());
-                        
+
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
                         return count > 0;
                     }
@@ -694,8 +693,8 @@ namespace MultirIntegraModulab
             {
                 // Obtenir la descripció del resultat
                 string descripcioResultat = ObtenirDescripcioResultatIntegracio(codiResultat);
-                string textDescripcio = !string.IsNullOrWhiteSpace(descripcioResultat) 
-                    ? $" ({descripcioResultat})" 
+                string textDescripcio = !string.IsNullOrWhiteSpace(descripcioResultat)
+                    ? $" ({descripcioResultat})"
                     : "";
 
                 Logger.Info($"💥 Inserint auditoria amb codi '{codiResultat}'{textDescripcio}");
@@ -726,7 +725,7 @@ namespace MultirIntegraModulab
             }
         }
 
-        private bool InserirRegistreAuditoria(MySqlConnection conn, Mostra mostra, 
+        private bool InserirRegistreAuditoria(MySqlConnection conn, Mostra mostra,
             string codiResultat, ResultatMostra resultatMostra, MecanismeResistenciaInfo mecanisme)
         {
             try
@@ -781,25 +780,25 @@ namespace MultirIntegraModulab
                     cmd.Parameters.AddWithValue("@colegiat_id", resultatUtilitzar.ColegiatId ?? "");
                     cmd.Parameters.AddWithValue("@nom_metge", resultatUtilitzar.NomMetge ?? "");
                     cmd.Parameters.AddWithValue("@centre_descripcio", resultatUtilitzar.CentreDescripcio ?? "");
-                    
-                    cmd.Parameters.AddWithValue("@data_peticio_truc", 
+
+                    cmd.Parameters.AddWithValue("@data_peticio_truc",
                         resultatUtilitzar.DataPeticioTrunc.HasValue ? (object)resultatUtilitzar.DataPeticioTrunc.Value : DBNull.Value);
-                    
+
                     cmd.Parameters.AddWithValue("@aillament_descripcio", resultatUtilitzar.AillamentDescripcio ?? "");
 
-                    cmd.Parameters.AddWithValue("@mecanisme_resistencia1_id", 
+                    cmd.Parameters.AddWithValue("@mecanisme_resistencia1_id",
                         mecanisme?.Id ?? "");
-                    cmd.Parameters.AddWithValue("@mecanisme_resistencia_descrip", 
+                    cmd.Parameters.AddWithValue("@mecanisme_resistencia_descrip",
                         mecanisme?.Descripcio ?? "");
 
                     cmd.Parameters.AddWithValue("@servei_descripcio", resultatUtilitzar.ServeiDescripcio ?? "");
                     cmd.Parameters.AddWithValue("@prova_descripcio", resultatUtilitzar.ProvaDescripcio ?? "");
                     cmd.Parameters.AddWithValue("@mostra_descripcio", resultatUtilitzar.MostraDescripcio ?? "");
 
-                    cmd.Parameters.AddWithValue("@data_resultat", 
+                    cmd.Parameters.AddWithValue("@data_resultat",
                         resultatUtilitzar.DataResultat != default(DateTime) ? (object)resultatUtilitzar.DataResultat : DBNull.Value);
-                    
-                    cmd.Parameters.AddWithValue("@data_validacio", 
+
+                    cmd.Parameters.AddWithValue("@data_validacio",
                         resultatUtilitzar.DataValidacio.HasValue ? (object)resultatUtilitzar.DataValidacio.Value : DBNull.Value);
 
                     cmd.Parameters.AddWithValue("@resultat", codiResultat);
@@ -853,16 +852,16 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     string sql = "SELECT COUNT(*) FROM pacients WHERE npat = @pacientSap AND dt_delete IS NULL";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
-                        
+
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
                         bool existeix = count > 0;
-                        
+
                         // Logger.Info($"  Pacient {pacientSap}: {(existeix ? "existeix" : "no existeix")} a la taula pacients de MultiR");
                         return existeix;
                     }
@@ -888,16 +887,16 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     string sql = @"SELECT id, npat, nom, cognom1, cognom2, dt_naixement, sexe, 
                                   dt_create, dt_update, cip, abs_referencia, consolidat, usuari
                                   FROM pacients 
                                   WHERE npat = @pacientSap AND dt_delete IS NULL";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
-                        
+
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -950,7 +949,7 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     string sql = @"INSERT INTO pacients 
                                   (npat, nom, cognom1, cognom2, dt_naixement, sexe, 
                                    dt_create, dt_update, fitxa, cip, abs_referencia, 
@@ -959,7 +958,7 @@ namespace MultirIntegraModulab
                                   (@npat, @nom, @cognom1, @cognom2, @dt_naixement, @sexe,
                                    NOW(), NOW(), 'I', @cip, @abs_referencia, 
                                    'N', 'MODULAB')";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@npat", dadesPacient.PacientSap);
@@ -970,9 +969,9 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@sexe", dadesPacient.Sexe ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@cip", dadesPacient.Cip ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@abs_referencia", dadesPacient.Abs ?? (object)DBNull.Value);
-                        
+
                         int filesAfectades = cmd.ExecuteNonQuery();
-                        
+
                         if (filesAfectades > 0)
                         {
                             Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient {dadesPacient.PacientSap} creat correctament");
@@ -1008,23 +1007,23 @@ namespace MultirIntegraModulab
                     Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Comprovant / creant diagnostic '{microorganisme}' ['{mecanisme}' - '{tipusMecanisme}']");
 
                     conn.Open();
-                    
+
                     string sql = @"SELECT MAX(id) 
                                   FROM pacients_diagnostics 
                                   WHERE npat = @pacientSap 
                                   AND microorganisme = @microorganisme 
                                   AND mecanisme = @mecanisme 
                                   AND dt_delete IS NULL";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
                         cmd.Parameters.AddWithValue("@microorganisme", microorganisme ?? "");
                         cmd.Parameters.AddWithValue("@mecanisme", mecanisme ?? "");
-                        
+
                         var result = cmd.ExecuteScalar();
                         int diagnosticId = (result != null && result != DBNull.Value) ? Convert.ToInt32(result) : 0;
-                        
+
                         Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Diagnòstic del pacient {pacientSap} + '{microorganisme}' + '{mecanisme}': {(diagnosticId > 0 ? $"JA existeix (ID: {diagnosticId})" : "NO existeix")}");
 
                         return diagnosticId;
@@ -1053,7 +1052,7 @@ namespace MultirIntegraModulab
                     Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Es procedeix a crear el diagnòstic '{microorganisme}' + '{mecanisme}'");
 
                     conn.Open();
-                    
+
                     string sql = @"INSERT INTO pacients_diagnostics 
                                   (npat, data_diagnostic, usuari, bitxo, dt_create, dt_update, 
                                    microorganisme, mecanisme, tipus_mecanisme, consolidat, 
@@ -1063,17 +1062,17 @@ namespace MultirIntegraModulab
                                    @microorganisme, @mecanisme, @tipusMecanisme, 'N', 
                                    '9999-12-31', '9999-12-31');
                                   SELECT LAST_INSERT_ID();";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@npat", pacientSap);
                         cmd.Parameters.AddWithValue("@microorganisme", microorganisme ?? "");
                         cmd.Parameters.AddWithValue("@mecanisme", mecanisme ?? "");
                         cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanisme ?? "");
-						
+
                         var result = cmd.ExecuteScalar();
                         int nouDiagnosticId = result != null ? Convert.ToInt32(result) : 0;
-                        
+
                         if (nouDiagnosticId > 0)
                         {
                             Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creat diagnòstic amb id {nouDiagnosticId} per pacient {pacientSap} microorganisme '{microorganisme}' mecanisme '{mecanisme}'");
@@ -1130,32 +1129,32 @@ namespace MultirIntegraModulab
                                   AND data_mostra = @dataMostra
                                   AND tipus_mostra_m = @tipusMostra
                                   AND dt_delete IS NULL";
-                    
+
                     // Afegir filtre per valoració si s'ha proporcionat
                     if (!string.IsNullOrWhiteSpace(valoracio))
                     {
                         sql += " AND valoracio = @valoracio";
                     }
-                    
+
                     sql += " ORDER BY dt_create DESC LIMIT 1";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
                         cmd.Parameters.AddWithValue("@dataMostra", dataMostra.Value);
                         cmd.Parameters.AddWithValue("@tipusMostra", tipusMostra ?? "");
-                        
+
                         if (!string.IsNullOrWhiteSpace(valoracio))
                         {
                             cmd.Parameters.AddWithValue("@valoracio", valoracio);
                         }
-                        
+
                         var result = cmd.ExecuteScalar();
                         int mostraId = result != null ? Convert.ToInt32(result) : 0;
-                        
+
                         string infoValoracio = !string.IsNullOrWhiteSpace(valoracio) ? $" + valoració '{valoracio}'" : "";
                         Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mostra del pacient {pacientSap} + data {dataMostra:dd/MM/yyyy} + tipus '{tipusMostra}'{infoValoracio}: {(mostraId > 0 ? $"JA existeix (ID: {mostraId})" : "NO existeix")}");
-                        
+
                         return mostraId;
                     }
                 }
@@ -1206,7 +1205,7 @@ namespace MultirIntegraModulab
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     conn.Open();
-                    
+
                     string sql = @"SELECT id 
                                   FROM pacients_diagnostics_mostra 
                                   WHERE npat = @pacientSap 
@@ -1214,22 +1213,22 @@ namespace MultirIntegraModulab
                                   AND valoracio = @valoracio
                                   AND etiqueta = @etiqueta
                                   AND dt_delete IS NULL";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
                         cmd.Parameters.AddWithValue("@tipusMostra", tipusMostra ?? "");
                         cmd.Parameters.AddWithValue("@valoracio", valoracio);
                         cmd.Parameters.AddWithValue("@etiqueta", etiqueta);
-                        
+
                         var result = cmd.ExecuteScalar();
                         int mostraId = result != null ? Convert.ToInt32(result) : 0;
-                        
+
                         if (mostraId > 0)
                         {
                             Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mostra trobada per pacient {pacientSap}, tipus '{tipusMostra}', valoració '{valoracio}', etiqueta '{etiqueta}' (ID: {mostraId})");
                         }
-                        
+
                         return mostraId;
                     }
                 }
@@ -1244,8 +1243,8 @@ namespace MultirIntegraModulab
         /// <summary>
         /// Crea un nou registre de pacients_diagnostics_mostra
         /// </summary>
-        public int CrearMostraDiagnostic(string pacientSap, DateTime? dataMostra, string tipusMostra, 
-            string tipusProva, string etiqueta, DateTime? dataResultat, DateTime? dataValidacio, 
+        public int CrearMostraDiagnostic(string pacientSap, DateTime? dataMostra, string tipusMostra,
+            string tipusProva, string etiqueta, DateTime? dataResultat, DateTime? dataValidacio,
             string mecanismeId, bool? esMicroorganismeEspecial)
         {
             if (string.IsNullOrWhiteSpace(pacientSap))
@@ -1267,17 +1266,17 @@ namespace MultirIntegraModulab
                     Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Es procedeix a crear la mostra");
 
                     conn.Open();
-                    
+
                     // Determinar si la mostra és positiva: té mecanisme o el microorganisme és especial
-                    bool esMostraPositiva = !string.IsNullOrWhiteSpace(mecanismeId) || 
+                    bool esMostraPositiva = !string.IsNullOrWhiteSpace(mecanismeId) ||
                                            (esMicroorganismeEspecial.HasValue && esMicroorganismeEspecial.Value);
-                    
+
                     // Determinar valoració segons si la mostra és positiva o negativa
                     string valoracio = esMostraPositiva ? "2" : "1";
-                    
+
                     // Determinar estat d'integració segons si està validada o no
                     string estatIntegracio = dataValidacio.HasValue ? "V" : "P";
-                    
+
                     string sql = @"INSERT INTO pacients_diagnostics_mostra 
                                   (npat, data_diagnostic, data_mostra, tipus_mostra_m, usuari, 
                                    dt_create, dt_update, consolidat, valoracio, tipus_prova, 
@@ -1287,7 +1286,7 @@ namespace MultirIntegraModulab
                                    NOW(), NOW(), 'N', @valoracio, @tipusProva, 
                                    @etiqueta, @dataResultat, @dataValidacio, @estatIntegracio);
                                   SELECT LAST_INSERT_ID();";
-                    
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@npat", pacientSap);
@@ -1299,10 +1298,10 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@dataResultat", dataResultat.HasValue ? (object)dataResultat.Value : DBNull.Value);
                         cmd.Parameters.AddWithValue("@dataValidacio", dataValidacio.HasValue ? (object)dataValidacio.Value : DBNull.Value);
                         cmd.Parameters.AddWithValue("@estatIntegracio", estatIntegracio);
-                        
+
                         var result = cmd.ExecuteScalar();
                         int nouMostraId = result != null ? Convert.ToInt32(result) : 0;
-                        
+
                         if (nouMostraId > 0)
                         {
                             Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creada mostra amb id {nouMostraId} per al pacient {pacientSap} data {dataMostra:dd/MM/yyyy} tipus '{tipusMostra}' valoració '{valoracio}'");
@@ -1436,14 +1435,14 @@ namespace MultirIntegraModulab
 
             // 1. COMPARAR DATA DE RESULTAT
             var dataResultatEntrant = mostraEntrant.DataUltimResultat;
-            
+
             // Comparar dates amb tolerància de segons (menys d'1 minut = no es considera canvi)
             bool datesResultatDiferents = false;
             if (mostraExistent.DataResultat.HasValue && dataResultatEntrant.HasValue)
             {
                 // Calcular diferència absoluta en segons
                 var diferencia = Math.Abs((mostraExistent.DataResultat.Value - dataResultatEntrant.Value).TotalSeconds);
-                
+
                 // Si la diferència és 60 segons o més, es considera diferent
                 datesResultatDiferents = diferencia >= 60;
             }
@@ -1452,7 +1451,7 @@ namespace MultirIntegraModulab
                 // Una és null i l'altra no, es considera diferent
                 datesResultatDiferents = true;
             }
-            
+
             if (datesResultatDiferents)
             {
                 resultat.HiHaCanvis = true;
@@ -1482,18 +1481,18 @@ namespace MultirIntegraModulab
 
             // Convertir a conjunts (HashSet) per comparar sense tenir en compte l'ordre
             var conjuntExistent = new HashSet<string>(
-                combinacionsExistents.Select(c => c.ToString()), 
+                combinacionsExistents.Select(c => c.ToString()),
                 StringComparer.OrdinalIgnoreCase);
-            
+
             var conjuntEntrant = new HashSet<string>(
-                combinacionsEntrants.Select(c => c.ToString()), 
+                combinacionsEntrants.Select(c => c.ToString()),
                 StringComparer.OrdinalIgnoreCase);
 
             // Comprovar si hi ha diferències en les combinacions
             if (!conjuntExistent.SetEquals(conjuntEntrant))
             {
                 resultat.HiHaCanvis = true;
-                
+
                 // Identificar combinacions noves (que estan a l'entrant però no a l'existent)
                 var combinacionsNoves = conjuntEntrant.Except(conjuntExistent).ToList();
                 if (combinacionsNoves.Any())
@@ -1564,11 +1563,7 @@ namespace MultirIntegraModulab
                                 {
                                     // Crear una combinació individual per cada microorganisme + mecanisme
                                     // Això permet comparar correctament independentment de l'ordre
-                                    combinacions.Add(new CombinacioMicroorganismeMecanisme
-                                    {
-                                        Microorganisme = microorganisme.Trim(),
-                                        Mecanismes = new List<string> { mecanisme1.Trim() }
-                                    });
+                                    combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganisme.Trim(), mecanisme1.Trim()));
                                 }
                             }
                         }
@@ -1601,11 +1596,7 @@ namespace MultirIntegraModulab
 
                                 if (!string.IsNullOrWhiteSpace(microorganisme))
                                 {
-                                    combinacions.Add(new CombinacioMicroorganismeMecanisme
-                                    {
-                                        Microorganisme = microorganisme.Trim(),
-                                        Mecanismes = new List<string>()
-                                    });
+                                    combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganisme.Trim(), ""));
                                 }
                             }
                         }
@@ -1622,7 +1613,7 @@ namespace MultirIntegraModulab
 
         /// <summary>
         /// Obté les combinacions de microorganisme + mecanismes d'una mostra entrant
-        /// NOMÉS retorna les combinacions POSITIVES: amb mecanisme de resistència o microorganisme especial
+        /// NOMÉS retorna les combinacions POSITIVES: amb mecanisme de resistència o microorganisme especial ???
         /// </summary>
         public List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMostraEntrant(Mostra mostra)
         {
@@ -1633,7 +1624,25 @@ namespace MultirIntegraModulab
                 return combinacions;
             }
 
-            foreach (var resultat in mostra.Resultats)
+            // Agrupar resultats per microorganisme i mecanismes per evitar duplicats
+            // Creem una clau única per cada combinació de microorganisme + mecanismes
+            var resultatsUnics = mostra.Resultats
+                .GroupBy(r => new
+                {
+                    Microorganisme = r.AillamentDescripcio ?? "",
+                    Mec1 = r.MecanismeResistencia1Id ?? "",
+                    Mec2 = r.MecanismeResistencia2Id ?? "",
+                    Mec3 = r.MecanismeResistencia3Id ?? "",
+                    Mec4 = r.MecanismeResistencia4Id ?? "",
+                    Mec5 = r.MecanismeResistencia5Id ?? "",
+                    EsEspecial = r.EsMicroorganismeEspecial ?? false
+                })
+                .Select(g => g.First()) // Agafar només el primer de cada grup (els altres són duplicats)
+                .ToList();
+
+            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Resultats totals: {mostra.Resultats.Count}, Resultats únics: {resultatsUnics.Count}");
+
+            foreach (var resultat in resultatsUnics)
             {
                 if (string.IsNullOrWhiteSpace(resultat.AillamentDescripcio))
                 {
@@ -1658,15 +1667,16 @@ namespace MultirIntegraModulab
                 // Una combinació és positiva si:
                 // 1. Té mecanismes de resistència, o
                 // 2. El microorganisme és especial (encara que no tingui mecanismes)
-                
+
                 bool esMicroorganismeEspecial = resultat.EsMicroorganismeEspecial ?? false;
                 bool teMecanismes = mecanismes.Any();
 
+                // TODOCC Tinc els mes dubtes
                 // Si no és positiva (ni especial ni té mecanismes), saltar aquest resultat
-                if (!esMicroorganismeEspecial && !teMecanismes)
-                {
-                    continue;
-                }
+                //if (!esMicroorganismeEspecial && !teMecanismes)
+                //{
+                //    continue;
+                //}
 
                 // Obtenir el codi del microorganisme (si existeix a la taula microorganismes)
                 string microorganismeCodi = resultat.AillamentDescripcio.Trim();
@@ -1689,84 +1699,23 @@ namespace MultirIntegraModulab
                 {
                     foreach (var mecanisme in mecanismes)
                     {
-                        combinacions.Add(new CombinacioMicroorganismeMecanisme
-                        {
-                            Microorganisme = microorganismeCodi,
-                            Mecanismes = new List<string> { mecanisme }
-                        });
+                        combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganismeCodi, mecanisme));
                     }
                 }
                 else if (esMicroorganismeEspecial)
                 {
                     // Si no té mecanismes però és especial, crear una combinació només amb el microorganisme
-                    combinacions.Add(new CombinacioMicroorganismeMecanisme
-                    {
-                        Microorganisme = microorganismeCodi,
-                        Mecanismes = new List<string>()
-                    });
+                    combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganismeCodi, ""));
+                }
+                else
+                {
+                    // Si no té mecanismes, crear una combinació només amb el microorganisme
+                    combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganismeCodi, ""));
                 }
             }
 
             return combinacions;
         }
-
-        /// <summary>
-        /// Classe auxiliar per representar una combinació microorganisme + mecanismes
-        /// Cada combinació representa un parell únic de microorganisme + 1 mecanisme (o sense mecanisme si és especial)
-        /// </summary>
-        public class CombinacioMicroorganismeMecanisme
-        {
-            public string Microorganisme { get; set; }
-            public List<string> Mecanismes { get; set; }
-
-            public CombinacioMicroorganismeMecanisme()
-            {
-                Mecanismes = new List<string>();
-            }
-
-            /// <summary>
-            /// Representació en text de la combinació.
-            /// Format: "MICROORGANISME+[MECANISME]" o "MICROORGANISME" si no té mecanisme
-            /// </summary>
-            public override string ToString()
-            {
-                // Normalitzar microorganisme: trim i majúscules
-                string microNormalitzat = (Microorganisme ?? "").Trim().ToUpperInvariant();
-
-                if (Mecanismes != null && Mecanismes.Any())
-                {
-                    // Si té mecanismes, ordenar-los i normalitzar-los
-                    var mecanismesNormalitzats = Mecanismes
-                        .Where(m => !string.IsNullOrWhiteSpace(m))
-                        .Select(m => m.Trim().ToUpperInvariant())
-                        .OrderBy(m => m)
-                        .ToList();
-
-                    if (mecanismesNormalitzats.Any())
-                    {
-                        return $"{microNormalitzat}+[{string.Join(",", mecanismesNormalitzats)}]";
-                    }
-                }
-                
-                // Si no té mecanismes
-                return microNormalitzat;
-            }
-
-            public override int GetHashCode()
-            {
-                return ToString().GetHashCode();
-            }
-
-            public override bool Equals(object obj)
-            {
-                if (obj is CombinacioMicroorganismeMecanisme other)
-                {
-                    return string.Equals(ToString(), other.ToString(), StringComparison.OrdinalIgnoreCase);
-                }
-                return false;
-            }
-        }
-
         #endregion
 
         #region Diagnòstics positius
@@ -2228,7 +2177,7 @@ namespace MultirIntegraModulab
                         {
                             // 0. Obtenir els diagnòstics associats a aquesta mostra
                             var diagnosticsIds = new List<int>();
-                            
+
                             string sqlDiagnostics = @"
                                 SELECT DISTINCT mm.pacient_diagnostic_id
                                 FROM mostra_microorganisme mm
@@ -2239,7 +2188,7 @@ namespace MultirIntegraModulab
                             using (var cmdDiag = new MySqlCommand(sqlDiagnostics, conn, transaction))
                             {
                                 cmdDiag.Parameters.AddWithValue("@etiqueta", etiquetaId);
-                                
+
                                 using (var reader = cmdDiag.ExecuteReader())
                                 {
                                     while (reader.Read())
@@ -2282,7 +2231,7 @@ namespace MultirIntegraModulab
                             // 3. Esborrar diagnòstics orfes (soft delete)
                             // Per cada diagnòstic associat, comprovar si té altres mostres
                             int diagnosticsOrfesEsborrats = 0;
-                            
+
                             foreach (var diagnosticId in diagnosticsIds)
                             {
                                 // Comprovar si aquest diagnòstic té altres mostres associades
@@ -2313,7 +2262,7 @@ namespace MultirIntegraModulab
                                     {
                                         cmdEsborrar.Parameters.AddWithValue("@diagnosticId", diagnosticId);
                                         int filesAfectades = cmdEsborrar.ExecuteNonQuery();
-                                        
+
                                         if (filesAfectades > 0)
                                         {
                                             diagnosticsOrfesEsborrats++;

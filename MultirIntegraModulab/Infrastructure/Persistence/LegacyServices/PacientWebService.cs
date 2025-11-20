@@ -126,7 +126,9 @@ namespace MultirIntegraModulab
                 // Decodificar el XML interior (convertir entitats HTML a XML vàlid)
                 string xmlInteriorDecodificat = System.Web.HttpUtility.HtmlDecode(xmlInteriorCodificat);
                 
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ XML interior decodificat: {xmlInteriorDecodificat.Substring(0, Math.Min(200, xmlInteriorDecodificat.Length))} ...");
+                // Eliminar salts de línia per mostrar en una sola línia al log
+                string xmlPerLog = xmlInteriorDecodificat.Replace("\r\n", " ").Replace("\n", " ").Replace("\r", " ");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ XML interior decodificat: {xmlPerLog.Substring(0, Math.Min(200, xmlPerLog.Length))} ...");
 
                 // Processar el XML interior
                 var xmlInterior = new XmlDocument();

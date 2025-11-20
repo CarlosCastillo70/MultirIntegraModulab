@@ -154,7 +154,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// </summary>
         /// <param name="etiquetaId">Etiqueta de la mostra</param>
         /// <returns>Llista de combinacions microorganisme + mecanismes</returns>
-        List<MultiRDbService.CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMicroorganismeMecanisme(string etiquetaId);
+        List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMicroorganismeMecanisme(string etiquetaId);
 
         /// <summary>
         /// Obté les combinacions de microorganisme + mecanismes d'una mostraentrant
@@ -162,7 +162,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// </summary>
         /// <param name="mostra">Mostra entrant</param>
         /// <returns>Llista de combinacions microorganisme + mecanismes</returns>
-        List<MultiRDbService.CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMostraEntrant(Mostra mostra);
+        List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMostraEntrant(Mostra mostra);
 
         // Microorganismes
         bool? EsMicroorganismeEspecial(string microorganismeDescripcio);
