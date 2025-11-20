@@ -188,7 +188,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             
             if (!pacientExisteix)
             {
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient {mostra.PacientSap} NO existeix a la taula de pacients");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Pacient {mostra.PacientSap} NO existeix a la taula de pacients");
                 
                 // Inserir auditoria amb codi NMRCMP (No supera la comprovació de mostra amb motiu pacient)
                 bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCMP", resultatMostra);
@@ -202,7 +202,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 return;
             }
             
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {mostra.PacientSap} SI existeix a la taula de pacients");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Pacient {mostra.PacientSap} SI existeix a la taula de pacients");
 
 
             // Comprovació 1: Tipus de mostra a incorporar sempre que el pacient tingui algun positiu
@@ -228,11 +228,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             {
                 if (comportament.HasValue)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus de mostra amb comportament {comportament.Value}. Per tant NO aplica comprovació 1 i es continúa amb comprovació 2");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Tipus de mostra amb comportament {comportament.Value}. Per tant NO aplica comprovació 1 i es continúa amb comprovació 2");
                 }
                 else
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Tipus de mostra no trobat o sense comportament definit");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Tipus de mostra no trobat o sense comportament definit");
                 }
             }
 			
@@ -266,8 +266,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     if (mostraNegativaExistent > 0)
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ JA existeix un negatiu per aquesta mostra (ID: {mostraNegativaExistent})");
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}No cal donar d´alta més negatius de la mateixa etiqueta");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ JA existeix un negatiu per aquesta mostra (ID: {mostraNegativaExistent})");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}No cal donar d´alta més negatius de la mateixa etiqueta");
 
                         //// Inserir auditoria amb codi NMRCM (ja s'ha incorporat un negatiu per aquesta mostra)
                         //bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCM", resultatMostra);

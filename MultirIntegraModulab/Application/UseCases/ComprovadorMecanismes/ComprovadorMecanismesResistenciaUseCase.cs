@@ -116,7 +116,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 return;
             }
 
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registre amb microorganisme '{registre.AillamentDescripcio}' SI que té {mecanismes.Count} mecanismes de resistència. Es comproven");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registre amb microorganisme '{registre.AillamentDescripcio}' SI que té {mecanismes.Count} mecanisme(s) de resistència");
 
             // Comprovar cada mecanisme
             foreach (var mecanisme in mecanismes)
@@ -218,7 +218,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 }
                 else
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Combinació microorganisme '{resultatMostra.AillamentDescripcio}' mecanisme : '{mecanisme.id} - {mecanisme.descripcio}' NO està marcada com a NO INCORPORAR");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Combinació microorganisme '{resultatMostra.AillamentDescripcio}' i mecanisme '{mecanisme.id} - {mecanisme.descripcio}' NO està marcada com a NO INCORPORAR");
                 }
             }
         }

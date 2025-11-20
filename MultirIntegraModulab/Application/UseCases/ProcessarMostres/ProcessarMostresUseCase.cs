@@ -249,7 +249,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var resultatPositives = await _processarPositivesUseCase.ExecutarAsync(mostra, classificacio);
                     if (resultatPositives.Exitosa)
                     {
-                        resum.MostresPositives += resultatPositives.MecanismesProcessats;
+                        resum.MostresPositives++;
                     }
                     else
                     {
@@ -273,7 +273,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var resultatNegatives = await _processarNegativesUseCase.ExecutarAsync(mostra, classificacio);
                     if (resultatNegatives.Exitosa)
                     {
-                        resum.MostresNegatives += resultatNegatives.ResultatsProcessats;
+                        resum.MostresNegatives++;
                     }
                     else
                     {
@@ -285,8 +285,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var resultatMixta = await _processarMixtaUseCase.ExecutarAsync(mostra, classificacio);
                     if (resultatMixta.Exitosa)
                     {
-                        resum.MostresPositives += resultatMixta.MecanismesProcessats;
-                        resum.MostresNegatives += resultatMixta.ResultatsProcessatsNegatius;
+                        resum.MostresMixtes++;
                     }
                     else
                     {

@@ -88,7 +88,7 @@ namespace MultirIntegraModulab
         {
             try
             {
-                Logger.Info($"  Processant resposta XML per pacient {pacientSap}...");
+                Logger.Info($"  Processant resposta XML per al pacient {pacientSap}");
                 
                 var xmlDoc = new XmlDocument();
                 xmlDoc.LoadXml(responseXml);

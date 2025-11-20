@@ -150,7 +150,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 return;
             }
 
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Pacient {mostra.PacientSap} NO existeix a MultiR, consultant web service SAP ...");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Pacient {mostra.PacientSap} NO existeix a MultiR. Consultant web service SAP");
 
             // 2. Si el pacient no existeix, intentar recuperar les dades del web service
             if (_pacientWebService != null)

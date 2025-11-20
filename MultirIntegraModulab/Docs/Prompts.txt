@@ -1980,4 +1980,8 @@ No se quina opció seria millor:
 
 2) canviar la detecció a ObtenirDiagnosticsPositiusPacientPerTipusMostra
 
+----
+
+a resum hi ha mostres positives i mostres negatives. en algun casos son mostres que contenen positius i negatius.
+hi hauria d´haver també un apartat per comptabilitzar aquestes tipus de mostra
 

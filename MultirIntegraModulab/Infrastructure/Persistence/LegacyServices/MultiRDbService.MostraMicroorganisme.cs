@@ -29,7 +29,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"🔎 Comprovant / creant registre mostra_microorganisme {diagnosticId} {mostraDiagnosticId}");
+                    Logger.Info($"🔎 Comprovant / creant mostra_microorganisme {diagnosticId} {mostraDiagnosticId}");
 
                     conn.Open();
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -39,7 +39,7 @@ namespace MultirIntegraModulab
 
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
 
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Registre de mostra microorganisme {diagnosticId}, {mostraDiagnosticId} : {(count > 0 ? $"JA existeix" : "NO existeix")}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Mostra microorganisme {diagnosticId}, {mostraDiagnosticId} : {(count > 0 ? $"JA existeix" : "NO existeix")}");
 
                         return count > 0;
                     }
@@ -71,7 +71,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Es procedeix a crear el registre mostra_microorganisme");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Es procedeix a crear la mostra_microorganisme");
 
                     conn.Open();
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -83,12 +83,12 @@ namespace MultirIntegraModulab
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creat registre a mostra_microorganisme : diagnostic_id = {diagnosticId}, mostra_diagnostic_id = {mostraDiagnosticId}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creada mostra_microorganisme diagnostic_id {diagnosticId} mostra_diagnostic_id {mostraDiagnosticId}");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠ No s'ha pogut crear el registre mostra_microorganisme");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠ No s'ha pogut crear la mostra_microorganisme");
                         }
 
 
@@ -147,7 +147,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"🔄 Actualitzant data_diagnostic (de pacients_diagnostics) per pacient {pacientSap}");
+                    Logger.Info($"🔄 Actualitzant data_diagnostic (pacients_diagnostics) per al pacient {pacientSap}");
 
                     conn.Open();
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -233,7 +233,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"🔄 Actualitzant data_diagnostic (de pacients_diagnostics_mostra) per pacient {pacientSap}");
+                    Logger.Info($"🔄 Actualitzant data_diagnostic (pacients_diagnostics_mostra) per al pacient {pacientSap}");
 
                     conn.Open();
                     using (var cmd = new MySqlCommand(sql, conn))

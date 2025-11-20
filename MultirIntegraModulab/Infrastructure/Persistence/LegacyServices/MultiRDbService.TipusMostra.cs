@@ -309,8 +309,8 @@ namespace MultirIntegraModulab
                         
                         if (tePositiusVigents)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient {pacientSap} té {count} positiu(s) vigent(s) per tipus mostra '{tipusMostra}' o equivalents");
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚡ Pacient té positius vigents → Cal incorporar el negatiu");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient {pacientSap} té {count} mostra(es) positiva(es) vigent(s) per tipus mostra '{tipusMostra}' o equivalents (Poden estar en un mateix diagnòstic)");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚡ Pacient té positius vigents. SI cal incorporar el negatiu");
                         }
                         else
                         {

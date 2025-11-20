@@ -1050,7 +1050,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Es procedeix a crear el Diagnòstic: {microorganisme} + {mecanisme}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Es procedeix a crear el diagnòstic '{microorganisme}' + '{mecanisme}'");
 
                     conn.Open();
                     
@@ -1076,12 +1076,12 @@ namespace MultirIntegraModulab
                         
                         if (nouDiagnosticId > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creat diagnòstic ID {nouDiagnosticId} per pacient {pacientSap}: {microorganisme} + {mecanisme}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creat diagnòstic amb id {nouDiagnosticId} per pacient {pacientSap} microorganisme '{microorganisme}' mecanisme '{mecanisme}'");
                             return nouDiagnosticId;
                         }
                         else
                         {
-                            Logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Error creant diagnòstic per pacient {pacientSap}: no s'ha retornat ID");
+                            Logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Error creant diagnòstic per pacient {pacientSap}: no s'ha retornat id");
                             return 0;
                         }
                     }
@@ -1120,6 +1120,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Comprovant / creant mostra del pacient '{pacientSap}' data '{dataMostra:dd/MM/yyyy}' tipus '{tipusMostra}'");
                     conn.Open();
 
                     // Obtenir les dades de la mostra existent
@@ -1153,7 +1154,7 @@ namespace MultirIntegraModulab
                         int mostraId = result != null ? Convert.ToInt32(result) : 0;
                         
                         string infoValoracio = !string.IsNullOrWhiteSpace(valoracio) ? $" + valoració '{valoracio}'" : "";
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Mostra del pacient {pacientSap} + data {dataMostra:dd/MM/yyyy} + tipus '{tipusMostra}'{infoValoracio}: {(mostraId > 0 ? $"JA existeix (ID: {mostraId})" : "NO existeix")}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mostra del pacient {pacientSap} + data {dataMostra:dd/MM/yyyy} + tipus '{tipusMostra}'{infoValoracio}: {(mostraId > 0 ? $"JA existeix (ID: {mostraId})" : "NO existeix")}");
                         
                         return mostraId;
                     }
@@ -1263,7 +1264,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Es procedeix a crear la mostra");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Es procedeix a crear la mostra");
 
                     conn.Open();
                     
@@ -1304,7 +1305,7 @@ namespace MultirIntegraModulab
                         
                         if (nouMostraId > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creada mostra amb id {nouMostraId} per pacient {pacientSap}: data {dataMostra:dd/MM/yyyy}, tipus {tipusMostra}, valoració {valoracio}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Creada mostra amb id {nouMostraId} per al pacient {pacientSap} data {dataMostra:dd/MM/yyyy} tipus '{tipusMostra}' valoració '{valoracio}'");
                             return nouMostraId;
                         }
                         else

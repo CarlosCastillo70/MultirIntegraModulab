@@ -58,6 +58,11 @@ namespace MultirIntegraModulab.Application.DTOs
         public int MostresNegatives { get; set; }
 
         /// <summary>
+        /// Nombre de mostres mixtes processades (amb resultats positius i negatius)
+        /// </summary>
+        public int MostresMixtes { get; set; }
+
+        /// <summary>
         /// Temps d'inici del processament
         /// </summary>
         public DateTime DataIniciProcessament { get; set; }
@@ -94,6 +99,7 @@ namespace MultirIntegraModulab.Application.DTOs
                    $"Revalidades: {MostresRevalidades} | " +
                    $"Positives: {MostresPositives} | " +
                    $"Negatives: {MostresNegatives} | " +
+                   $"Mixtes: {MostresMixtes} | " +
                    $"Errors: {MostresAmbError} | " +
                    $"Durada: {DuradaProcessament.TotalSeconds:F2}s";
         }
