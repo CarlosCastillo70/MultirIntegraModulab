@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using MultirIntegraModulab.Application.Helpers;
 
 namespace MultirIntegraModulab
 {
@@ -88,7 +89,7 @@ namespace MultirIntegraModulab
         {
             try
             {
-                Logger.Info($"  Processant resposta XML per al pacient {pacientSap}");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Processant resposta XML per al pacient {pacientSap}");
                 
                 var xmlDoc = new XmlDocument();
                 xmlDoc.LoadXml(responseXml);
@@ -103,7 +104,7 @@ namespace MultirIntegraModulab
                 
                 if (responseNode == null)
                 {
-                    Logger.Warning($" ❌ No s'ha trobat element consultaPacientResponse per pacient {pacientSap}");
+                    Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ No s'ha trobat element consultaPacientResponse per pacient {pacientSap}");
                     return null;
                 }
 
@@ -111,21 +112,21 @@ namespace MultirIntegraModulab
                 var resultNode = responseNode.SelectSingleNode("Result");
                 if (resultNode == null)
                 {
-                    Logger.Warning($" ❌ No s'ha trobat element Result per pacient {pacientSap}");
+                    Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ No s'ha trobat element Result per pacient {pacientSap}");
                     return null;
                 }
 
                 string xmlInteriorCodificat = resultNode.InnerText;
                 if (string.IsNullOrWhiteSpace(xmlInteriorCodificat))
                 {
-                    Logger.Warning($" ❌ El node Result està buit per pacient {pacientSap}");
+                    Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ El node Result està buit per pacient {pacientSap}");
                     return null;
                 }
 
                 // Decodificar el XML interior (convertir entitats HTML a XML vàlid)
                 string xmlInteriorDecodificat = System.Web.HttpUtility.HtmlDecode(xmlInteriorCodificat);
                 
-                Logger.Info($" ✔️ XML interior decodificat: {xmlInteriorDecodificat.Substring(0, Math.Min(200, xmlInteriorDecodificat.Length))} ...");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ XML interior decodificat: {xmlInteriorDecodificat.Substring(0, Math.Min(200, xmlInteriorDecodificat.Length))} ...");
 
                 // Processar el XML interior
                 var xmlInterior = new XmlDocument();
@@ -135,7 +136,7 @@ namespace MultirIntegraModulab
                 var itemNode = xmlInterior.SelectSingleNode("//item");
                 if (itemNode == null)
                 {
-                    Logger.Warning($"  ❌ No s'ha trobat element item dins del XML interior per pacient {pacientSap}");
+                    Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ No s'ha trobat element item dins del XML interior per pacient {pacientSap}");
                     return null;
                 }
 
@@ -143,7 +144,7 @@ namespace MultirIntegraModulab
                 var nhcNode = itemNode.SelectSingleNode("NHC");
                 if (nhcNode == null || string.IsNullOrWhiteSpace(nhcNode.InnerText))
                 {
-                    Logger.Info($" ❌ Pacient {pacientSap} no trobat al web service (NHC buit)");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ Pacient {pacientSap} no trobat al web service (NHC buit)");
                     return null;
                 }
 
@@ -169,11 +170,11 @@ namespace MultirIntegraModulab
                     }
                     else
                     {
-                        Logger.Warning($" ❌ No s'ha pogut convertir la data de naixement '{dataNaixStr}' per pacient {pacientSap}");
+                        Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ No s'ha pogut convertir la data de naixement '{dataNaixStr}' per pacient {pacientSap}");
                     }
                 }
 
-                Logger.Info($"  Pacient {pacientSap} trobat: {pacient.Nom} {pacient.Cognom1} {pacient.Cognom2} (CIP: {pacient.Cip})");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient {pacientSap} trobat: {pacient.Nom} {pacient.Cognom1} {pacient.Cognom2} (CIP: {pacient.Cip})");
                 return pacient;
             }
             catch (Exception ex)
