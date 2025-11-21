@@ -750,7 +750,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
                     // Continuar processament per re-processar la mostra amb les noves dades
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}➡️ Continuant processament de la mostra amb les noves dades...");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}➡️ Continuant processament de la mostra amb les noves dades");
                     return true; // Continuar processament
                 }
             }

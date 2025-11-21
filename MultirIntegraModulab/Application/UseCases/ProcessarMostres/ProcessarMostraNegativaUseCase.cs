@@ -370,13 +370,19 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 int mostraDiagnosticId = _multiRRepository.ComprovarMostraDiagnosticExisteix(
                     mostra.PacientSap,
                     resultatMostra.DataPeticioTrunc,
-                    resultatMostra.MostraDescripcio, "1");
+                    resultatMostra.MostraDescripcio,
+                    "1");
 
                 int mostraDiagnosticIdFinal = mostraDiagnosticId;
 
                 if (mostraDiagnosticId == 0)
                 {
+                    // Obtenir el microorganisme del resultat per incloure'l al camp microorganismeMecanismeCaptat
+                    var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultatMostra.AillamentDescripcio);
+                    string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio ?? "";
+                    
                     // Mostra diagnòstic negatiu no existeix. Es procedeix a crear-la
+                    // Per a negatius, només s'inclou el microorganisme (sense mecanisme)
                     int nouMostraDiagnosticId = _multiRRepository.CrearMostraDiagnostic(
                         mostra.PacientSap,
                         resultatMostra.DataPeticioTrunc,
@@ -386,7 +392,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         mostra.DataUltimResultat, // agafar data resultat de la mostra (no del resultat, ja que per una mostra poden haver diferents valors)
                         resultatMostra.DataValidacio,
                         "", // sense mecanisme
-                        resultatMostra.EsMicroorganismeEspecial);
+                        resultatMostra.EsMicroorganismeEspecial,
+                        microorganismeCodi); // Per a negatius, només el microorganisme (sense mecanisme)
 
                     if (nouMostraDiagnosticId > 0)
                     {

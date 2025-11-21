@@ -1985,3 +1985,38 @@ No se quina opció seria millor:
 a resum hi ha mostres positives i mostres negatives. en algun casos son mostres que contenen positius i negatius.
 hi hauria d´haver també un apartat per comptabilitzar aquestes tipus de mostra
 
+----
+
+hi ha  Logger.Info, per exemple a pacientwebservice, que no estan inclosos en el sistema d'identació. Pots incloure-ho
+
+incloure-ho tambe a totes les crides a logger de MultiRDbService.MostraMicroorganisme.mostramicroorganisme
+
+per exemple a : Logger.Info($"🔎 Comprovant / creant mostra_microorganisme {diagnosticId} {mostraDiagnosticId}");
+
+--
+
+a pacientwebservice, al fer 
+Logger.Info($" ✔️ XML interior decodificat: {xmlInteriorDecodificat.Substring(0, Math.Min(200, xmlInteriorDecodificat.Length))} ...");
+
+al log escriu això: 
+
+2025-11-20 08:52:31 INFO :  ✔️ XML interior decodificat: <?xml version="1.0" encoding="utf-8"?>
+<data><item><NHC>0010701540</NHC><CIP>CASU0620225005</CIP><APELLIDO1>CAPELLÀ</APELLIDO1><APELLIDO2>SUNYER</APELLIDO2><NOMBRE>IGNASI</NOMBRE><DNAIX>1962-02-25</DN ...
+
+necessito que ho escrigui en una sola linea (sense el salt de linea)
+
+---
+
+a ObtenirCombinacionsMostraEntrant a mostra.resultats ha arribat una mostra amb dos resultats que son identics.
+
+vull tractar unicament els resultats diferents
+
+---
+
+CrearMostraDiagnostic ha d´incloure un nou parametre microorganismeMecanismeCaptat i s´ha d´incloure al insert.
+
+El nom del camp a actualitzar a la taula pacients_diagnostics_mostra és microorganisme_mecanisme_captat
+
+Revisar les crides a crearmostradiagnostic, i incloure la combinacio microorganisme i mecanisme de resistencia que s´estan incorporant
+
+---

@@ -341,6 +341,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (mostraDiagnosticId == 0)
                     {
 
+                        // Construir la combinació microorganisme + mecanisme per a captar
+                        string microorganismeMecanismeCaptat = !string.IsNullOrWhiteSpace(mecanismeId)
+                            ? $"{microorganismeCodi} + {mecanismeId}"
+                            : microorganismeCodi;
+
                         int nouMostraDiagnosticId = _multiRRepository.CrearMostraDiagnostic(
                             mostra.PacientSap,
                             resultatMostra.DataPeticioTrunc,
@@ -350,7 +355,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                             mostra.DataUltimResultat, // agafar data resultat de la mostra (no del resultat, ja que per una mostra poden haver diferents valors)
                             resultatMostra.DataValidacio,
                             mecanismeId,
-                            resultatMostra.EsMicroorganismeEspecial);
+                            resultatMostra.EsMicroorganismeEspecial,
+                            ""); // Per a positius no desar aquesta dada. TODOCC: PENDENT CONFIRMAR MARTI. Si es vol desar, afegir microorganismeMecanismeCaptat
 
                         if (nouMostraDiagnosticId > 0)
                         {
@@ -697,7 +703,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             if (mostraDiagnosticId == 0)
             {
+                // Obtenir el microorganisme del resultat per incloure'l al camp microorganismeMecanismeCaptat
+                var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultatMostra.AillamentDescripcio);
+                string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio ?? "";
+                
                 // Crear mostra negativa: sense mecanisme, no és especial
+                // Per a negatius, només s'inclou el microorganisme (sense mecanisme)
                 mostraDiagnosticIdFinal = _multiRRepository.CrearMostraDiagnostic(
                     mostra.PacientSap,
                     resultatMostra.DataPeticioTrunc,
@@ -707,7 +718,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     mostra.DataUltimResultat, // agafar data resultat de la mostra (no del resultat, ja que per una mostra poden haver diferents valors)
                     resultatMostra.DataValidacio,
                     null, // Sense mecanisme (negativa)
-                    false); // No és microorganisme especial
+                    false, // No és microorganisme especial
+                    microorganismeCodi); // Per a negatius, només el microorganisme (sense mecanisme)
 
                 if (mostraDiagnosticIdFinal == 0)
                 {

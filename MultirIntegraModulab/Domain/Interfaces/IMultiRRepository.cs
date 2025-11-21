@@ -126,7 +126,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>ID de la nova mostra creada, 0 si ha fallat</returns>
         int CrearMostraDiagnostic(string pacientSap, DateTime? dataMostra, string tipusMostra, 
             string tipusProva, string etiqueta, DateTime? dataResultat, DateTime? dataValidacio, 
-            string mecanismeId, bool? esMicroorganismeEspecial);
+            string mecanismeId, bool? esMicroorganismeEspecial, string microorganismeMecanismeCaptat);
 
         /// <summary>
         /// Obté les dades completes d'una mostra diagnòstic existent

@@ -1245,7 +1245,7 @@ namespace MultirIntegraModulab
         /// </summary>
         public int CrearMostraDiagnostic(string pacientSap, DateTime? dataMostra, string tipusMostra,
             string tipusProva, string etiqueta, DateTime? dataResultat, DateTime? dataValidacio,
-            string mecanismeId, bool? esMicroorganismeEspecial)
+            string mecanismeId, bool? esMicroorganismeEspecial, string microorganismeMecanismeCaptat)
         {
             if (string.IsNullOrWhiteSpace(pacientSap))
             {
@@ -1280,11 +1280,11 @@ namespace MultirIntegraModulab
                     string sql = @"INSERT INTO pacients_diagnostics_mostra 
                                   (npat, data_diagnostic, data_mostra, tipus_mostra_m, usuari, 
                                    dt_create, dt_update, consolidat, valoracio, tipus_prova, 
-                                   etiqueta, data_resultat, data_validacio, estat_integracio_m)
+                                   etiqueta, data_resultat, data_validacio, estat_integracio_m, microorganisme_mecanisme_captat)
                                   VALUES 
                                   (@npat, NULL, @dataMostra, @tipusMostra, 'MODULAB', 
                                    NOW(), NOW(), 'N', @valoracio, @tipusProva, 
-                                   @etiqueta, @dataResultat, @dataValidacio, @estatIntegracio);
+                                   @etiqueta, @dataResultat, @dataValidacio, @estatIntegracio, @microorganismeMecanismeCaptat);
                                   SELECT LAST_INSERT_ID();";
 
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -1298,6 +1298,7 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@dataResultat", dataResultat.HasValue ? (object)dataResultat.Value : DBNull.Value);
                         cmd.Parameters.AddWithValue("@dataValidacio", dataValidacio.HasValue ? (object)dataValidacio.Value : DBNull.Value);
                         cmd.Parameters.AddWithValue("@estatIntegracio", estatIntegracio);
+                        cmd.Parameters.AddWithValue("@microorganismeMecanismeCaptat", microorganismeMecanismeCaptat ?? "");
 
                         var result = cmd.ExecuteScalar();
                         int nouMostraId = result != null ? Convert.ToInt32(result) : 0;
@@ -1640,7 +1641,7 @@ namespace MultirIntegraModulab
                 .Select(g => g.First()) // Agafar només el primer de cada grup (els altres són duplicats)
                 .ToList();
 
-            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Resultats totals: {mostra.Resultats.Count}, Resultats únics: {resultatsUnics.Count}");
+            // Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Resultats totals: {mostra.Resultats.Count}, Resultats únics: {resultatsUnics.Count}");
 
             foreach (var resultat in resultatsUnics)
             {
@@ -1710,7 +1711,7 @@ namespace MultirIntegraModulab
                 else
                 {
                     // Si no té mecanismes, crear una combinació només amb el microorganisme
-                    combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganismeCodi, ""));
+                    combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganismeCodi, "NOCOD"));
                 }
             }
 
