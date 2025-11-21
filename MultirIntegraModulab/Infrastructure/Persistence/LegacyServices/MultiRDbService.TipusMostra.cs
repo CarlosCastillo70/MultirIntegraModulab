@@ -34,7 +34,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"🔎 Comprovant / creant tipus mostra a tipusmostra_m: '{codiMostra}'");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Comprovant / creant tipus mostra a tipusmostra_m: '{codiMostra}'");
 
                     conn.Open();
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -45,11 +45,11 @@ namespace MultirIntegraModulab
 
                         if (count > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Tipus mostra '{codiMostra}' JA existeix a tipusmostra_m");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus mostra '{codiMostra}' JA existeix a tipusmostra_m");
                         }
                         else
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}El tipus de mostra '{codiMostra}' NO existeix, es procedeix a crear-lo");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}El tipus de mostra '{codiMostra}' NO existeix, es procedeix a crear-lo");
                         }
 
                         return count > 0;

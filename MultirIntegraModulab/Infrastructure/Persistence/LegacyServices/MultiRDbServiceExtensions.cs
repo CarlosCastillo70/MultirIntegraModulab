@@ -2054,7 +2054,7 @@ namespace MultirIntegraModulab
                     if (!string.IsNullOrWhiteSpace(mecanisme))
                         infoFiltres += $" i mecanisme '{mecanisme}'";
 
-                    Logger.Info($"🔎 Buscant altres diagnòstics positius per tipus mostra '{tipusMostra}' {infoEtiqueta} {infoFiltres}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Buscant altres diagnòstics positius per tipus mostra '{tipusMostra}' {infoEtiqueta} {infoFiltres}");
 
                     conn.Open();
 
