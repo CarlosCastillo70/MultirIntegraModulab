@@ -2,6 +2,7 @@ using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Application.Helpers;
 using MySql.Data.MySqlClient;
 using System;
+using System.Collections.Generic;
 
 namespace MultirIntegraModulab
 {
@@ -256,7 +257,7 @@ namespace MultirIntegraModulab
             }
 
             string sql = @"
-                SELECT COUNT(*) AS positius_vigents_tipus_mostra_i_equivalents 
+                SELECT pdm.id AS id_mostra_positiva 
                 FROM pacients_diagnostics_mostra pdm	 
                 JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.descripcio 		 
                 WHERE pdm.npat = @pacientSap
@@ -303,13 +304,24 @@ namespace MultirIntegraModulab
                             cmd.Parameters.AddWithValue("@etiquetaExcloure", etiquetaExcloure);
                         }
 
-                        int count = Convert.ToInt32(cmd.ExecuteScalar());
+                        var idsMostresPositives = new List<int>();
                         
-                        bool tePositiusVigents = count > 0;
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                int idMostra = Convert.ToInt32(reader["id_mostra_positiva"]);
+                                idsMostresPositives.Add(idMostra);
+                            }
+                        }
+                        
+                        bool tePositiusVigents = idsMostresPositives.Count > 0;
                         
                         if (tePositiusVigents)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient {pacientSap} té {count} mostra(es) positiva(es) vigent(s) per tipus mostra '{tipusMostra}' o equivalents (Poden estar en un mateix diagnòstic)");
+                            string idsMostres = string.Join(", ", idsMostresPositives);
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient {pacientSap} té {idsMostresPositives.Count} mostra(es) positiva(es) vigent(s) per tipus mostra '{tipusMostra}' o equivalents (Poden estar en un mateix diagnòstic)");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs de les mostres positives: {idsMostres}");
                             Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚡ Pacient té positius vigents. SI cal incorporar el negatiu");
                         }
                         else
