@@ -564,11 +564,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // En aquest punt tenim la llista de positius a contrarestar
                     if (diagnosticsPositius == null || diagnosticsPositius.Count == 0)
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✔️ NO hi ha altres diagnòstics positius a contrarestar amb negatiu, per aquest pacient i tipus de mostra");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ NO hi ha altres diagnòstics positius a contrarestar amb negatiu, per aquest pacient i tipus de mostra");
                     }
                     else
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Trobats {diagnosticsPositius.Count} diagnòstic(s) positiu(s) a neutralitzar amb un negatiu, per aquest pacient i tipus de mostra");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Trobats {diagnosticsPositius.Count} diagnòstic(s) positiu(s) a neutralitzar amb un negatiu, per aquest pacient i tipus de mostra");
 
                         // Mostrar detall dels diagnòstics trobats
                         foreach (var diagId in diagnosticsPositius)

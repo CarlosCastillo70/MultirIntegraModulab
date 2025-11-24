@@ -153,12 +153,12 @@ namespace MultirIntegraModulab
                         if (result != null && result != DBNull.Value)
                         {
                             int comportament = Convert.ToInt32(result);
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus mostra '{codiMostra}' té comportament {comportament}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Tipus mostra '{codiMostra}' té comportament {comportament}");
                             return comportament;
                         }
                         else
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Tipus mostra '{codiMostra}' no trobat o no actiu");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Tipus mostra '{codiMostra}' no trobat o no actiu");
                             return null;
                         }
                     }
@@ -320,13 +320,13 @@ namespace MultirIntegraModulab
                         if (tePositiusVigents)
                         {
                             string idsMostres = string.Join(", ", idsMostresPositives);
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient {pacientSap} té {idsMostresPositives.Count} mostra(es) positiva(es) vigent(s) per tipus mostra '{tipusMostra}' o equivalents (Poden estar en un mateix diagnòstic)");
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs de les mostres positives: {idsMostres}");
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚡ Pacient té positius vigents. SI cal incorporar el negatiu");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Pacient {pacientSap} té {idsMostresPositives.Count} mostra(es) positiva(es) vigent(s) per tipus mostra '{tipusMostra}' o equivalents (Poden estar en un mateix diagnòstic)");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}IDs de les mostres positives: {idsMostres}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚡ Pacient té positius vigents. SI cal incorporar el negatiu");
                         }
                         else
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient NO té positius vigents per aquest tipus de mostra '{tipusMostra}' o equivalents, i amb diferent etiqueta");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Pacient NO té positius vigents per aquest tipus de mostra '{tipusMostra}' o equivalents, i amb diferent etiqueta");
                         }
                         
                         return tePositiusVigents;

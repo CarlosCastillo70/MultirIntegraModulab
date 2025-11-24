@@ -2020,3 +2020,11 @@ El nom del camp a actualitzar a la taula pacients_diagnostics_mostra és microor
 Revisar les crides a crearmostradiagnostic, i incloure la combinacio microorganisme i mecanisme de resistencia que s´estan incorporant
 
 ---
+
+Quan es fa la crida per comprovar si el pacient te positius vigents
+
+                bool pacientTePositiusVigents = _multiRRepository.PacientTePositiusVigentsTipusMostraIEquivalents(
+                    mostra.PacientSap, 
+                    resultatMostra.MostraDescripcio, mostra.EtiquetaId);
+
+vull que es visualitzi el/els id/s de les mostres positives 

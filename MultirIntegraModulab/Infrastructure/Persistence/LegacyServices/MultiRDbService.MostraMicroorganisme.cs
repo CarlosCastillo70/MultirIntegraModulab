@@ -83,12 +83,12 @@ namespace MultirIntegraModulab
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Detall)}✔️ Creada mostra_microorganisme diagnostic_id {diagnosticId} mostra_diagnostic_id {mostraDiagnosticId}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Creada mostra_microorganisme diagnostic_id {diagnosticId} mostra_diagnostic_id {mostraDiagnosticId}");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Detall)}⚠ No s'ha pogut crear la mostra_microorganisme");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠ No s'ha pogut crear la mostra_microorganisme");
                         }
 
 
@@ -163,11 +163,11 @@ namespace MultirIntegraModulab
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Detall)}✔️ Data diagnòstic (pacients_diagnostics) actualitzada a {rowsAffected} registre(s), per pacient = {pacientSap}, microorganisme = '{microorganismeCodi}', mecanisme = '{mecanismeId ?? "(buit)"}'");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Data diagnòstic (pacients_diagnostics) actualitzada a {rowsAffected} registre(s), per pacient = {pacientSap}, microorganisme = '{microorganismeCodi}', mecanisme = '{mecanismeId ?? "(buit)"}'");
                             return true;
                         }
                         
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Detall)}⚠️ No s'ha actualitzat cap registre per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId ?? "(buit)"}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ No s'ha actualitzat cap registre per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId ?? "(buit)"}");
                         return false;
                     }
                 }
@@ -258,11 +258,11 @@ namespace MultirIntegraModulab
                         
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Detall)}✔️ Data diagnòstic (pacients_diagnostics_mostra) actualitzada a {rowsAffected} registre(s), per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId ?? "(buit)"}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Data diagnòstic (pacients_diagnostics_mostra) actualitzada a {rowsAffected} registre(s), per pacient = {pacientSap}, microorganisme = {microorganismeCodi}, mecanisme = {mecanismeId ?? "(buit)"}");
                             return true;
                         }
                         
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Detall)}⚠️ No s'ha actualitzat cap registre de pacients_diagnostics_mostra per pacient={pacientSap}, micro={microorganismeCodi}, mec={mecanismeId ?? "(buit)"}");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ No s'ha actualitzat cap registre de pacients_diagnostics_mostra per pacient={pacientSap}, micro={microorganismeCodi}, mec={mecanismeId ?? "(buit)"}");
                         return false;
                     }
                 }

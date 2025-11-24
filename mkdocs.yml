@@ -1,0 +1,291 @@
+site_name: MultirIntegraModulab - Documentació
+site_description: Portal de documentació del sistema d'integració Modulab-MultiR
+site_author: Equip de Desenvolupament
+site_url: https://carlosllocastillo70.github.io/MultirIntegraModulab
+
+# Repository
+repo_name: CarlosCastillo70/MultirIntegraModulab
+repo_url: https://github.com/CarlosCastillo70/MultirIntegraModulab
+edit_uri: edit/main/MultirIntegraModulab/Docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 MultirIntegraModulab
+
+# Configuration
+theme:
+  name: material
+  language: ca
+  custom_dir: MultirIntegraModulab/Docs/assets/
+  favicon: assets/images/logos/favicon.ico
+  logo: assets/images/logos/logo.png
+  
+  palette:
+    # Light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Canviar a mode fosc
+    
+    # Dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Canviar a mode clar
+  
+  font:
+    text: Roboto
+    code: Roboto Mono
+  
+  features:
+    # Navigation
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    
+    # Table of contents
+    - toc.follow
+    - toc.integrate
+    
+    # Search
+    - search.suggest
+    - search.highlight
+    - search.share
+    
+    # Content
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+    
+    # Header
+    - header.autohide
+
+# Plugins
+plugins:
+  - search:
+      lang: ca
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  
+  - tags:
+      tags_file: reference/tags.md
+  
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+      locale: ca
+  
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+      htmlmin_opts:
+        remove_comments: true
+  
+  - awesome-pages
+  
+  - mermaid2:
+      arguments:
+        theme: default
+
+# Extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      permalink_title: Enllaç a aquesta secció
+      toc_depth: 3
+  
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Extra
+extra:
+  version:
+    provider: mike
+    default: latest
+  
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/CarlosCastillo70/MultirIntegraModulab
+      name: GitHub Repository
+    - icon: fontawesome/solid/envelope
+      link: mailto:suport@multir.cat
+      name: Contacte per email
+  
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY
+    feedback:
+      title: Ha estat útil aquesta pàgina?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: Aquesta pàgina ha estat útil
+          data: 1
+          note: >-
+            Gràcies pel teu feedback!
+        - icon: material/emoticon-sad-outline
+          name: Aquesta pàgina es pot millorar
+          data: 0
+          note: >-
+            Gràcies pel teu feedback! Ajuda'ns a millorar aquesta pàgina obrint
+            un <a href="https://github.com/CarlosCastillo70/MultirIntegraModulab/issues/new/?title=[Feedback]+{title}+-+{url}" target="_blank" rel="noopener">issue</a>.
+  
+  tags:
+    Arquitectura: architecture
+    Desenvolupament: development
+    Guia: guide
+    Tutorial: tutorial
+    Referència: reference
+    Exemple: example
+
+# Extra CSS
+extra_css:
+  - assets/css/custom.css
+  - assets/css/extra.css
+
+# Extra JavaScript
+extra_javascript:
+  - assets/js/custom.js
+  - https://unpkg.com/mermaid@9.4.0/dist/mermaid.min.js
+
+# Page tree
+nav:
+  - Inici: index.md
+  
+  - Començar Ràpid:
+    - getting-started/index.md
+    - Guia Ràpida: getting-started/quick-start.md
+    - Instal·lació: getting-started/installation.md
+    - Primers Passos: getting-started/first-steps.md
+  
+  - Documents Generals:
+    - overview/index.md
+    - Resum Executiu: overview/RESUM_EXECUTIU.md
+    - Resum Final: overview/RESUM_FINAL.md
+    - Arquitectura: overview/architecture.md
+    - Roadmap: overview/roadmap.md
+  
+  - Documentació Tècnica:
+    - technical/index.md
+    - Procés Captació Dades: technical/PROCES_CAPTACIO_DADES.md
+    - Diagrames Flux: technical/DIAGRAMES_FLUX_MERMAID.md
+    - API Reference: technical/api-reference.md
+    - Model de Dades: technical/data-model.md
+    - Configuració: technical/configuration.md
+  
+  - Funcionalitats:
+    - features/index.md
+    - Classificació:
+      - features/classification/index.md
+      - Mostres Positives: features/classification/positive-samples.md
+      - Mostres Negatives: features/classification/negative-samples.md
+    - Microorganismes:
+      - features/microorganisms/index.md
+      - Microorganismes Especials: features/microorganisms/special-microorganisms.md
+      - Gestió: features/microorganisms/management.md
+    - Mecanismes Resistència:
+      - features/resistance/index.md
+      - Tipus de Mecanismes: features/resistance/mechanisms-types.md
+      - Combinacions Prohibides: features/resistance/forbidden-combinations.md
+    - Comprovacions Negatius:
+      - features/validation/index.md
+      - Diagrames: features/validation/DIAGRAMES_COMPROVACIONS.md
+      - Comprovació 1: features/validation/COMPROVACIO_1_NEGATIUS.md
+      - Comprovació 2: features/validation/COMPROVACIO_2_NEGATIUS.md
+      - Resum: features/validation/COMPROVACIONS_NEGATIUS_RESUM.md
+      - Implementació: features/validation/IMPLEMENTACIO_COMPROVACIONS_RESUM.md
+    - Tipus Incorporació:
+      - features/incorporation/index.md
+      - Tipus: features/incorporation/types.md
+      - Comparació: features/incorporation/comparison.md
+    - Auditoria:
+      - features/audit/index.md
+      - Codis: features/audit/codes.md
+      - Logging: features/audit/logging.md
+  
+  - Guies Pràctiques:
+    - guides/index.md
+    - Guia Desenvolupador: guides/developer-guide.md
+    - Guia Analista: guides/analyst-guide.md
+    - Guia Usuari: guides/user-guide.md
+    - Desplegament: guides/deployment-guide.md
+    - Troubleshooting: guides/troubleshooting.md
+  
+  - Tutorials:
+    - tutorials/index.md
+    - Processar Mostres: tutorials/processing-samples.md
+    - Gestionar Negatius: tutorials/handling-negatives.md
+    - Validacions Custom: tutorials/custom-validations.md
+    - Testing Integració: tutorials/integration-testing.md
+  
+  - Referència:
+    - reference/index.md
+    - Glossari: reference/glossary.md
+    - Codis Auditoria: reference/audit-codes.md
+    - Esquema BD: reference/database-schema.md
+    - Configuració: reference/configuration-reference.md
+  
+  - Exemples:
+    - examples/index.md
+    - Casos d'Ús: examples/use-cases.md
+    - Dades Exemple: examples/sample-data.md
+    - Fragments Codi: examples/code-snippets.md
+  
+  - Contribuir:
+    - contributing/index.md
+    - Estil Codi: contributing/code-style.md
+    - Estil Documentació: contributing/documentation-style.md
+    - Pull Request: contributing/pull-request-template.md
+    - Changelog: contributing/CHANGELOG.md
+  
+  - Recursos:
+    - resources/index.md
+    - LogIndentHelper: resources/README_LogIndentHelper.md
+    - Mostres Antigues: resources/TRACTAMENT_MOSTRES_ANTIGUES.md
+    - Enllaços: resources/links.md
+    - Descàrregues: resources/downloads.md
