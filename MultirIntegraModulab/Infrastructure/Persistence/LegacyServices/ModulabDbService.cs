@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace MultirIntegraModulab
 {
-    public class ModulabDbService : IDbService
+    public partial class ModulabDbService : IDbService
     {
         private readonly string _connectionString;
         private readonly ILoggerService _logger;

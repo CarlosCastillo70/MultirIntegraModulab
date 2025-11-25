@@ -4,18 +4,18 @@ using MultirIntegraModulab.Domain.Entities;
 namespace MultirIntegraModulab.Domain.Interfaces
 {
     /// <summary>
-    /// Port (interf�cie) per accedir a les dades de Modulab (Oracle)
+    /// Port (interfície) per accedir a les dades de Modulab (Oracle)
     /// Seguint el principi de Dependency Inversion (SOLID)
     /// </summary>
     public interface IModulabRepository
     {
         /// <summary>
-        /// Carrega resultats de mostres dels �ltims X dies
+        /// Carrega resultats de mostres dels últims X dies
         /// </summary>
         ColeccioMostres CarregarResultats(int diesEndarrera, int limit = 0);
 
         /// <summary>
-        /// Carrega resultats per un pacient espec�fic
+        /// Carrega resultats per un pacient específic
         /// </summary>
         ColeccioMostres CarregarResultatsPerPacient(string pacientSap, int diesEndarrera, int limit = 0);
 
@@ -25,12 +25,21 @@ namespace MultirIntegraModulab.Domain.Interfaces
         ColeccioMostres CarregarResultatsPerRangDates(DateTime dataInici, DateTime dataFi);
 
         /// <summary>
-        /// Obt� la data actual del sistema Oracle
+        /// Carrega resultats utilitzant filtres de sincronització optimitzats
+        /// Implementa la finestra de seguretat per validacions tardanes
+        /// </summary>
+        /// <param name="dadesSincronitzacio">Dades de l'última sincronització (null si és la primera)</param>
+        /// <param name="limit">Límit de registres (0 = sense límit)</param>
+        /// <returns>Col·lecció de mostres filtrades</returns>
+        ColeccioMostres CarregarResultatsAmbSincronitzacio(DadesSincronitzacio dadesSincronitzacio, int limit = 0);
+
+        /// <summary>
+        /// Obté la data actual del sistema Oracle
         /// </summary>
         DateTime GetCurrentDate();
 
         /// <summary>
-        /// Obt� el tipus de base de dades
+        /// Obté el tipus de base de dades
         /// </summary>
         string GetDatabaseType();
     }

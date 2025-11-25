@@ -76,8 +76,8 @@ namespace MultirIntegraModulab
                 // FASE 3: CÀRREGA DE DADES
                 // ===========================================================
                 
-                loggerService.Info($"🔍 Carregant mostres dels últims {configService.DiesEndarreraCarrega} dies...");
-                Console.WriteLine($"\n🔍 Carregant mostres dels últims {configService.DiesEndarreraCarrega} dies...");
+                loggerService.Info($"🔍 Carregant mostres amb sistema de sincronització optimitzat...");
+                Console.WriteLine($"\n🔍 Carregant mostres amb sistema de sincronització optimitzat...");
 
                 int limitRegistres = configService.EntornProduccion ? 0 : configService.LimitResultatsProves;
                 
@@ -87,10 +87,33 @@ namespace MultirIntegraModulab
                     Console.WriteLine($"⚠️ Mode PROVES: Procés limitat a {limitRegistres} resultats");
                 }
 
-                // Carregar mostres utilitzant el repositori
-                var mostres = modulabRepository.CarregarResultats(
-                    configService.DiesEndarreraCarrega, 
-                    limitRegistres);
+                // ===========================================================
+                // SISTEMA DE SINCRONITZACIÓ OPTIMITZAT
+                // ===========================================================
+                
+                // 1. Obtenir última sincronització exitosa
+                var ultimaSincronitzacio = multiRRepository.ObtenirUltimaSincronitzacio();
+                
+                ColeccioMostres mostres;
+                
+                if (ultimaSincronitzacio != null)
+                {
+                    // 2. Carregar amb filtres de sincronització
+                    loggerService.Info("🔄 Utilitzant càrrega incremental optimitzada...");
+                    mostres = modulabRepository.CarregarResultatsAmbSincronitzacio(
+                        ultimaSincronitzacio, 
+                        limitRegistres);
+                }
+                else
+                {
+                    loggerService.Info("ℹ️ Primera execució - carregant mostres dels últims 7 dies");
+                    Console.WriteLine("\nℹ️ Primera execució del sistema de sincronització");
+                    Console.WriteLine($"   Carregant mostres dels últims 7 dies...");
+                    
+                    // 3. Primera càrrega (últims 7 dies per defecte)
+                    mostres = modulabRepository.CarregarResultats(2, limitRegistres);
+                }
+
 
                 // ===========================================================
                 // FASE 4: PROCESSAMENT
@@ -109,6 +132,52 @@ namespace MultirIntegraModulab
 
                     // Mostrar resultats
                     MostrarResumProcessament(resum, loggerService);
+                    
+                    // ===========================================================
+                    // GUARDAR DADES DE SINCRONITZACIÓ
+                    // ===========================================================
+                    
+                    if (resum.MostresAmbError == 0)
+                    {
+                        try
+                        {
+                            loggerService.Info("💾 Guardant dades de sincronització...");
+                            
+                            var dadesSincronitzacio = new DadesSincronitzacio
+                            {
+                                DataResultatMaxProcessada = mostres.ObtenirDataResultatMaxima(),
+                                DataValidacioMaxProcessada = mostres.ObtenirDataValidacioMaxima(),
+                                DataSincronitzacio = DateTime.Now,
+                                NombreMostresProcessades = resum.TotalProcessats,
+                                NombreMostresError = resum.MostresAmbError,
+                                DiesRevisioSeguretat = 7, // Finestra de seguretat per validacions tardanes
+                                Estat = "OK",
+                                DuradaSegons = resum.DuradaProcessament.TotalSeconds
+                            };
+                            
+                            int idSincronitzacio = multiRRepository.GuardarDadesSincronitzacio(dadesSincronitzacio);
+                            
+                            if (idSincronitzacio > 0)
+                            {
+                                loggerService.Info($"✅ Sincronització guardada correctament (ID: {idSincronitzacio})");
+                                Console.WriteLine($"✅ Sincronització guardada (ID: {idSincronitzacio})");
+                            }
+                            else
+                            {
+                                loggerService.Warning("⚠️ No s'ha pogut guardar la sincronització");
+                            }
+                        }
+                        catch (Exception exSync)
+                        {
+                            loggerService.Error("❌ Error guardant sincronització", exSync);
+                            Console.WriteLine($"⚠️ Error guardant sincronització: {exSync.Message}");
+                        }
+                    }
+                    else
+                    {
+                        loggerService.Warning($"⚠️ No es guarda sincronització perquè hi ha {resum.MostresAmbError} mostres amb error");
+                        Console.WriteLine($"\n⚠️ Sincronització no guardada ({resum.MostresAmbError} errors detectats)");
+                    }
                 }
                 else
                 {

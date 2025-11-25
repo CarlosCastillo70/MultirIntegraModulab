@@ -248,17 +248,47 @@ dir bin\Release\MultirIntegraModulab.exe
 
 ### 5. Preparar el Paquet de Desplegament
 
+⚠️ **IMPORTANT:** El projecte inclou un **sistema automàtic de neteja** que elimina DLLs innecessàries després de cada build. Veure [CONFIGURACIO_BUILD_RELEASE.md](CONFIGURACIO_BUILD_RELEASE.md) per detalls.
+
+#### 5.1. Verificar la Neteja Automàtica
+
+Després del build en Release, verifica que les DLLs innecessàries s'han eliminat:
+
+```powershell
+# Comprovar que NO hi ha DLLs innecessàries
+Get-ChildItem bin\Release\net48\*.dll | Where-Object { 
+    $_.Name -match "BouncyCastle|Google.Protobuf|K4os|Zstd|Ubiety" 
+}
+
+# No hauria de retornar res. Si retorna alguna cosa, revisar el .csproj
+```
+
+✅ **Beneficis de la neteja automàtica:**
+- **Mida reduïda**: ~3.6 MB menys (35% d'estalvi)
+- **Desplegament més ràpid**: Menys fitxers a transferir
+- **Menys confusió**: Només DLLs realment necessàries
+- **Més segur**: Menys superfície d'atac
+
+📊 **Mida esperada del paquet:**
+- **Abans de la neteja**: ~11.5 MB
+- **Després de la neteja**: ~7.8 MB
+- **DLLs finals**: ~15 (només necessàries)
+
+#### 5.2. Crear el Paquet
+
 Crear una carpeta amb tots els arxius necessaris:
 
 ```
 MultirIntegraModulab_Release_v[VERSION]\
 │
-├── MultirIntegraModulab.exe           # Executable principal
-├── MultirIntegraModulab.exe.config    # Configuració (verificar!)
-├── Oracle.ManagedDataAccess.dll       # Dependencies
-├── MySql.Data.dll
-├── System.Net.Http.dll
-├── [altres DLLs necessàries]
+├── MultirIntegraModulab.exe           # Executable principal (~180 KB)
+├── MultirIntegraModulab.exe.config    # Configuració (VERIFICAR!)
+│
+├── MySql.Data.dll                     # MySQL driver (~1.1 MB)
+├── Oracle.ManagedDataAccess.dll       # Oracle driver (~4.4 MB)
+├── System.Configuration.*.dll         # Configuració .NET
+├── System.Net.Http.dll                # HTTP client
+├── [altres DLLs necessàries]          # (~2 MB total)
 │
 ├── Logs\                              # Carpeta de logs (buida)
 │
@@ -273,14 +303,55 @@ $version = "1.0.0"  # Canviar segons la versió
 $releaseDir = "MultirIntegraModulab_Release_v$version"
 New-Item -ItemType Directory -Force -Path $releaseDir
 
-# Copiar fitxers compilats
-Copy-Item "bin\Release\*" -Destination $releaseDir -Recurse
+# Copiar fitxers compilats des de bin\Release\net48
+Copy-Item "bin\Release\net48\*" -Destination $releaseDir -Recurse -Exclude "*.pdb"
 
 # Crear carpeta de logs
 New-Item -ItemType Directory -Force -Path "$releaseDir\Logs"
 
+# Crear fitxer LEEME
+$readme = @"
+# MultirIntegraModulab - Instal·lació
+
+1. Copiar tots els fitxers a: C:\Apps\MultirIntegraModulab\
+2. Verificar App.config (entorn, BD, emails)
+3. Crear carpeta Logs amb permisos d'escriptura
+4. Configurar tasca programada o servei Windows
+5. Executar manualment per verificar
+
+Veure POSADA_EN_PRODUCCIO.md per instruccions completes.
+"@
+Set-Content -Path "$releaseDir\LEEME_INSTALACIO.txt" -Value $readme
+
+# Mostrar resum
+Write-Host "`n✅ Paquet creat: $releaseDir" -ForegroundColor Green
+Write-Host "   - Fitxers: $((Get-ChildItem $releaseDir -File).Count)" -ForegroundColor Cyan
+Write-Host "   - Mida total: $([math]::Round((Get-ChildItem $releaseDir -Recurse -File | Measure-Object -Property Length -Sum).Sum / 1MB, 2)) MB" -ForegroundColor Cyan
+
 # Comprimir
-Compress-Archive -Path $releaseDir -DestinationPath "$releaseDir.zip"
+Compress-Archive -Path $releaseDir -DestinationPath "$releaseDir.zip" -Force
+Write-Host "   - ZIP creat: $releaseDir.zip" -ForegroundColor Green
+```
+
+#### 5.3. Verificar el Contingut del Paquet
+
+```powershell
+# Llistar DLLs incloses
+Write-Host "`n📦 DLLs incloses al paquet:" -ForegroundColor Yellow
+Get-ChildItem "$releaseDir\*.dll" | Select-Object Name, @{Name="MB";Expression={[math]::Round($_.Length/1MB, 2)}} | Format-Table
+
+# Verificar que NO hi ha DLLs innecessàries
+$unnecessary = Get-ChildItem "$releaseDir\*.dll" | Where-Object { 
+    $_.Name -match "BouncyCastle|Google.Protobuf|K4os|Zstd|Ubiety" 
+}
+
+if ($unnecessary) {
+    Write-Host "`n⚠️ ATENCIÓ: S'han trobat DLLs innecessàries:" -ForegroundColor Red
+    $unnecessary | ForEach-Object { Write-Host "   - $($_.Name)" -ForegroundColor Red }
+    Write-Host "`nExecutar 'dotnet build -c Release' per aplicar la neteja automàtica" -ForegroundColor Yellow
+} else {
+    Write-Host "`n✅ No s'han trobat DLLs innecessàries" -ForegroundColor Green
+}
 ```
 
 ### 6. Validacions Pre-Desplegament
@@ -410,7 +481,7 @@ Get-ScheduledTask -TaskName $taskName | Get-ScheduledTaskInfo
 
 ### 5. Configurar com a Servei Windows (Alternativa)
 
-Si es prefereix executar com a servei en lloc de tasca programada:
+Si es prefereix executar amb a servei en lloc de tasca programada:
 
 #### 5.1. Instal·lar NSSM (Non-Sucking Service Manager)
 

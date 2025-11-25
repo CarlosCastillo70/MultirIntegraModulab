@@ -234,5 +234,21 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
 
         public int NetejarHistorialAntic(int diesRetencio = 90) => 
             _multiRDbService.NetejarHistorialAntic(diesRetencio);
+
+#region Control de Sincronització
+
+public DadesSincronitzacio ObtenirUltimaSincronitzacio() =>
+    _multiRDbService.ObtenirUltimaSincronitzacio();
+
+public int GuardarDadesSincronitzacio(DadesSincronitzacio dades) =>
+    _multiRDbService.GuardarDadesSincronitzacio(dades);
+
+public bool ActualitzarEstatSincronitzacio(int id, string estat, string observacions = null) =>
+    _multiRDbService.ActualitzarEstatSincronitzacio(id, estat, observacions);
+
+public int NetejarHistorialSincronitzacio(int diesRetencio = 90) =>
+    _multiRDbService.NetejarHistorialSincronitzacio(diesRetencio);
+
+#endregion
     }
 }

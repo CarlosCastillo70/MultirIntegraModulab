@@ -168,5 +168,29 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         {
             return _modulabDbService.GetDatabaseType();
         }
+
+        /// <summary>
+        /// Carrega resultats utilitzant filtres de sincronització optimitzats
+        /// </summary>
+        public ColeccioMostres CarregarResultatsAmbSincronitzacio(DadesSincronitzacio dadesSincronitzacio, int limit = 0)
+        {
+            try
+            {
+                _logger.Info("🔄 Carregant mostres amb filtres de sincronització");
+                
+                var resultat = _modulabDbService.CarregarResultatsAmbSincronitzacio(
+                    dadesSincronitzacio, 
+                    _multiRDbService, 
+                    limit);
+                
+                _logger.Info($"✅ Carregades {resultat.NombreTotalMostres} mostres amb sincronització");
+                return resultat;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"❌ Error carregant mostres amb sincronització: {ex.Message}", ex);
+                throw;
+            }
+        }
     }
 }

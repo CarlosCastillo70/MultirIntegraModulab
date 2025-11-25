@@ -17,11 +17,15 @@
     <PackageReference Include="MySql.Data" Version="9.4.0" />
     <PackageReference Include="Oracle.ManagedDataAccess" Version="19.23.0" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    
+    <!-- Afegir referència explícita a System.Configuration per .NET Framework -->
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Referència a System.Web per HttpUtility -->
     <Reference Include="System.Web" />
+    <Reference Include="System.Configuration" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,5 +34,26 @@
     <EmbeddedResource Remove="_Legacy\**" />
     <None Remove="_Legacy\**" />
   </ItemGroup>
+
+  <!-- ⚙️ Post-Build: Eliminar DLLs innecessàries de la sortida -->
+  <Target Name="RemoveUnusedDlls" AfterTargets="Build">
+    <ItemGroup>
+      <!-- DLLs de BouncyCastle (criptografia no utilitzada) -->
+      <UnusedDlls Include="$(OutputPath)BouncyCastle.Cryptography.dll" />
+      <UnusedDlls Include="$(OutputPath)BouncyCastle.Crypto.dll" />
+      
+      <!-- DLLs de compressió de MySql.Data no utilitzades -->
+      <UnusedDlls Include="$(OutputPath)Google.Protobuf.dll" />
+      <UnusedDlls Include="$(OutputPath)K4os.Compression.LZ4.dll" />
+      <UnusedDlls Include="$(OutputPath)K4os.Compression.LZ4.Streams.dll" />
+      <UnusedDlls Include="$(OutputPath)K4os.Hash.xxHash.dll" />
+      <UnusedDlls Include="$(OutputPath)ZstdSharp.dll" />
+      
+      <!-- Altres dependències transitives no utilitzades -->
+      <UnusedDlls Include="$(OutputPath)Ubiety.Dns.Core.dll" />
+    </ItemGroup>
+    <Delete Files="@(UnusedDlls)" ContinueOnError="true" />
+    <Message Text="🧹 DLLs innecessàries eliminades de $(OutputPath)" Importance="high" />
+  </Target>
 
 </Project>

@@ -309,5 +309,38 @@ namespace MultirIntegraModulab.Domain.Interfaces
         
         bool GuardarHistorialAutomaticMostra(Mostra mostra, TipusIncorporacio tipusIncorporacio, string observacions = null);
         int NetejarHistorialAntic(int diesRetencio = 90);
+
+        #region Control de Sincronització
+
+        /// <summary>
+        /// Obté les dades de l'última sincronització exitosa
+        /// </summary>
+        /// <returns>Dades de sincronització o null si és la primera execució</returns>
+        DadesSincronitzacio ObtenirUltimaSincronitzacio();
+
+        /// <summary>
+        /// Guarda les dades d'una nova sincronització
+        /// </summary>
+        /// <param name="dades">Dades de sincronització a guardar</param>
+        /// <returns>ID del registre creat</returns>
+        int GuardarDadesSincronitzacio(DadesSincronitzacio dades);
+
+        /// <summary>
+        /// Actualitza l'estat d'una sincronització
+        /// </summary>
+        /// <param name="id">ID de la sincronització</param>
+        /// <param name="estat">Nou estat (OK, ERROR, PARCIAL)</param>
+        /// <param name="observacions">Observacions adicionals</param>
+        /// <returns>True si s'ha actualitzat correctament</returns>
+        bool ActualitzarEstatSincronitzacio(int id, string estat, string observacions = null);
+
+        /// <summary>
+        /// Neteja registres de sincronització antics
+        /// </summary>
+        /// <param name="diesRetencio">Nombre de dies a mantenir (per defecte 90)</param>
+        /// <returns>Nombre de registres esborrats</returns>
+        int NetejarHistorialSincronitzacio(int diesRetencio = 90);
+
+        #endregion
     }
 }

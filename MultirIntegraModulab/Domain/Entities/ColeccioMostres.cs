@@ -202,5 +202,41 @@ namespace MultirIntegraModulab.Domain.Entities
         {
             return _mostres.ContainsKey(etiquetaId);
         }
+
+        /// <summary>
+        /// Obté la data de resultat màxima de totes les mostres
+        /// Útil per al sistema de sincronització optimitzat
+        /// </summary>
+        /// <returns>Data resultat màxima o null si no hi ha mostres</returns>
+        public DateTime? ObtenirDataResultatMaxima()
+        {
+            if (_mostres.Count == 0)
+                return null;
+
+            return _mostres.Values
+                .SelectMany(m => m.Resultats)
+                .Where(r => r.DataResultat != default(DateTime))
+                .Select(r => r.DataResultat)
+                .DefaultIfEmpty()
+                .Max();
+        }
+
+        /// <summary>
+        /// Obté la data de validació màxima de totes les mostres
+        /// Útil per al sistema de sincronització optimitzat
+        /// </summary>
+        /// <returns>Data validació màxima o null si no hi ha validacions</returns>
+        public DateTime? ObtenirDataValidacioMaxima()
+        {
+            if (_mostres.Count == 0)
+                return null;
+
+            return _mostres.Values
+                .SelectMany(m => m.Resultats)
+                .Where(r => r.DataValidacio.HasValue)
+                .Select(r => r.DataValidacio.Value)
+                .DefaultIfEmpty()
+                .Max();
+        }
     }
 }
