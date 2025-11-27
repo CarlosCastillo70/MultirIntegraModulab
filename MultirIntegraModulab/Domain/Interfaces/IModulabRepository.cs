@@ -10,9 +10,9 @@ namespace MultirIntegraModulab.Domain.Interfaces
     public interface IModulabRepository
     {
         /// <summary>
-        /// Carrega resultats de mostres dels últims X dies
+        /// Carrega resultats de mostres dels últims X dies enrere
         /// </summary>
-        ColeccioMostres CarregarResultats(int diesEndarrera, int limit = 0);
+        ColeccioMostres CarregarResultatsDiesEndarrera(int diesEndarrera, int limit = 0);
 
         /// <summary>
         /// Carrega resultats per un pacient específic
@@ -25,13 +25,13 @@ namespace MultirIntegraModulab.Domain.Interfaces
         ColeccioMostres CarregarResultatsPerRangDates(DateTime dataInici, DateTime dataFi);
 
         /// <summary>
-        /// Carrega resultats utilitzant filtres de sincronització optimitzats
+        /// Carrega resultats de forma incremental utilitzant filtres de darreres dates de resultat i validació
         /// Implementa la finestra de seguretat per validacions tardanes
         /// </summary>
         /// <param name="dadesSincronitzacio">Dades de l'última sincronització (null si és la primera)</param>
         /// <param name="limit">Límit de registres (0 = sense límit)</param>
         /// <returns>Col·lecció de mostres filtrades</returns>
-        ColeccioMostres CarregarResultatsAmbSincronitzacio(DadesSincronitzacio dadesSincronitzacio, int limit = 0);
+        ColeccioMostres CarregarResultatsIncremental(DadesSincronitzacio dadesSincronitzacio, int limit = 0);
 
         /// <summary>
         /// Obté la data actual del sistema Oracle

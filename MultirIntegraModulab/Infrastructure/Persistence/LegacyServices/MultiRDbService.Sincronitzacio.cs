@@ -170,14 +170,14 @@ namespace MultirIntegraModulab
 
                         if (nouId > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✅ Sincronització guardada correctament (ID: {nouId})");
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   • Mostres processades: {dades.NombreMostresProcessades}");
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   • Errors: {dades.NombreMostresError}");
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   • Estat: {dades.Estat}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✅ Sincronització guardada correctament (ID: {nouId})");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Mostres processades: {dades.NombreMostresProcessades}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Errors: {dades.NombreMostresError}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Estat: {dades.Estat}");
                             
                             if (dades.DuradaSegons.HasValue)
                             {
-                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   • Durada: {dades.DuradaSegons:F2}s");
+                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Durada: {dades.DuradaSegons:F2}s");
                             }
                         }
                         else

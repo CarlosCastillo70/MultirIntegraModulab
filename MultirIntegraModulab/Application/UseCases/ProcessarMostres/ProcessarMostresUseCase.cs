@@ -177,8 +177,6 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     await ProcessarPerTipusMostraAsync(mostra, classificacio, resum);
 
 
-
-                    resum.TotalProcessats++;
                     _logger.Info($"✅ Mostra {mostra.EtiquetaId} processada correctament");
                 }
                 catch (Exception ex)
@@ -663,7 +661,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 if (!resultatComparacio.HiHaCanvis)
                 {
                     // CAS 1: No hi ha canvis - només actualitzar data_validacio amb la nova data
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Mostra a incorporar és idèntica a la existent a l´historial - actualitzant data_validacio...");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ La mostra que es vol incorporar és IDÈNTICA a la existent a l´historial. Actualitzant data validació i estat integració");
 
                     // Obtenir la nova data de validació
                     var novaDataValidacio = mostra.Resultats.FirstOrDefault()?.DataValidacio;
@@ -701,7 +699,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 else
                 {
                     // CAS 2: Hi ha canvis - guardar historial, esborrar i continuar
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ La mostra que es vol incorporar i l´existent, SÓN DIFERENTS - guardant historial, esborrant dades i continuant amb l´incorporació...");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ La mostra que es vol incorporar i l´existent, SÓN DIFERENTS. Desant canvis a historial, esborrant dades actuals i continuant endavant per incorporar de nou la mostra");
                     
                     // Mostrar canvis detectats
                     foreach (var canvi in resultatComparacio.CanvisDetectats)

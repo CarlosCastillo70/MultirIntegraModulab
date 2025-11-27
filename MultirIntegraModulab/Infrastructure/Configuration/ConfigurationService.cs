@@ -122,6 +122,11 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
 
         #region Configuració de Càrrega
 
+        public bool CarregaIncremental
+        {
+            get { return LlegirBoolConfiguracio("CarregaIncremental", true); }
+        }
+
         public int DiesEndarreraCarrega
         {
             get { return LlegirIntConfiguracio("DiesEndarreraCarrega", 1); }
@@ -368,7 +373,8 @@ ENTORN:
   - És producció: {(EsEntornProduccio ? "SÍ" : "NO")}
 
 CÀRREGA DE DADES:
-  - Dies enrere: {DiesEndarreraCarrega}
+  - Mode càrrega: {(CarregaIncremental ? "Incremental (optimitzada)" : "Dies enrere (clàssica)")}
+  - Dies enrere: {DiesEndarreraCarrega}{(CarregaIncremental ? " (només per primera càrrega o si falla sincronització)" : "")}
   - Límit resultats: {(LimitResultatsProves == 0 ? "Il·limitat" : LimitResultatsProves.ToString())}
 
 FILTRATGE DE MOSTRES:

@@ -13,8 +13,8 @@ namespace MultirIntegraModulab
         /// <summary>
         /// Carrega resultats de mostres utilitzant filtres de sincronització optimitzats
         /// Implementa:
-        /// 1. Filtre per data_resultat >= última processada (amb overlap de 5 min per seguretat)
-        /// 2. Filtre per data_validacio >= última processada (sense overlap, sempre incrementals)
+        /// 1. Filtre per data_resultat >= última processada (amb overlap de 2 min per seguretat)
+        /// 2. Filtre per data_validacio >= última processada (amb overlap de 2 min per seguretat)
 
         /// </summary>
         /// <param name="dadesSincronitzacio">Dades de l'última sincronització (null si és la primera)</param>
@@ -26,7 +26,6 @@ namespace MultirIntegraModulab
             MultiRDbService mysqlService = null, 
             int limitRegistres = 0)
         {
-            _logger.Info("🔄 Iniciant càrrega amb filtres de sincronització optimitzats");
 
             var coleccioResultats = new ColeccioMostres();
             int registresProcessats = 0;
@@ -41,22 +40,20 @@ namespace MultirIntegraModulab
             }
 
             // Calcular dates amb overlap de seguretat
-
-            DateTime? dataResultatFiltre = dadesSincronitzacio.DataResultatMaxProcessada?.AddMinutes(-5);
-            DateTime? dataValidacioFiltre = dadesSincronitzacio.DataValidacioMaxProcessada?.AddMinutes(-5);
+            DateTime? dataResultatFiltre = dadesSincronitzacio.DataResultatMaxProcessada?.AddMinutes(-2);
+            DateTime? dataValidacioFiltre = dadesSincronitzacio.DataValidacioMaxProcessada?.AddMinutes(-2);
             int diesRevisio = dadesSincronitzacio.DiesRevisioSeguretat;
 
             _logger.Info("📊 Filtres aplicats:");
             if (dataResultatFiltre.HasValue)
             {
-                _logger.Info($"Data resultat > {dataResultatFiltre:dd/MM/yyyy HH:mm} (amb overlap de 5 min)");
+                _logger.Info($"Data resultat > {dataResultatFiltre:dd/MM/yyyy HH:mm} (amb overlap de 2 min)");
             }
             if (dataValidacioFiltre.HasValue)
             {
-                _logger.Info($"Data validació > {dataValidacioFiltre:dd/MM/yyyy HH:mm} (amb overlap de 5 min)");
+                _logger.Info($"Data validació > {dataValidacioFiltre:dd/MM/yyyy HH:mm} (amb overlap de 2 min)");
             }
-            _logger.Info($"Finestra de seguretat: {diesRevisio} dies per validacions tardanes");
-
+            
             // Precarregar microorganismes especials
             if (mysqlService != null)
             {
@@ -86,7 +83,7 @@ namespace MultirIntegraModulab
 
                 using (var cmd = new OracleCommand(sql, conn))
                 {
-                    _logger.Info($"🔎 Executant consulta Oracle amb filtres de sincronització...");
+                    _logger.Info($"🔎 Executant consulta a Modulab amb filtres per dates de resultat i validació processades");
 
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -174,8 +171,8 @@ namespace MultirIntegraModulab
         /// <summary>
         /// Construeix la consulta SQL amb filtres de sincronització
         /// Implementa la lògica de 2 filtres complementaris:
-        /// 1. DATA_RESULTAT >= última processada (amb overlap de 5 min)
-        /// 2. DATA_VALIDACIO >= última processada (sense overlap)
+        /// 1. DATA_RESULTAT >= última processada (amb overlap de 2 min)
+        /// 2. DATA_VALIDACIO >= última processada (amb overlap de 2 min)
         /// </summary>
         private string ObtenirConsultaAmbFiltresSincronitzacio(
             DateTime? dataResultatFiltre,

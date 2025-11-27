@@ -4,14 +4,14 @@ using MultirIntegraModulab.Domain.Interfaces;
 namespace MultirIntegraModulab.Infrastructure.ExternalServices.Logger
 {
     /// <summary>
-    /// ImplementaciÛ del servei de logging
-    /// Adapta la classe Logger est‡tica a la interfÌcie del domini
+    /// Implementaci√≥ del servei de logging
+    /// Adapta la classe Logger est√†tica a la interf√≠cie del domini
     /// </summary>
     public class LoggerService : ILoggerService
     {
         public LoggerService()
         {
-            // El Logger Ès est‡tic, no necessita inicialitzaciÛ
+            // El Logger √©s est√†tic, no necessita inicialitzaci√≥
         }
 
         public void Info(string missatge)
@@ -49,6 +49,11 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Logger
         public void MarcarFinalExecucio()
         {
             MultirIntegraModulab.Logger.MarcarFinalExecucio();
+        }
+
+        public void FlushLogs()
+        {
+            MultirIntegraModulab.Logger.FlushLogs();
         }
 
         public string ObtenirRutaLogAvui()

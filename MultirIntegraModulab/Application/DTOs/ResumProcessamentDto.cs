@@ -90,18 +90,18 @@ namespace MultirIntegraModulab.Application.DTOs
 
         public override string ToString()
         {
-            return $"Processament: {TotalProcessats} mostres | " +
-                   $"Noves: {NovesIncorporacions} | " +
-                   $"Antigues: {MostresAntigues} | " +
-                   $"Repetides: {MostresRepetides} | " +
-                   $"Desvalidades: {MostresDesvalidades} | " +
-                   $"Validades: {MostresValidades} | " +
-                   $"Revalidades: {MostresRevalidades} | " +
-                   $"Positives: {MostresPositives} | " +
-                   $"Negatives: {MostresNegatives} | " +
-                   $"Mixtes: {MostresMixtes} | " +
-                   $"Errors: {MostresAmbError} | " +
-                   $"Durada: {DuradaProcessament.TotalSeconds:F2}s";
+            return $"S'han processat: {TotalProcessats} mostres | " +
+                   $"Noves -> {NovesIncorporacions} | " +
+                   $"Validades -> {MostresValidades} | " +
+                   $"Desvalidades -> {MostresDesvalidades} | " +
+                   $"Revalidades -> {MostresRevalidades} | " +
+                   $"Repetides -> {MostresRepetides} | " +
+                   $"Antigues -> {MostresAntigues} ||| " +
+                   $"Positives -> {MostresPositives} | " +
+                   $"Negatives -> {MostresNegatives} | " +
+                   $"Mixtes -> {MostresMixtes} | " +
+                   $"Errors -> {MostresAmbError} | " +
+                   $"Durada : {DuradaProcessament.TotalSeconds:F2}s";
         }
     }
 }

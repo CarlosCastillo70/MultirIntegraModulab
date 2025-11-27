@@ -20,6 +20,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         int WebServiceTimeout { get; }
 
         // Configuració de càrrega
+        bool CarregaIncremental { get; }
         int DiesEndarreraCarrega { get; }
         int LimitResultatsProves { get; }
         bool EntornProduccion { get; }

@@ -235,6 +235,19 @@ namespace MultirIntegraModulab
             Info(separador);
             Info($"FINAL EXECUCIÓ - {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             Info(separador);
+            
+            // Petit delay per assegurar que el fitxer s'ha tancat completament
+            Thread.Sleep(100);
+        }
+
+        /// <summary>
+        /// Força l'espera per assegurar que tots els logs s'han escrit al disc
+        /// Útil abans d'adjuntar el log a un email
+        /// </summary>
+        public static void FlushLogs()
+        {
+            // Petit delay per assegurar que tots els StreamWriter s'han tancat
+            Thread.Sleep(200);
         }
     }
 }

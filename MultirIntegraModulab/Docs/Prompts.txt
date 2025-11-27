@@ -2028,3 +2028,28 @@ Quan es fa la crida per comprovar si el pacient te positius vigents
                     resultatMostra.MostraDescripcio, mostra.EtiquetaId);
 
 vull que es visualitzi el/els id/s de les mostres positives 
+
+
+---
+
+Les mostres que es carreguen tenen una data de resultat i una data de validació. 
+
+Data de resultat és la data en que s´ha produit un resultat al laboratori. Aquests resultats es validen a posteriori, ja sigui
+amb un procés automàtic, o be amb validació humana. Quan es valida, s´inclou la data de validació, que pot ser uns segons més tard
+de la data de resultat, o bé, dies mes tard.
+
+En el nostre procés volem carregar totes les mostres, estiguin validades o no, i sobretot sense deixar-nos res.
+
+Fins ara les carregues es fan un cop al dia i es filtra la consulta a Oracle amb data resultat d´una dia enradere o bé
+data validació un dia enraredere.
+
+Ara es vol canviar aquest filtre per incloure més carregues diaries. Segurament es consultarà si hi ha dades cada hora.
+
+Vull canviar el sistema de filtre de les dades de oracle. 
+
+Estaba pensant en desar a una nova taula de la base de dades, la data de resultat mes alta processada, 
+i també la data de validació més alta processada.
+
+D´aquesta forma, a la seguent carrega filtraria les dades d´oracle per aquestes dates.
+
+Com ho veus ? Veus alguna feblessa ? Es pot millorar ?

@@ -91,9 +91,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         }
 
         /// <summary>
-        /// Carrega resultats de mostres dels últims X dies
+        /// Carrega resultats de mostres dels últims X dies enrere
         /// </summary>
-        public ColeccioMostres CarregarResultats(int diesEndarrera, int limit = 0)
+        public ColeccioMostres CarregarResultatsDiesEndarrera(int diesEndarrera, int limit = 0)
         {
             try
             {
@@ -170,25 +170,25 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         }
 
         /// <summary>
-        /// Carrega resultats utilitzant filtres de sincronització optimitzats
+        /// Carrega resultats de forma incremental utilitzant filtres de darreres dates de resultat i validació processades
         /// </summary>
-        public ColeccioMostres CarregarResultatsAmbSincronitzacio(DadesSincronitzacio dadesSincronitzacio, int limit = 0)
+        public ColeccioMostres CarregarResultatsIncremental(DadesSincronitzacio dadesSincronitzacio, int limit = 0)
         {
             try
             {
-                _logger.Info("🔄 Carregant mostres amb filtres de sincronització");
+                _logger.Info("🔄 Carregant mostres amb càrrega incremental (segons filtres de darreres dates de resultat i validació processades)");
                 
                 var resultat = _modulabDbService.CarregarResultatsAmbSincronitzacio(
                     dadesSincronitzacio, 
                     _multiRDbService, 
                     limit);
                 
-                _logger.Info($"✅ Carregades {resultat.NombreTotalMostres} mostres amb sincronització");
+                _logger.Info($"✅ Carregades {resultat.NombreTotalMostres} mostres de forma incremental");
                 return resultat;
             }
             catch (Exception ex)
             {
-                _logger.Error($"❌ Error carregant mostres amb sincronització: {ex.Message}", ex);
+                _logger.Error($"❌ Error carregant mostres de forma incremental: {ex.Message}", ex);
                 throw;
             }
         }

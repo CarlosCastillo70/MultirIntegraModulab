@@ -3,8 +3,8 @@ using System;
 namespace MultirIntegraModulab.Domain.Interfaces
 {
     /// <summary>
-    /// Port (interfície) per al sistema de logging
-    /// Permet canviar la implementació sense afectar el domini
+    /// Port (interfÃ­cie) per al sistema de logging
+    /// Permet canviar la implementaciÃ³ sense afectar el domini
     /// </summary>
     public interface ILoggerService
     {
@@ -14,6 +14,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         void Debug(string missatge);
         void MarcarIniciExecucio();
         void MarcarFinalExecucio();
+        void FlushLogs();
         string ObtenirRutaLogAvui();
         bool ExisteixLogAvui();
         long ObtenirMidaLogAvui();
