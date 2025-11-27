@@ -58,17 +58,20 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Logger
 
         public string ObtenirRutaLogAvui()
         {
-            return MultirIntegraModulab.Logger.ObtenirRutaLogAvui();
+            // Utilitzar el mètode actualitzat
+            return MultirIntegraModulab.Logger.ObtenirRutaLogActual();
         }
 
         public bool ExisteixLogAvui()
         {
-            return MultirIntegraModulab.Logger.ExisteixLogAvui();
+            // Utilitzar el mètode actualitzat
+            return MultirIntegraModulab.Logger.ExisteixLogActual();
         }
 
         public long ObtenirMidaLogAvui()
         {
-            return MultirIntegraModulab.Logger.ObtenirMidaLogAvui();
+            // Utilitzar el mètode actualitzat
+            return MultirIntegraModulab.Logger.ObtenirMidaLogActual();
         }
     }
 }

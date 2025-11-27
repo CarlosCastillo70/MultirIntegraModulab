@@ -5,12 +5,19 @@ using System.Threading;
 namespace MultirIntegraModulab
 {
     /// <summary>
-    /// Sistema de logging que escriu els missatges a fitxers organitzats per dia
+    /// Sistema de logging que escriu els missatges a fitxers organitzats per execució
+    /// Cada execució crea un fitxer de log independent amb timestamp
     /// </summary>
     public static class Logger
     {
         private static readonly object _lockObject = new object();
         private static readonly string _baseDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+        
+        // Timestamp d'inici de l'execució actual (fixat al primer ús)
+        private static DateTime? _dataInici = null;
+        
+        // Ruta del fitxer de log de l'execució actual
+        private static string _rutaLogActual = null;
 
         /// <summary>
         /// Tipus de missatge de log
@@ -40,6 +47,27 @@ namespace MultirIntegraModulab
             {
                 // En cas d'error creant la carpeta, usar Console com a fallback
                 Console.WriteLine($"ERROR: No s'ha pogut crear la carpeta de logs: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Inicialitza una nova execució amb un timestamp fix
+        /// Aquest mètode s'ha de cridar al principi de cada execució
+        /// </summary>
+        private static void InicialitzarExecucio()
+        {
+            if (_dataInici == null)
+            {
+                lock (_lockObject)
+                {
+                    if (_dataInici == null)
+                    {
+                        _dataInici = DateTime.Now;
+                        // Format: multir2025-01-27_08-30-15.log
+                        string nomFitxer = $"multir{_dataInici.Value:yyyy-MM-dd_HH-mm-ss}.log";
+                        _rutaLogActual = Path.Combine(_baseDirectory, nomFitxer);
+                    }
+                }
             }
         }
 
@@ -104,7 +132,7 @@ namespace MultirIntegraModulab
         }
 
         /// <summary>
-        /// Escriu un missatge al fitxer de log corresponent al dia actual
+        /// Escriu un missatge al fitxer de log de l'execució actual
         /// </summary>
         /// <param name="tipus">Tipus de missatge</param>
         /// <param name="missatge">Missatge a escriure</param>
@@ -114,15 +142,16 @@ namespace MultirIntegraModulab
             {
                 lock (_lockObject)
                 {
+                    // Assegurar que tenim inicialitzada l'execució
+                    InicialitzarExecucio();
+                    
                     DateTime ara = DateTime.Now;
-                    string nomFitxer = $"multir{ara:yyyy-MM-dd}.log";
-                    string rutaCompleta = Path.Combine(_baseDirectory, nomFitxer);
 
                     // Format: data hora minut segon actual tipus : missatge
                     string lineaLog = $"{ara:yyyy-MM-dd HH:mm:ss} {tipus} : {missatge}";
 
-                    // Escriure al fitxer (crear si no existeix, afegir si existeix)
-                    using (var writer = new StreamWriter(rutaCompleta, append: true))
+                    // Escriure al fitxer de l'execució actual
+                    using (var writer = new StreamWriter(_rutaLogActual, append: true))
                     {
                         writer.WriteLine(lineaLog);
                         writer.Flush();
@@ -142,33 +171,62 @@ namespace MultirIntegraModulab
         }
 
         /// <summary>
-        /// Obté la ruta del fitxer de log d'avui
+        /// Obté la ruta del fitxer de log de l'execució actual
         /// </summary>
-        /// <returns>Ruta completa del fitxer de log actual</returns>
-        public static string ObtenirRutaLogAvui()
+        /// <returns>Ruta completa del fitxer de log de l'execució actual</returns>
+        public static string ObtenirRutaLogActual()
         {
-            DateTime ara = DateTime.Now;
-            string nomFitxer = $"multir{ara:yyyy-MM-dd}.log";
-            return Path.Combine(_baseDirectory, nomFitxer);
+            InicialitzarExecucio();
+            return _rutaLogActual;
         }
 
         /// <summary>
-        /// Comprova si existeix el fitxer de log d'avui
+        /// Comprova si existeix el fitxer de log de l'execució actual
         /// </summary>
         /// <returns>True si existeix el fitxer</returns>
-        public static bool ExisteixLogAvui()
+        public static bool ExisteixLogActual()
         {
-            return File.Exists(ObtenirRutaLogAvui());
+            return File.Exists(ObtenirRutaLogActual());
         }
 
         /// <summary>
-        /// Obté la mida del fitxer de log d'avui en bytes
+        /// Obté la mida del fitxer de log de l'execució actual en bytes
         /// </summary>
         /// <returns>Mida en bytes o 0 si no existeix</returns>
+        public static long ObtenirMidaLogActual()
+        {
+            string rutaLog = ObtenirRutaLogActual();
+            return File.Exists(rutaLog) ? new FileInfo(rutaLog).Length : 0;
+        }
+
+        /// <summary>
+        /// Obté la ruta del fitxer de log d'avui (mètode obsolet, mantingut per compatibilitat)
+        /// </summary>
+        /// <returns>Ruta completa del fitxer de log de l'execució actual</returns>
+        [Obsolete("Utilitzeu ObtenirRutaLogActual() en lloc d'aquest mètode")]
+        public static string ObtenirRutaLogAvui()
+        {
+            return ObtenirRutaLogActual();
+        }
+
+        /// <summary>
+        /// Comprova si existeix el fitxer de log d'avui (mètode obsolet, mantingut per compatibilitat)
+        /// </summary>
+        /// <returns>True si existeix el fitxer</returns>
+        [Obsolete("Utilitzeu ExisteixLogActual() en lloc d'aquest mètode")]
+        public static bool ExisteixLogAvui()
+        {
+            return ExisteixLogActual();
+        }
+
+        /// <summary>
+        /// Obté la mida del fitxer de log d'avui en bytes (mètode obsolet, mantingut per compatibilitat)
+        /// </summary>
+        /// <returns>Mida en bytes o 0 si no existeix</returns>
+        [Obsolete("Utilitzeu ObtenirMidaLogActual() en lloc d'aquest mètode")]
         public static long ObtenirMidaLogAvui()
         {
-            string rutaLog = ObtenirRutaLogAvui();
-            return File.Exists(rutaLog) ? new FileInfo(rutaLog).Length : 0;
+            return ObtenirMidaLogActual();
         }
 
         /// <summary>
@@ -219,9 +277,13 @@ namespace MultirIntegraModulab
         /// </summary>
         public static void MarcarIniciExecucio()
         {
+            // Forçar inicialització amb el timestamp actual
+            InicialitzarExecucio();
+            
             string separador = new string('=', 80);
             Info(separador);
-            Info($"INICI NOVA EXECUCIÓ - {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+            Info($"INICI NOVA EXECUCIÓ - {_dataInici.Value:yyyy-MM-dd HH:mm:ss}");
+            Info($"Fitxer de log: {Path.GetFileName(_rutaLogActual)}");
             Info($"Versió de l'aplicació: {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version}");
             Info(separador);
         }
@@ -258,6 +320,18 @@ namespace MultirIntegraModulab
                 
                 // Delay addicional per assegurar que el sistema operatiu ha alliberat el fitxer
                 Thread.Sleep(200);
+            }
+        }
+
+        /// <summary>
+        /// Reinicia el logger per una nova execució (útil per testing o múltiples execucions en un mateix procés)
+        /// </summary>
+        public static void ReiniciarPerNovaExecucio()
+        {
+            lock (_lockObject)
+            {
+                _dataInici = null;
+                _rutaLogActual = null;
             }
         }
     }

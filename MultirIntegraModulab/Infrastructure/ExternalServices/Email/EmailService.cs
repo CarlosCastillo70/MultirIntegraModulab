@@ -44,7 +44,7 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             _usarSSL = usarSSL;
             _emailFrom = emailFrom ?? throw new ArgumentNullException(nameof(emailFrom));
             _emailsDestinataris = emailsDestinataris ?? throw new ArgumentNullException(nameof(emailsDestinataris));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger = logger;  // Pot ser null per evitar escriure al fitxer de log durant l'enviament d'email
 
             if (!_emailsDestinataris.Any())
             {
@@ -52,19 +52,36 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             }
 
             // Determinar si s'utilitza autenticació
-            // Només utilitzem autenticació si tant l'usuari com la contrasenya tenen valors vàlids
             _utilitzarAutenticacio = !string.IsNullOrWhiteSpace(_smtpUsuari) && 
                                      !EsValorPerDefecte(_smtpUsuari) &&
                                      !string.IsNullOrWhiteSpace(_smtpPassword) &&
                                      !EsValorPerDefecte(_smtpPassword);
+        }
 
-            if (_utilitzarAutenticacio)
+        /// <summary>
+        /// Escriu un missatge de log de forma segura (consola si no hi ha logger per evitar reobrir fitxers)
+        /// </summary>
+        private void Log(string missatge, string tipus = "INFO")
+        {
+            if (_logger != null)
             {
-                _logger.Info("📧 EmailService configurat amb autenticació SMTP");
+                switch (tipus.ToUpper())
+                {
+                    case "WARNING":
+                        _logger.Warning(missatge);
+                        break;
+                    case "ERROR":
+                        _logger.Error(missatge);
+                        break;
+                    default:
+                        _logger.Info(missatge);
+                        break;
+                }
             }
             else
             {
-                _logger.Info("📧 EmailService configurat sense autenticació (connexió anònima)");
+                // Si no hi ha logger, escriure a consola per no reobrir el fitxer de log
+                Console.WriteLine($"[{tipus}] {missatge}");
             }
         }
 
@@ -99,7 +116,7 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
         {
             try
             {
-                _logger.Info($"📧 Preparant enviament d'email: '{subject}'");
+                Log($"📧 Preparant enviament d'email: '{subject}'");
 
                 using (var message = new MailMessage())
                 {
@@ -133,61 +150,58 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
                                 var attachment = new Attachment(logFilePath);
                                 message.Attachments.Add(attachment);
                                 adjuntAfegit = true;
-                                _logger.Info($"📎 Adjuntant fitxer de log: {Path.GetFileName(logFilePath)}");
+                                Log($"📎 Adjuntant fitxer de log: {Path.GetFileName(logFilePath)}");
                             }
                             catch (IOException ioEx) when (intents < maxIntents)
                             {
-                                _logger.Warning($"⚠️ Intent {intents}/{maxIntents} - Fitxer de log encara està bloquejat. Reintentant...");
-                                System.Threading.Thread.Sleep(500); // Esperar mig segon abans de reintentar
+                                Log($"⚠️ Intent {intents}/{maxIntents} - Fitxer de log encara bloquejat. Reintentant...", "WARNING");
+                                System.Threading.Thread.Sleep(500);
                             }
                         }
                         
                         if (!adjuntAfegit)
                         {
-                            _logger.Warning($"⚠️ No s'ha pogut adjuntar el fitxer de log després de {maxIntents} intents. S'enviarà l'email sense adjunt.");
+                            Log($"⚠️ No s'ha pogut adjuntar el fitxer després de {maxIntents} intents. S'enviarà sense adjunt.", "WARNING");
                         }
                     }
                     else if (!string.IsNullOrWhiteSpace(logFilePath))
                     {
-                        _logger.Warning($"⚠️ No s'ha trobat el fitxer de log: {logFilePath}");
+                        Log($"⚠️ No s'ha trobat el fitxer de log: {logFilePath}", "WARNING");
                     }
 
                     // Configurar client SMTP
                     using (var smtpClient = new SmtpClient(_smtpServer, _smtpPort))
                     {
-                        // Només configurar credencials si s'utilitza autenticació
                         if (_utilitzarAutenticacio)
                         {
                             smtpClient.Credentials = new NetworkCredential(_smtpUsuari, _smtpPassword);
-                            _logger.Info($"🔐 Utilitzant autenticació SMTP amb usuari: {_smtpUsuari}");
+                            Log($"🔐 Autenticació SMTP: {_smtpUsuari}");
                         }
                         else
                         {
                             smtpClient.UseDefaultCredentials = false;
-                            _logger.Info($"🔓 Connexió SMTP anònima (sense autenticació)");
+                            Log($"🔓 Connexió SMTP anònima");
                         }
 
                         smtpClient.EnableSsl = _usarSSL;
-                        smtpClient.Timeout = 30000; // 30 segons
+                        smtpClient.Timeout = 30000;
 
-                        // Enviar email
-                        _logger.Info($"📤 Enviant email a {_emailsDestinataris.Count} destinatari(s) via {_smtpServer}:{_smtpPort}...");
+                        Log($"📤 Enviant email a {_emailsDestinataris.Count} destinatari(s) via {_smtpServer}:{_smtpPort}...");
                         smtpClient.Send(message);
                         
-                        _logger.Info($"✅ Email enviat correctament a: {string.Join(", ", _emailsDestinataris)}");
+                        Log($"✅ Email enviat a: {string.Join(", ", _emailsDestinataris)}");
                         return true;
                     }
                 }
             }
             catch (SmtpException ex)
             {
-                _logger.Error($"❌ Error SMTP enviant email: {ex.Message}", ex);
-                _logger.Error($"   Codi d'estat SMTP: {ex.StatusCode}");
+                Log($"❌ Error SMTP: {ex.Message} (Codi: {ex.StatusCode})", "ERROR");
                 return false;
             }
             catch (Exception ex)
             {
-                _logger.Error($"❌ Error general enviant email: {ex.Message}", ex);
+                Log($"❌ Error enviant email: {ex.Message}", "ERROR");
                 return false;
             }
         }
@@ -195,9 +209,6 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
         /// <summary>
         /// Envia un email de resum del processament amb estadístiques
         /// </summary>
-        /// <param name="resum">Resum del processament</param>
-        /// <param name="logFilePath">Ruta al fitxer de log (opcional)</param>
-        /// <returns>True si s'ha enviat correctament</returns>
         public bool EnviarEmailResumProcessament(
             Application.DTOs.ResumProcessamentDto resum, 
             string logFilePath = null)
@@ -206,14 +217,12 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             {
                 var dataExecutio = DateTime.Now;
                 var subject = $"MultiR - Integració Modulab - {dataExecutio:dd/MM/yyyy HH:mm}";
-
                 var body = GenerarCosEmailResum(resum, dataExecutio);
-
                 return EnviarEmailAmbLog(subject, body, logFilePath);
             }
             catch (Exception ex)
             {
-                _logger.Error($"❌ Error generant email de resum: {ex.Message}", ex);
+                Log($"❌ Error generant email de resum: {ex.Message}", "ERROR");
                 return false;
             }
         }
@@ -224,7 +233,6 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
         private string GenerarCosEmailResum(Application.DTOs.ResumProcessamentDto resum, DateTime dataExecutio)
         {
             var sb = new StringBuilder();
-
             sb.AppendLine("=================================================");
             sb.AppendLine("    MULTIR - INTEGRACIÓ MODULAB");
             sb.AppendLine("=================================================");
@@ -257,31 +265,24 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             sb.AppendLine();
             sb.AppendLine("--");
             sb.AppendLine("Aquest és un missatge automàtic del sistema MultiR");
-
             return sb.ToString();
         }
 
         /// <summary>
         /// Envia un email d'error crític
         /// </summary>
-        /// <param name="missatgeError">Missatge d'error</param>
-        /// <param name="exception">Excepció (opcional)</param>
-        /// <param name="logFilePath">Ruta al fitxer de log (opcional)</param>
-        /// <returns>True si s'ha enviat correctament</returns>
         public bool EnviarEmailError(string missatgeError, Exception exception = null, string logFilePath = null)
         {
             try
             {
                 var dataExecutio = DateTime.Now;
                 var subject = $"❌ MultiR - ERROR - {dataExecutio:dd/MM/yyyy HH:mm}";
-
                 var body = GenerarCosEmailError(missatgeError, exception, dataExecutio);
-
                 return EnviarEmailAmbLog(subject, body, logFilePath);
             }
             catch (Exception ex)
             {
-                _logger.Error($"❌ Error enviant email d'error: {ex.Message}", ex);
+                Log($"❌ Error enviant email d'error: {ex.Message}", "ERROR");
                 return false;
             }
         }
@@ -292,7 +293,6 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
         private string GenerarCosEmailError(string missatgeError, Exception exception, DateTime dataExecutio)
         {
             var sb = new StringBuilder();
-
             sb.AppendLine("=================================================");
             sb.AppendLine("    ❌ MULTIR - ERROR CRÍTIC");
             sb.AppendLine("=================================================");
@@ -330,7 +330,6 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             sb.AppendLine();
             sb.AppendLine("--");
             sb.AppendLine("Aquest és un missatge automàtic del sistema MultiR");
-
             return sb.ToString();
         }
     }

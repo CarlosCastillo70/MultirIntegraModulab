@@ -234,13 +234,37 @@ namespace MultirIntegraModulab
 
                         if (enviarEmail)
                         {
-                            // Assegurar que tots els logs s'han escrit abans d'adjuntar el fitxer
+                            Console.WriteLine("\n📧 Preparant enviament d'email...");
+                            
+                            // Obtenir la ruta del log actual ABANS de tancar-lo
+                            string logFilePathOriginal = loggerService.ObtenirRutaLogAvui();
+                            
+                            // Assegurar que tots els logs s'han escrit i tancar el fitxer
                             loggerService.FlushLogs();
                             
-                            // Delay addicional per assegurar que el fitxer está completament alliberat
-                            System.Threading.Thread.Sleep(300);
+                            // Delay per assegurar que el fitxer està completament alliberat
+                            System.Threading.Thread.Sleep(500);
                             
-                            loggerService.Info("📧 Enviant email amb el resum del processament");
+                            // Crear una còpia temporal del log per adjuntar a l'email
+                            string logFilePathTemp = null;
+                            if (System.IO.File.Exists(logFilePathOriginal))
+                            {
+                                try
+                                {
+                                    logFilePathTemp = logFilePathOriginal.Replace(".log", "_temp.log");
+                                    System.IO.File.Copy(logFilePathOriginal, logFilePathTemp, overwrite: true);
+                                    Console.WriteLine($"✅ Còpia temporal del log creada: {System.IO.Path.GetFileName(logFilePathTemp)}");
+                                }
+                                catch (Exception exCopy)
+                                {
+                                    Console.WriteLine($"⚠️ No s'ha pogut crear còpia del log: {exCopy.Message}");
+                                    // Si no podem copiar, intentarem amb l'original
+                                    logFilePathTemp = logFilePathOriginal;
+                                }
+                            }
+                            
+                            // A partir d'aquí, NO utilitzem més loggerService per evitar reobrir el fitxer
+                            Console.WriteLine("📧 Enviant email amb el resum del processament...");
                             
                             var emailService = new EmailService(
                                 configService.SmtpServer,
@@ -250,11 +274,8 @@ namespace MultirIntegraModulab
                                 configService.SmtpUsarSSL,
                                 configService.EmailFrom,
                                 configService.EmailsDestinataris,
-                                loggerService
+                                null  // NO passem logger per evitar que escrigui logs durant l'enviament
                             );
-
-                            // Obtenir la ruta del log d'avui
-                            string logFilePath = loggerService.ObtenirRutaLogAvui();
 
                             bool emailEnviat = false;
 
@@ -264,7 +285,7 @@ namespace MultirIntegraModulab
                                 emailEnviat = emailService.EnviarEmailError(
                                     "S'ha produït un error crític durant l'execució de la integració Modulab",
                                     errorGeneral,
-                                    logFilePath
+                                    logFilePathTemp
                                 );
                             }
                             else if (resum != null)
@@ -272,7 +293,7 @@ namespace MultirIntegraModulab
                                 // Enviar email amb resum normal
                                 emailEnviat = emailService.EnviarEmailResumProcessament(
                                     resum,
-                                    logFilePath
+                                    logFilePathTemp
                                 );
                             }
                             else
@@ -281,17 +302,32 @@ namespace MultirIntegraModulab
                                 emailEnviat = emailService.EnviarEmailAmbLog(
                                     "MultiR - Integració Modulab - Sense mostres a processar",
                                     "No s'han trobat mostres per processar en aquesta execució.",
-                                    logFilePath
+                                    logFilePathTemp
                                 );
                             }
 
                             if (emailEnviat)
                             {
-                                loggerService.Info("✅ Email enviat correctament");
+                                Console.WriteLine("✅ Email enviat correctament");
                             }
                             else
                             {
-                                loggerService.Error("⚠️ No s'ha pogut enviar l'email (revisa el log per més detalls)");
+                                Console.WriteLine("⚠️ No s'ha pogut enviar l'email");
+                            }
+                            
+                            // Esborrar fitxer temporal si existeix i és diferent de l'original
+                            if (logFilePathTemp != null && 
+                                logFilePathTemp != logFilePathOriginal && 
+                                System.IO.File.Exists(logFilePathTemp))
+                            {
+                                try
+                                {
+                                    System.IO.File.Delete(logFilePathTemp);
+                                }
+                                catch
+                                {
+                                    // Ignorar errors esborrant el temporal
+                                }
                             }
                         }
                     }
