@@ -118,12 +118,34 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
                     message.BodyEncoding = Encoding.UTF8;
                     message.SubjectEncoding = Encoding.UTF8;
 
-                    // Afegir adjunt de log si existeix
+                    // Afegir adjunt de log si existeix (amb retry logic)
                     if (!string.IsNullOrWhiteSpace(logFilePath) && File.Exists(logFilePath))
                     {
-                        var attachment = new Attachment(logFilePath);
-                        message.Attachments.Add(attachment);
-                        _logger.Info($"📎 Adjuntant fitxer de log: {Path.GetFileName(logFilePath)}");
+                        bool adjuntAfegit = false;
+                        int intents = 0;
+                        int maxIntents = 3;
+                        
+                        while (!adjuntAfegit && intents < maxIntents)
+                        {
+                            try
+                            {
+                                intents++;
+                                var attachment = new Attachment(logFilePath);
+                                message.Attachments.Add(attachment);
+                                adjuntAfegit = true;
+                                _logger.Info($"📎 Adjuntant fitxer de log: {Path.GetFileName(logFilePath)}");
+                            }
+                            catch (IOException ioEx) when (intents < maxIntents)
+                            {
+                                _logger.Warning($"⚠️ Intent {intents}/{maxIntents} - Fitxer de log encara està bloquejat. Reintentant...");
+                                System.Threading.Thread.Sleep(500); // Esperar mig segon abans de reintentar
+                            }
+                        }
+                        
+                        if (!adjuntAfegit)
+                        {
+                            _logger.Warning($"⚠️ No s'ha pogut adjuntar el fitxer de log després de {maxIntents} intents. S'enviarà l'email sense adjunt.");
+                        }
                     }
                     else if (!string.IsNullOrWhiteSpace(logFilePath))
                     {

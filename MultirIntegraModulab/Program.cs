@@ -237,6 +237,9 @@ namespace MultirIntegraModulab
                             // Assegurar que tots els logs s'han escrit abans d'adjuntar el fitxer
                             loggerService.FlushLogs();
                             
+                            // Delay addicional per assegurar que el fitxer está completament alliberat
+                            System.Threading.Thread.Sleep(300);
+                            
                             loggerService.Info("📧 Enviant email amb el resum del processament");
                             
                             var emailService = new EmailService(

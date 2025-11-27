@@ -246,8 +246,19 @@ namespace MultirIntegraModulab
         /// </summary>
         public static void FlushLogs()
         {
-            // Petit delay per assegurar que tots els StreamWriter s'han tancat
-            Thread.Sleep(200);
+            lock (_lockObject)
+            {
+                // Petit delay inicial per assegurar que tots els StreamWriter s'han tancat
+                Thread.Sleep(100);
+                
+                // Forçar recollida de memòria per alliberar tots els StreamWriter pendents
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+                
+                // Delay addicional per assegurar que el sistema operatiu ha alliberat el fitxer
+                Thread.Sleep(200);
+            }
         }
     }
 }
