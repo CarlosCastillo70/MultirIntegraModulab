@@ -242,11 +242,26 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             
             if (!calIncorporarNegatiu)
             {
-                
-                // Comprovar si el pacient té positius vigents per aquest tipus de mostra o equivalents
+
+                // Comprovar si el pacient té positius vigents per aquest tipus de mostra o equivalents, amb diferent etiquetaid
                 bool pacientTePositiusVigents = _multiRRepository.PacientTePositiusVigentsTipusMostraIEquivalents(
-                    mostra.PacientSap, 
-                    resultatMostra.MostraDescripcio, mostra.EtiquetaId);
+                    mostra.PacientSap,
+                    resultatMostra.MostraDescripcio, 
+                    mostra.EtiquetaId);
+
+                // NotaCC : segons Marti, pot ser que per una mateixa data puguin haver diferents resultats per una mateixa data
+                // Comprovar si el pacient té positius vigents per aquest tipus de mostra o equivalents, amb diferent etiquetaid i diferent datapeticio
+                //bool pacientTePositiusVigents = _multiRRepository.PacientTePositiusVigentsTipusMostraIEquivalents(
+                //    mostra.PacientSap, 
+                //    resultatMostra.MostraDescripcio, 
+                //    mostra.EtiquetaId, 
+                //    mostra.DataPeticio);
+
+                //if (pacientTePositiusVigentsSenseFiltreData != pacientTePositiusVigents)
+                //{
+                //    var aaa = "TODOCC";
+                //}
+
                 
                 if (pacientTePositiusVigents)
                 {

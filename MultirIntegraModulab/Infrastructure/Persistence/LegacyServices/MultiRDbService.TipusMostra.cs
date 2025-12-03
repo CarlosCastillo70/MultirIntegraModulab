@@ -241,8 +241,9 @@ namespace MultirIntegraModulab
         /// <param name="pacientSap">Identificador del pacient</param>
         /// <param name="tipusMostra">Tipus de mostra (MOSTRA_DESCRIPCIO)</param>
         /// <param name="etiquetaExcloure">Etiqueta a excloure de la cerca (opcional)</param>
+        /// <param name="dataResultatExcloure">Data resultat a excloure - filtra mostres amb data resultat diferent (opcional)</param>
         /// <returns>True si el pacient té almenys un positiu vigent per aquest tipus o equivalents</returns>
-        public bool PacientTePositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiquetaExcloure = null)
+        public bool PacientTePositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiquetaExcloure = null, DateTime? dataResultatExcloure = null)
         {
             if (string.IsNullOrWhiteSpace(pacientSap))
             {
@@ -287,7 +288,14 @@ namespace MultirIntegraModulab
                 sql += " AND (pdm.etiqueta <> @etiquetaExcloure OR pdm.etiqueta IS NULL)";
             }
 
-            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 2: Positius vigents per aquest tipus de mostra '{tipusMostra}' o equivalents, i amb diferent etiqueta");
+            // Si s'especifica una data de resultat a excloure, filtrar per mostres amb data resultat diferent
+            if (dataResultatExcloure.HasValue)
+            {
+                sql += @" AND (pdm.data_mostra IS NULL 
+                             OR pdm.data_mostra <> @dataResultatExcloure)";
+            }
+
+            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Aplicant Comprovació 2: Positius vigents per aquest tipus de mostra '{tipusMostra}' o equivalents, amb diferent etiqueta{(dataResultatExcloure.HasValue ? " i diferent data resultat" : "")}");
 
             try
             {
@@ -302,6 +310,11 @@ namespace MultirIntegraModulab
                         if (!string.IsNullOrWhiteSpace(etiquetaExcloure))
                         {
                             cmd.Parameters.AddWithValue("@etiquetaExcloure", etiquetaExcloure);
+                        }
+
+                        if (dataResultatExcloure.HasValue)
+                        {
+                            cmd.Parameters.AddWithValue("@dataResultatExcloure", dataResultatExcloure.Value);
                         }
 
                         var idsMostresPositives = new List<int>();
@@ -326,7 +339,7 @@ namespace MultirIntegraModulab
                         }
                         else
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Pacient NO té positius vigents per aquest tipus de mostra '{tipusMostra}' o equivalents, i amb diferent etiqueta");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Pacient NO té positius vigents per aquest tipus de mostra '{tipusMostra}' o equivalents, amb diferent etiqueta{(dataResultatExcloure.HasValue ? " i diferent data mostra" : "")}");
                         }
                         
                         return tePositiusVigents;

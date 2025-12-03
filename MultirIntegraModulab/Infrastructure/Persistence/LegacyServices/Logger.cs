@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 using System.IO;
 using System.Threading;
 
@@ -6,7 +7,7 @@ namespace MultirIntegraModulab
 {
     /// <summary>
     /// Sistema de logging que escriu els missatges a fitxers organitzats per execució
-    /// Cada execució crea un fitxer de log independent amb timestamp
+    /// Cada execució crea un fitxer de log independent amb timestamp i sufix d'entorn
     /// </summary>
     public static class Logger
     {
@@ -51,7 +52,7 @@ namespace MultirIntegraModulab
         }
 
         /// <summary>
-        /// Inicialitza una nova execució amb un timestamp fix
+        /// Inicialitza una nova execució amb un timestamp fix i sufix d'entorn
         /// Aquest mètode s'ha de cridar al principi de cada execució
         /// </summary>
         private static void InicialitzarExecucio()
@@ -63,11 +64,58 @@ namespace MultirIntegraModulab
                     if (_dataInici == null)
                     {
                         _dataInici = DateTime.Now;
-                        // Format: multir2025-01-27_08-30-15.log
-                        string nomFitxer = $"multir{_dataInici.Value:yyyy-MM-dd_HH-mm-ss}.log";
+                        
+                        // Obtenir sufix segons l'entorn
+                        string sufixEntorn = ObtenirSufixEntorn();
+                        
+                        // Format: multir2025-01-27_08-30-15_pro.log o multir2025-01-27_08-30-15_pre.log
+                        string nomFitxer = $"multir{_dataInici.Value:yyyy-MM-dd_HH-mm-ss}{sufixEntorn}.log";
                         _rutaLogActual = Path.Combine(_baseDirectory, nomFitxer);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Obté el sufix d'entorn per al nom del fitxer de log
+        /// </summary>
+        /// <returns>_pro per producció, _pre per preproducció</returns>
+        private static string ObtenirSufixEntorn()
+        {
+            try
+            {
+                // Llegir configuració d'entorn des d'App.config
+                string entorn = ConfigurationManager.AppSettings["Entorn"];
+                
+                if (string.IsNullOrWhiteSpace(entorn))
+                {
+                    // Per defecte preproducció si no està configurat
+                    return "_pre";
+                }
+                
+                // Normalitzar i retornar sufix
+                if (entorn.Equals("Produccio", StringComparison.OrdinalIgnoreCase) ||
+                    entorn.Equals("Produccion", StringComparison.OrdinalIgnoreCase) ||
+                    entorn.Equals("Production", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "_pro";
+                }
+                else if (entorn.Equals("Preproduccio", StringComparison.OrdinalIgnoreCase) ||
+                         entorn.Equals("Preproduccion", StringComparison.OrdinalIgnoreCase) ||
+                         entorn.Equals("Preproduction", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "_pre";
+                }
+                else
+                {
+                    // Per defecte preproducció per entorns desconeguts
+                    return "_pre";
+                }
+            }
+            catch (Exception)
+            {
+                // En cas d'error llegint la configuració, utilitzar preproducció per seguretat
+                return "_pre";
             }
         }
 

@@ -2053,3 +2053,47 @@ i també la data de validació més alta processada.
 D´aquesta forma, a la seguent carrega filtraria les dades d´oracle per aquestes dates.
 
 Com ho veus ? Veus alguna feblessa ? Es pot millorar ?
+
+----
+
+
+PacientTePositiusVigentsTipusMostraIEquivalents ha d´incloure un nou parametre opcional. Data resultat a excloure. 
+
+Si hi ha valor, s´ha de filtrar per les mostres que tinguin una data resultat diferent a aquesta. 
+
+Això ens servirà per detectar quan hi ha una mostra positiva i a continuació una mostra negativa. Quan es gestiona la mostra negativa
+cerca altres positius, i detectarà el primer positiu inclòs, amb el que li afegiria un negatiu, i tindriem una diagnostic amb un positiu i el mateix dia un negatiu
+
+
+-----
+
+Fins ara els resultats de mostres arriben amb paper. El papers poden arribar el mateix dia del resulat, o dies després.
+
+Ara aquest procés s´automatitzarà amb el programa que hem estat fent.
+
+Per provar si funciona el procés de carrega automatica de mostres necesito algun sistema per comparar les mostres carregades amb el nou sistema amb les mostres que arriben amb paper.
+
+Necessito comprovar que totes les mostres rebudes en paper les hem processat en alguna de les carregues que farem diaries.
+
+Com ho podria fer ?
+
+-----
+
+
+
+A ComprovarMecanisme has d´afegir una nova comprovació. Els mecanismes tenen un camp incorpora_modulab. Si té valor 0,
+no s´ha d´incorporar i ha d´inserir auditoria amb codi MNI 'Mecanisme de resistència a NO incorporar'
+
+
+
+-----
+
+El funcionament és una mica diferent. 
+
+Si un resultat té més d´un mecanisme de resistencia i algun d´ells 
+tenen el camp incorpora_modulab = 0, aquests mecanismes s´haurien de treure per no gestionar-los, però s´ha de continuar endavant 
+amb la gestió de la resta de mecanismes de resistencia del resultat.
+
+En aquests casos, per deixar constancia, s´ha de deixar auditoria
+
+
