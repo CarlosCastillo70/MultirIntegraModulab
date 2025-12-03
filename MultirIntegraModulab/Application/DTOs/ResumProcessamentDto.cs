@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 
 namespace MultirIntegraModulab.Application.DTOs
 {
@@ -90,18 +91,49 @@ namespace MultirIntegraModulab.Application.DTOs
 
         public override string ToString()
         {
-            return $"S'han processat: {TotalProcessats} mostres | " +
-                   $"Noves -> {NovesIncorporacions} | " +
-                   $"Validades -> {MostresValidades} | " +
-                   $"Desvalidades -> {MostresDesvalidades} | " +
-                   $"Revalidades -> {MostresRevalidades} | " +
-                   $"Repetides -> {MostresRepetides} | " +
-                   $"Antigues -> {MostresAntigues} ||| " +
-                   $"Positives -> {MostresPositives} | " +
-                   $"Negatives -> {MostresNegatives} | " +
-                   $"Mixtes -> {MostresMixtes} | " +
-                   $"Errors -> {MostresAmbError} | " +
-                   $"Durada : {DuradaProcessament.TotalSeconds:F2}s";
+            var sb = new StringBuilder();
+            
+            sb.AppendLine();
+            sb.AppendLine("═══════════════════════════════════════════════════════════════");
+            sb.AppendLine("  RESUM FINAL DEL PROCESSAMENT");
+            sb.AppendLine("═══════════════════════════════════════════════════════════════");
+            sb.AppendLine();
+            
+            // Total mostres processades
+            sb.AppendLine($"📊 TOTAL MOSTRES PROCESSADES: {TotalProcessats}");
+            sb.AppendLine();
+            
+            // Tipus d'incorporació
+            sb.AppendLine("┌─────────────────────────────────────────────────────────────┐");
+            sb.AppendLine("│  SEGONS TIPUS D'INCORPORACIÓ                                │");
+            sb.AppendLine("└─────────────────────────────────────────────────────────────┘");
+            sb.AppendLine($"   🆕 Noves incorporacions  : {NovesIncorporacions,6}");
+            sb.AppendLine($"   ✅ Validades             : {MostresValidades,6}");
+            sb.AppendLine($"   ⬇️ Desvalidades          : {MostresDesvalidades,6}");
+            sb.AppendLine($"   🔄 Revalidades           : {MostresRevalidades,6}");
+            sb.AppendLine($"   🔁 Repetides             : {MostresRepetides,6}");
+            sb.AppendLine($"   🕐 Antigues              : {MostresAntigues,6}");
+            sb.AppendLine();
+            
+            // Tipus de resultat
+            sb.AppendLine("┌─────────────────────────────────────────────────────────────┐");
+            sb.AppendLine("│  SEGONS TIPUS DE RESULTAT                                   │");
+            sb.AppendLine("└─────────────────────────────────────────────────────────────┘");
+            sb.AppendLine($"   ⚡ Positives             : {MostresPositives,6}");
+            sb.AppendLine($"   🔵 Negatives             : {MostresNegatives,6}");
+            sb.AppendLine($"   🟢🔵 Mixtes              : {MostresMixtes,6}");
+            sb.AppendLine();
+            
+            // Errors i durada
+            sb.AppendLine("┌─────────────────────────────────────────────────────────────┐");
+            sb.AppendLine("│  ALTRES DADES                                               │");
+            sb.AppendLine("└─────────────────────────────────────────────────────────────┘");
+            sb.AppendLine($"   ❌ Errors                : {MostresAmbError,6}");
+            sb.AppendLine($"   ⏱️ Durada                : {DuradaProcessament.TotalSeconds:F2}s");
+            sb.AppendLine();
+            sb.AppendLine("═══════════════════════════════════════════════════════════════");
+            
+            return sb.ToString();
         }
     }
 }
