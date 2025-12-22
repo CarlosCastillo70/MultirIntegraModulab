@@ -211,13 +211,14 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
 
         /// <summary>
         /// Obte la consulta SQL per carregar els resultats de proves
+        /// IMPORTANT: Concatena PREFIX formatat a 3 caràcters amb ETIQUETA_ID per obtenir identificador únic real
         /// </summary>
         /// <param name="limitRegistres">Límit màxim de registres (0 = sense límit)</param>
         private string ObtenirConsultaResultatsProves(int limitRegistres = 0)
         {
             string consultaBase = @"
                 SELECT
-                  PET.ETIQUETA_ID,
+                  PET.ETIQUETA_ID || LPAD(NVL(CONT.PREFIX, '0'), 3, '0') AS ETIQUETA_ID,
                   PA.PACIENT_SAP,
                   nvl(PA.CIP,'N/D') CIP,
                   ME.COLEGIAT_ID,
@@ -272,14 +273,14 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
                   AND  ( CONT.ORIGEN(+) = DETALL.ORIGEN AND  CONT.CONTENIDOR_ID(+) = DETALL.CONTENIDOR_ID )
                   AND  ( MOS.ORIGEN(+) = CONT.ORIGEN AND  MOS.MOSTRA_ID(+) = CONT.MOSTRA_ID )
                   AND  (
-                         ( PA.TIPUS is null )
-                         AND
-                         PET.ORIGEN  =  'DT'
-                         AND
-                         DETALL.TIPUS = 'A'
-                         AND
-                         (DETALL.DATA_VALIDACIO_TRUNC >= trunc(sysdate-:diesEndarrera) OR DETALL.DATA_RESULTAT_TRUNC >= trunc(sysdate-:diesEndarrera)) 
-                        )
+	       ( PA.TIPUS is null )
+		   AND
+	       PET.ORIGEN  =  'DT'
+		   AND
+	       DETALL.TIPUS = 'A'
+		   AND
+		   (DETALL.DATA_VALIDACIO_TRUNC >= trunc(sysdate-:diesEndarrera) OR DETALL.DATA_RESULTAT_TRUNC >= trunc(sysdate-:diesEndarrera)) 
+      )
                 ORDER BY PET.ETIQUETA_ID";
 
             // Afegir clàusula ROWNUM si hi ha límit especificat
@@ -499,12 +500,13 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
 
         /// <summary>
         /// Obté la consulta SQL per carregar els resultats per rang de dates
+        /// IMPORTANT: Concatena PREFIX formatat a 3 caràcters amb ETIQUETA_ID per obtenir identificador únic real
         /// </summary>
         private string ObtenirConsultaResultatsProvesPerRangDates()
         {
             return @"
                 SELECT
-                  PET.ETIQUETA_ID,
+                  PET.ETIQUETA_ID || LPAD(NVL(CONT.PREFIX, '0'), 3, '0') AS ETIQUETA_ID,
                   PA.PACIENT_SAP,
                   nvl(PA.CIP,'N/D') CIP,
                   ME.COLEGIAT_ID,

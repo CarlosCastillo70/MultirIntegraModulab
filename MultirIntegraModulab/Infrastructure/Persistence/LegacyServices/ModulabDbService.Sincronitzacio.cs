@@ -173,6 +173,7 @@ namespace MultirIntegraModulab
         /// Implementa la lògica de 2 filtres complementaris:
         /// 1. DATA_RESULTAT >= última processada (amb overlap de 2 min)
         /// 2. DATA_VALIDACIO >= última processada (amb overlap de 2 min)
+        /// IMPORTANT: Concatena PREFIX formatat a 3 caràcters amb ETIQUETA_ID per obtenir identificador únic real
         /// </summary>
         private string ObtenirConsultaAmbFiltresSincronitzacio(
             DateTime? dataResultatFiltre,
@@ -182,7 +183,7 @@ namespace MultirIntegraModulab
         {
             string consultaBase = @"
                 SELECT
-                  PET.ETIQUETA_ID,
+                  PET.ETIQUETA_ID || LPAD(NVL(CONT.PREFIX, '0'), 3, '0') AS ETIQUETA_ID,
                   PA.PACIENT_SAP,
                   nvl(PA.CIP,'N/D') CIP,
                   ME.COLEGIAT_ID,

@@ -2096,4 +2096,16 @@ amb la gestió de la resta de mecanismes de resistencia del resultat.
 
 En aquests casos, per deixar constancia, s´ha de deixar auditoria
 
+-----
 
+afegir al nom del fitxer de log generats el sufix _pro si entorn és producció o bé _pre si es preproducció
+
+---
+
+El resum final:
+
+Processament finalitzat: S'han processat: 216 mostres | Noves -> 213 | Validades -> 3 | Desvalidades -> 0 | Revalidades -> 0 | Repetides -> 0 | Antigues -> 0 ||| Positives -> 2 | Negatives -> 209 | Mixtes -> 3 | Errors -> 1 | Durada : 846.65s
+
+vull que surti en linees diferents, segons tipus d´incorporació: noves, validades, .... Tambe segons si es positiu, negatiu, ...
+
+---
