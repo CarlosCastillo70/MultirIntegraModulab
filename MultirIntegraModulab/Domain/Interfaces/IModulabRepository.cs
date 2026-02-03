@@ -22,7 +22,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <summary>
         /// Carrega resultats per rang de dates
         /// </summary>
-        ColeccioMostres CarregarResultatsPerRangDates(DateTime dataInici, DateTime dataFi);
+        ColeccioMostres CarregarResultatsPerRangDates(DateTime dataInici, DateTime dataFi, int limit = 0);
 
         /// <summary>
         /// Carrega resultats de forma incremental utilitzant filtres de darreres dates de resultat i validació

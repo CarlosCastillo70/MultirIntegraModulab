@@ -246,7 +246,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
             {
                 bool esNoIncorporar = _multiRRepository.EsCombinacioNoIncorporar(
                     resultatMostra.AillamentDescripcio, 
-                    mecanisme.id);
+                    mecanisme.descripcio);
                 
                 if (esNoIncorporar)
                 {

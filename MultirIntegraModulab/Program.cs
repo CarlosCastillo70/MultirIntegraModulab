@@ -76,7 +76,7 @@ namespace MultirIntegraModulab
                 // FASE 3: CÀRREGA DE DADES
                 // ===========================================================
                 
-                int limitRegistres = configService.EntornProduccion ? 0 : configService.LimitResultatsProves;
+                int limitRegistres = configService.EsEntornProduccio ? 0 : configService.LimitResultatsProves;
                 
                 if (limitRegistres > 0)
                 {
@@ -85,19 +85,28 @@ namespace MultirIntegraModulab
 
                 ColeccioMostres mostres;
                 
-                if (configService.CarregaIncremental)
+                // ===========================================================
+                // DETERMINAR TIPUS DE CÀRREGA SEGONS PRIORITAT
+                // Prioritat: 1. Incremental, 2. Dies Enrere, 3. Rang de Dates
+                // ===========================================================
+                
+                if (configService.CarregaIncremental_Activa)
                 {
                     // ===========================================================
-                    // MODE 1: CÀRREGA INCREMENTAL OPTIMITZADA
+                    // TIPUS 1: CÀRREGA INCREMENTAL OPTIMITZADA (Prioritat Alta)
                     // ===========================================================
                     
-                    loggerService.Info($"🔍 Carregant mostres amb càrrega incremental");
+                    loggerService.Info($"🔍 Mode: CÀRREGA INCREMENTAL (Prioritat Alta)");
+                    Console.WriteLine($"\n🔍 Mode: CÀRREGA INCREMENTAL");
 
                     // 1. Obtenir última sincronització exitosa
                     var ultimaSincronitzacio = multiRRepository.ObtenirUltimaSincronitzacio();
                     
                     if (ultimaSincronitzacio != null)
                     {
+                        loggerService.Info($"📅 Última sincronització: {ultimaSincronitzacio.DataSincronitzacio:dd/MM/yyyy HH:mm}");
+                        Console.WriteLine($"📅 Última sincronització: {ultimaSincronitzacio.DataSincronitzacio:dd/MM/yyyy HH:mm}");
+                        
                         // 2. Carregar amb filtres incrementals
                         mostres = modulabRepository.CarregarResultatsIncremental(
                             ultimaSincronitzacio, 
@@ -105,24 +114,66 @@ namespace MultirIntegraModulab
                     }
                     else
                     {
-                        loggerService.Info("ℹ️ Primera execució - carregant mostres dels últims 7 dies");
+                        int diesInicials = configService.CarregaIncremental_DiesRevisioSeguretat;
+                        loggerService.Info($"ℹ️ Primera execució - carregant mostres dels últims {diesInicials} dies");
+                        Console.WriteLine($"ℹ️ Primera execució - carregant mostres dels últims {diesInicials} dies");
                         
-                        // 3. Primera càrrega (últims 7 dies per defecte)
-                        mostres = modulabRepository.CarregarResultatsDiesEndarrera(7, limitRegistres);
+                        // 3. Primera càrrega (utilitzar dies de revisió de seguretat)
+                        mostres = modulabRepository.CarregarResultatsDiesEndarrera(diesInicials, limitRegistres);
                     }
+                }
+                else if (configService.CarregaDiesEnrere_Activa)
+                {
+                    // ===========================================================
+                    // TIPUS 2: CÀRREGA PER DIES ENRERE (Prioritat Mitjana)
+                    // ===========================================================
+                    
+                    int diesEnrere = configService.CarregaDiesEnrere_NombreDies;
+                    
+                    loggerService.Info($"🔍 Mode: CÀRREGA PER DIES ENRERE (Prioritat Mitjana)");
+                    loggerService.Info($"📅 Carregant mostres dels últims {diesEnrere} dies");
+                    Console.WriteLine($"\n🔍 Mode: CÀRREGA PER DIES ENRERE");
+                    Console.WriteLine($"📅 Carregant mostres dels últims {diesEnrere} dies...");
+                    
+                    mostres = modulabRepository.CarregarResultatsDiesEndarrera(diesEnrere, limitRegistres);
+                }
+                else if (configService.CarregaRangDates_Activa)
+                {
+                    // ===========================================================
+                    // TIPUS 3: CÀRREGA PER RANG DE DATES (Prioritat Baixa)
+                    // ===========================================================
+                    
+                    if (!configService.CarregaRangDates_DataInici.HasValue || 
+                        !configService.CarregaRangDates_DataFi.HasValue)
+                    {
+                        throw new InvalidOperationException(
+                            "CarregaRangDates_Activa està activat però les dates no estan configurades correctament. " +
+                            "Revisar CarregaRangDates_DataInici i CarregaRangDates_DataFi a App.config");
+                    }
+                    
+                    var dataInici = configService.CarregaRangDates_DataInici.Value;
+                    var dataFi = configService.CarregaRangDates_DataFi.Value;
+                    
+                    loggerService.Info($"🔍 Mode: CÀRREGA PER RANG DE DATES (Prioritat Baixa)");
+                    loggerService.Info($"📅 Carregant mostres del {dataInici:dd/MM/yyyy} al {dataFi:dd/MM/yyyy}");
+                    Console.WriteLine($"\n🔍 Mode: CÀRREGA PER RANG DE DATES");
+                    Console.WriteLine($"📅 Del {dataInici:dd/MM/yyyy} al {dataFi:dd/MM/yyyy}...");
+                    
+                    mostres = modulabRepository.CarregarResultatsPerRangDates(
+                        dataInici, 
+                        dataFi, 
+                        limitRegistres);
                 }
                 else
                 {
                     // ===========================================================
-                    // MODE 2: CÀRREGA PER DIES ENRERE (CLÀSSICA)
+                    // ERROR: CAP TIPUS DE CÀRREGA ACTIVAT
                     // ===========================================================
                     
-                    loggerService.Info($"🔍 Carregant mostres dels últims {configService.DiesEndarreraCarrega} dies...");
-                    Console.WriteLine($"\n🔍 Carregant mostres dels últims {configService.DiesEndarreraCarrega} dies (mode clàssic)...");
-                    
-                    mostres = modulabRepository.CarregarResultatsDiesEndarrera(
-                        configService.DiesEndarreraCarrega, 
-                        limitRegistres);
+                    throw new InvalidOperationException(
+                        "Cap tipus de càrrega està activat. " +
+                        "Activar almenys un tipus a App.config: " +
+                        "CarregaIncremental_Activa, CarregaDiesEnrere_Activa o CarregaRangDates_Activa");
                 }
 
 
@@ -149,7 +200,7 @@ namespace MultirIntegraModulab
                     // ===========================================================
                     
                     // Només guardar sincronització si estem en mode incremental
-                    if (configService.CarregaIncremental && resum.MostresAmbError == 0)
+                    if (configService.CarregaIncremental_Activa && resum.MostresAmbError == 0)
                     {
                         try
                         {
@@ -162,7 +213,7 @@ namespace MultirIntegraModulab
                                 DataSincronitzacio = DateTime.Now,
                                 NombreMostresProcessades = mostres.NombreTotalMostres,
                                 NombreMostresError = resum.MostresAmbError,
-                                DiesRevisioSeguretat = 7, // Finestra de seguretat per validacions tardanes
+                                DiesRevisioSeguretat = configService.CarregaIncremental_DiesRevisioSeguretat,
                                 Estat = "OK",
                                 DuradaSegons = resum.DuradaProcessament.TotalSeconds
                             };
@@ -183,7 +234,7 @@ namespace MultirIntegraModulab
                             loggerService.Error("❌ Error guardant sincronització", exSync);
                         }
                     }
-                    else if (!configService.CarregaIncremental)
+                    else if (!configService.CarregaIncremental_Activa)
                     {
                         loggerService.Info("ℹ️ Mode càrrega incremental desactivat - no es guarden dades de sincronització");
                     }
@@ -396,8 +447,8 @@ namespace MultirIntegraModulab
             if (mostres.NombreTotalMostres > 0)
             {
                 var percentatge = (valides.Count * 100.0) / mostres.NombreTotalMostres;
-                Console.WriteLine($"   - % Validades: {percentatge:F1}%");
-                logger.Info($"📊 Estadístiques:  % Validades: {percentatge:F1}%");
+                Console.WriteLine($"   - % Valides: {percentatge:F1}%");
+                logger.Info($"📊 Estadístiques:  % Valides: {percentatge:F1}%");
             }
             
 

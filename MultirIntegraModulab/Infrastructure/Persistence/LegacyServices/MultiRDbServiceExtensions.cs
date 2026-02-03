@@ -611,20 +611,121 @@ namespace MultirIntegraModulab
                 {
                     conn.Open();
 
+                    // 1. Intentar amb el codi del mecanisme (tal com arriba)
                     string sql = @"SELECT COUNT(*) 
                                   FROM microorganisme_mecanisme_no_incorporar 
-                                  WHERE microorganisme = @microorganisme 
-                                  AND mecanisme = @mecanisme
+                                  WHERE UPPER(TRIM(microorganisme)) = UPPER(TRIM(@microorganisme))
+                                  AND UPPER(TRIM(mecanisme)) = UPPER(TRIM(@mecanisme))
                                   AND dt_delete IS NULL";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
-                        cmd.Parameters.AddWithValue("@microorganisme", microorganisme.Trim());
-                        cmd.Parameters.AddWithValue("@mecanisme", mecanisme.Trim());
+                        cmd.Parameters.AddWithValue("@microorganisme", microorganisme);
+                        cmd.Parameters.AddWithValue("@mecanisme", mecanisme);
 
                         int count = Convert.ToInt32(cmd.ExecuteScalar());
-                        return count > 0;
+                        
+                        if (count > 0)
+                        {
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Combinació '{microorganisme}' + '{mecanisme}' (codi) trobada a la taula NO INCORPORAR");
+                            return true;
+                        }
                     }
+
+                    // 2. Si no es troba amb el codi, intentar amb la descripció del mecanisme
+                    // Obtenir la descripció del mecanisme des de la taula mecanismes
+                    string sqlDescripcio = @"SELECT descripcio 
+                                            FROM mecanismes 
+                                            WHERE codi = @mecanismeCodi
+                                            AND dt_delete IS NULL
+                                            LIMIT 1";
+
+                    string descripcioMecanisme = null;
+                    using (var cmdDesc = new MySqlCommand(sqlDescripcio, conn))
+                    {
+                        cmdDesc.Parameters.AddWithValue("@mecanismeCodi", mecanisme);
+                        var result = cmdDesc.ExecuteScalar();
+                        descripcioMecanisme = result?.ToString();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(descripcioMecanisme))
+                    {
+                        // Intentar amb la descripció del mecanisme
+                        string sqlAmbDescripcio = @"SELECT COUNT(*) 
+                                                   FROM microorganisme_mecanisme_no_incorporar 
+                                                   WHERE UPPER(TRIM(microorganisme)) = UPPER(TRIM(@microorganisme))
+                                                   AND UPPER(TRIM(mecanisme)) = UPPER(TRIM(@descripcioMecanisme))
+                                                   AND dt_delete IS NULL";
+
+                        using (var cmdDescripcio = new MySqlCommand(sqlAmbDescripcio, conn))
+                        {
+                            cmdDescripcio.Parameters.AddWithValue("@microorganisme", microorganisme);
+                            cmdDescripcio.Parameters.AddWithValue("@descripcioMecanisme", descripcioMecanisme);
+
+                            int countDescripcio = Convert.ToInt32(cmdDescripcio.ExecuteScalar());
+                            
+                            if (countDescripcio > 0)
+                            {
+                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Combinació '{microorganisme}' + '{descripcioMecanisme}' (descripció) trobada a la taula NO INCORPORAR");
+                                return true;
+                            }
+                        }
+                    }
+
+                    // 3. Si encara no es troba, intentar amb el codi del microorganisme (per si a la taula està el codi)
+                    var microorganismeEntitat = ObtenirMicroorganisme(microorganisme);
+                    if (microorganismeEntitat != null && !string.IsNullOrWhiteSpace(microorganismeEntitat.Codi))
+                    {
+                        string codiMicroorganisme = microorganismeEntitat.Codi;
+                        
+                        // Intentar amb codi micro + codi mecanisme
+                        string sqlCodi = @"SELECT COUNT(*) 
+                                          FROM microorganisme_mecanisme_no_incorporar 
+                                          WHERE UPPER(TRIM(microorganisme)) = UPPER(TRIM(@codiMicroorganisme))
+                                          AND UPPER(TRIM(mecanisme)) = UPPER(TRIM(@mecanisme))
+                                          AND dt_delete IS NULL";
+
+                        using (var cmdCodi = new MySqlCommand(sqlCodi, conn))
+                        {
+                            cmdCodi.Parameters.AddWithValue("@codiMicroorganisme", codiMicroorganisme);
+                            cmdCodi.Parameters.AddWithValue("@mecanisme", mecanisme);
+
+                            int countCodi = Convert.ToInt32(cmdCodi.ExecuteScalar());
+                            
+                            if (countCodi > 0)
+                            {
+                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Combinació '{codiMicroorganisme}' (codi micro) + '{mecanisme}' (codi) trobada a la taula NO INCORPORAR");
+                                return true;
+                            }
+                        }
+
+                        // Intentar amb codi micro + descripció mecanisme
+                        if (!string.IsNullOrWhiteSpace(descripcioMecanisme))
+                        {
+                            string sqlCodiDesc = @"SELECT COUNT(*) 
+                                                  FROM microorganisme_mecanisme_no_incorporar 
+                                                  WHERE UPPER(TRIM(microorganisme)) = UPPER(TRIM(@codiMicroorganisme))
+                                                  AND UPPER(TRIM(mecanisme)) = UPPER(TRIM(@descripcioMecanisme))
+                                                  AND dt_delete IS NULL";
+
+                            using (var cmdCodiDesc = new MySqlCommand(sqlCodiDesc, conn))
+                            {
+                                cmdCodiDesc.Parameters.AddWithValue("@codiMicroorganisme", codiMicroorganisme);
+                                cmdCodiDesc.Parameters.AddWithValue("@descripcioMecanisme", descripcioMecanisme);
+
+                                int countCodiDesc = Convert.ToInt32(cmdCodiDesc.ExecuteScalar());
+                                
+                                if (countCodiDesc > 0)
+                                {
+                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Combinació '{codiMicroorganisme}' (codi micro) + '{descripcioMecanisme}' (descripció) trobada a la taula NO INCORPORAR");
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✓ Combinació '{microorganisme}' + '{mecanisme}' NO està a la taula NO INCORPORAR");
+                    return false;
                 }
             }
             catch (Exception ex)
@@ -1417,7 +1518,7 @@ namespace MultirIntegraModulab
         /// Compara una mostra entrant amb una mostra existent per detectar canvis
         /// </summary>
         /// <param name="mostraExistent">Mostra existent a la base de dades</param>
-        /// <param name="mostraEntrant">Mostra que està entrant</param>
+        /// <param name="mostraEntrant">Mostra que estàentrant</param>
         /// <returns>Resultat de la comparació amb detall dels canvis</returns>
         public ResultatComparacioMostres CompararMostres(MostraDiagnosticExistent mostraExistent, Mostra mostraEntrant)
         {

@@ -122,21 +122,146 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
 
         #region Configuració de Càrrega
 
+        // ──────────────────────────────────────────────────────────────
+        // TIPUS 1: CÀRREGA INCREMENTAL
+        // ──────────────────────────────────────────────────────────────
+        
+        /// <summary>
+        /// Indica si la càrrega incremental està activada
+        /// Prioritat: ALTA (s'executa primer si està activat)
+        /// </summary>
+        public bool CarregaIncremental_Activa
+        {
+            get { return LlegirBoolConfiguracio("CarregaIncremental_Activa", false); }
+        }
+
+        /// <summary>
+        /// Dies de revisió de seguretat per la càrrega incremental
+        /// </summary>
+        public int CarregaIncremental_DiesRevisioSeguretat
+        {
+            get { return LlegirIntConfiguracio("CarregaIncremental_DiesRevisioSeguretat", 7); }
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // TIPUS 2: CÀRREGA PER DIES ENRERE
+        // ──────────────────────────────────────────────────────────────
+        
+        /// <summary>
+        /// Indica si la càrrega per dies enrere està activada
+        /// Prioritat: MITJANA (s'executa si Incremental no està activa)
+        /// </summary>
+        public bool CarregaDiesEnrere_Activa
+        {
+            get { return LlegirBoolConfiguracio("CarregaDiesEnrere_Activa", true); }
+        }
+
+        /// <summary>
+        /// Nombre de dies enrere per carregar mostres
+        /// </summary>
+        public int CarregaDiesEnrere_NombreDies
+        {
+            get { return LlegirIntConfiguracio("CarregaDiesEnrere_NombreDies", 1); }
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // TIPUS 3: CÀRREGA PER RANG DE DATES
+        // ──────────────────────────────────────────────────────────────
+        
+        /// <summary>
+        /// Indica si la càrrega per rang de dates està activada
+        /// Prioritat: BAIXA (s'executa si Incremental i DiesEnrere no estan actives)
+        /// </summary>
+        public bool CarregaRangDates_Activa
+        {
+            get { return LlegirBoolConfiguracio("CarregaRangDates_Activa", false); }
+        }
+
+        /// <summary>
+        /// Data d'inici del rang per la càrrega
+        /// Format esperat: dd/MM/yyyy
+        /// </summary>
+        public DateTime? CarregaRangDates_DataInici
+        {
+            get 
+            { 
+                var dataStr = LlegirStringConfiguracio("CarregaRangDates_DataInici", "");
+                if (string.IsNullOrWhiteSpace(dataStr))
+                    return null;
+
+                if (DateTime.TryParseExact(dataStr, "dd/MM/yyyy", 
+                    System.Globalization.CultureInfo.InvariantCulture, 
+                    System.Globalization.DateTimeStyles.None, out DateTime data))
+                {
+                    return data;
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Data de fi del rang per la càrrega
+        /// Format esperat: dd/MM/yyyy
+        /// </summary>
+        public DateTime? CarregaRangDates_DataFi
+        {
+            get 
+            { 
+                var dataStr = LlegirStringConfiguracio("CarregaRangDates_DataFi", "");
+                if (string.IsNullOrWhiteSpace(dataStr))
+                    return null;
+
+                if (DateTime.TryParseExact(dataStr, "dd/MM/yyyy", 
+                    System.Globalization.CultureInfo.InvariantCulture, 
+                    System.Globalization.DateTimeStyles.None, out DateTime data))
+                {
+                    return data;
+                }
+
+                return null;
+            }
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // PROPIETATS DE COMPATIBILITAT (per no trencar codi existent)
+        // ──────────────────────────────────────────────────────────────
+        
+        /// <summary>
+        /// OBSOLET: Utilitzar CarregaIncremental_Activa
+        /// Mantingut per compatibilitat amb codi existent
+        /// </summary>
+        [Obsolete("Utilitzar CarregaIncremental_Activa en el seu lloc")]
         public bool CarregaIncremental
         {
-            get { return LlegirBoolConfiguracio("CarregaIncremental", true); }
+            get { return CarregaIncremental_Activa; }
         }
 
+        /// <summary>
+        /// OBSOLET: Utilitzar CarregaDiesEnrere_NombreDies
+        /// Mantingut per compatibilitat amb codi existent
+        /// </summary>
+        [Obsolete("Utilitzar CarregaDiesEnrere_NombreDies en el seu lloc")]
         public int DiesEndarreraCarrega
         {
-            get { return LlegirIntConfiguracio("DiesEndarreraCarrega", 1); }
+            get { return CarregaDiesEnrere_NombreDies; }
         }
 
+        // ──────────────────────────────────────────────────────────────
+        // PARÀMETRES COMUNS
+        // ──────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Límit de resultats per proves (0 = il·limitat)
+        /// </summary>
         public int LimitResultatsProves
         {
             get { return LlegirIntConfiguracio("LimitResultatsProves", 0); }
         }
 
+        /// <summary>
+        /// Indica si l'entorn és de producció
+        /// </summary>
         public bool EntornProduccion
         {
             get { return EsEntornProduccio; }
@@ -303,6 +428,33 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
             if (string.IsNullOrWhiteSpace(ConfigurationManager.AppSettings[webServiceKey]))
                 errors.Add($"Falta la configuració '{webServiceKey}' per l'entorn {Entorn}");
 
+            // Validar configuració de càrrega
+            int tipusCarregaActius = 0;
+            if (CarregaIncremental_Activa) tipusCarregaActius++;
+            if (CarregaDiesEnrere_Activa) tipusCarregaActius++;
+            if (CarregaRangDates_Activa) tipusCarregaActius++;
+
+            if (tipusCarregaActius == 0)
+            {
+                errors.Add("Cap tipus de càrrega està activat. Activar almenys un tipus: CarregaIncremental_Activa, CarregaDiesEnrere_Activa o CarregaRangDates_Activa");
+            }
+
+            // Validar paràmetres específics de càrrega per rang de dates
+            if (CarregaRangDates_Activa)
+            {
+                if (!CarregaRangDates_DataInici.HasValue)
+                    errors.Add("'CarregaRangDates_Activa' està activat però 'CarregaRangDates_DataInici' no és vàlid (format esperat: dd/MM/yyyy)");
+
+                if (!CarregaRangDates_DataFi.HasValue)
+                    errors.Add("'CarregaRangDates_Activa' està activat però 'CarregaRangDates_DataFi' no és vàlid (format esperat: dd/MM/yyyy)");
+
+                if (CarregaRangDates_DataInici.HasValue && CarregaRangDates_DataFi.HasValue)
+                {
+                    if (CarregaRangDates_DataInici.Value > CarregaRangDates_DataFi.Value)
+                        errors.Add("'CarregaRangDates_DataInici' ha de ser anterior o igual a 'CarregaRangDates_DataFi'");
+                }
+            }
+
             // Validar configuració d'email si està activat
             if (EnviarEmailLog)
             {
@@ -320,8 +472,11 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
             }
 
             // Validar valors numèrics
-            if (DiesEndarreraCarrega < 0)
-                errors.Add("'DiesEndarreraCarrega' ha de ser >= 0");
+            if (CarregaDiesEnrere_NombreDies < 0)
+                errors.Add("'CarregaDiesEnrere_NombreDies' ha de ser >= 0");
+
+            if (CarregaIncremental_DiesRevisioSeguretat < 0)
+                errors.Add("'CarregaIncremental_DiesRevisioSeguretat' ha de ser >= 0");
 
             if (LimitResultatsProves < 0)
                 errors.Add("'LimitResultatsProves' ha de ser >= 0");
@@ -363,6 +518,54 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
                 ? $"{EtiquetesMostresAProcessar.Count} etiqueta(es): {string.Join(", ", EtiquetesMostresAProcessar)}"
                 : "Totes les mostres";
 
+            // Determinar quin tipus de càrrega s'utilitzarà
+            string tipusCarrega = "CAP (ERROR: Cap tipus activat)";
+            string detallsCarrega = "";
+
+            if (CarregaIncremental_Activa)
+            {
+                tipusCarrega = "INCREMENTAL (Prioritat Alta)";
+                detallsCarrega = $@"
+  • Dies revisió seguretat: {CarregaIncremental_DiesRevisioSeguretat} dies
+  • Descripció: Carrega només dades noves des de l'última sincronització";
+            }
+            else if (CarregaDiesEnrere_Activa)
+            {
+                tipusCarrega = "DIES ENRERE (Prioritat Mitjana)";
+                detallsCarrega = $@"
+  • Nombre de dies: {CarregaDiesEnrere_NombreDies} dies enrere
+  • Descripció: Carrega dades dels últims N dies cap enrere";
+            }
+            else if (CarregaRangDates_Activa)
+            {
+                tipusCarrega = "RANG DE DATES (Prioritat Baixa)";
+                string dataIniciStr = CarregaRangDates_DataInici.HasValue 
+                    ? CarregaRangDates_DataInici.Value.ToString("dd/MM/yyyy") 
+                    : "NO CONFIGURAT";
+                string dataFiStr = CarregaRangDates_DataFi.HasValue 
+                    ? CarregaRangDates_DataFi.Value.ToString("dd/MM/yyyy") 
+                    : "NO CONFIGURAT";
+                
+                detallsCarrega = $@"
+  • Data inici: {dataIniciStr}
+  • Data fi: {dataFiStr}
+  • Descripció: Carrega dades d'un període específic";
+            }
+
+            // Mostrar avís si hi ha més d'un tipus activat
+            string avisMultiplesActius = "";
+            int comptadorActius = 0;
+            if (CarregaIncremental_Activa) comptadorActius++;
+            if (CarregaDiesEnrere_Activa) comptadorActius++;
+            if (CarregaRangDates_Activa) comptadorActius++;
+
+            if (comptadorActius > 1)
+            {
+                avisMultiplesActius = $@"
+  ⚠️  AVÍS: Hi ha {comptadorActius} tipus de càrrega activats simultàniament
+      Només s'executarà el PRIMER tipus (segons prioritat)";
+            }
+
             return $@"
 ==============================================
 CONFIGURACIÓ DE L'APLICACIÓ
@@ -373,9 +576,13 @@ ENTORN:
   - És producció: {(EsEntornProduccio ? "SÍ" : "NO")}
 
 CÀRREGA DE DADES:
-  - Mode càrrega: {(CarregaIncremental ? "Incremental (optimitzada)" : "Dies enrere (clàssica)")}
-  - Dies enrere: {DiesEndarreraCarrega}{(CarregaIncremental ? " (només per primera càrrega o si falla sincronització)" : "")}
+  - Tipus de càrrega: {tipusCarrega}{detallsCarrega}{avisMultiplesActius}
   - Límit resultats: {(LimitResultatsProves == 0 ? "Il·limitat" : LimitResultatsProves.ToString())}
+  
+  Estats de càrrega:
+    1. Incremental: {(CarregaIncremental_Activa ? "✓ ACTIVA" : "✗ Inactiva")}
+    2. Dies Enrere: {(CarregaDiesEnrere_Activa ? "✓ ACTIVA" : "✗ Inactiva")}
+    3. Rang Dates:  {(CarregaRangDates_Activa ? "✓ ACTIVA" : "✗ Inactiva")}
 
 FILTRATGE DE MOSTRES:
   - Etiquetes a processar: {etiquetesResum}

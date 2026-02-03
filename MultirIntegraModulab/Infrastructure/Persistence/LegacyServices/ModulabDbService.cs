@@ -460,6 +460,12 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
 
         /// <summary>
         /// Carrega resultats de proves per un rang de dates específic
+        /// NOTA: Aquesta funcionalitat està disponible però no s'utilitza actualment al flux principal.
+        ///       Pot ser útil per:
+        ///       - Reprocesar dades d'un període específic
+        ///       - Càrregues manuals o proves
+        ///       - Correccions de dades històriques
+        ///       - Anàlisis retrospectives
         /// </summary>
         /// <param name="dataInici">Data d'inici del rang</param>
         /// <param name="dataFi">Data de fi del rang</param>
@@ -470,6 +476,23 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
             _logger.Info($"Carregant resultats per rang de dates: {dataInici:dd/MM/yyyy} - {dataFi:dd/MM/yyyy}");
             
             var coleccioResultats = new ColeccioMostres();
+            int registresProcessats = 0;
+            int registresAmbError = 0;
+            int microorganismesEspecials = 0;
+            
+            // Precarregar microorganismes especials si tenim el servei MySQL
+            if (mysqlService != null)
+            {
+                try
+                {
+                    _logger.Info("📋 Precarregant microorganismes especials...");
+                    mysqlService.CarregarMicroorganismesEspecials();
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error("⚠️ Error precarregant microorganismes especials", ex);
+                }
+            }
             
             using (var conn = new OracleConnection(_connectionString))
             {
@@ -482,25 +505,86 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
                     cmd.Parameters.Add(new OracleParameter("dataInici", dataInici.Date));
                     cmd.Parameters.Add(new OracleParameter("dataFi", dataFi.Date.AddDays(1).AddSeconds(-1)));
                     
+                    _logger.Info($"🔎 Executant consulta Oracle per rang de dates ({dataInici:dd/MM/yyyy} - {dataFi:dd/MM/yyyy})");
+                    
                     using (var reader = cmd.ExecuteReader())
                     {
+                        _logger.Info("✅ Consulta executada correctament. Processant registres...");
+                        
                         while (reader.Read())
                         {
-                            var registre = CrearRegistreDesDeReader(reader, mysqlService);
-                            coleccioResultats.AfegirRegistre(registre);
+                            try
+                            {
+                                registresProcessats++;
+                                
+                                var registre = CrearRegistreDesDeReader(reader, mysqlService);
+                                
+                                // Comptar microorganismes especials
+                                if (registre.EsMicroorganismeEspecial == true)
+                                {
+                                    microorganismesEspecials++;
+                                }
+                                
+                                // Validar dades crítiques abans d'afegir
+                                if (ValidarRegistre(registre, registresProcessats))
+                                {
+                                    coleccioResultats.AfegirResultat(registre); // ✅ Corregit: era AfegirRegistre
+                                }
+                                else
+                                {
+                                    registresAmbError++;
+                                    _logger.Warning($"⚠️ Registre #{registresProcessats} omès per validació fallida - ETIQUETA_ID: {registre.EtiquetaId}");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                registresAmbError++;
+                                string etiquetaId = ObtenirValorSegur(reader, "ETIQUETA_ID");
+                                string pacientSap = ObtenirValorSegur(reader, "PACIENT_SAP");
+                                
+                                _logger.Error($"❌ Error processant registre #{registresProcessats}: ETIQUETA_ID={etiquetaId}, PACIENT_SAP={pacientSap}", ex);
+                                
+                                // Aturar si hi ha més de 10 errors
+                                if (registresAmbError > 10)
+                                {
+                                    _logger.Error($"🛑 S'han trobat {registresAmbError} errors. Aturant el processament");
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            _logger.Info($"Resultats carregats per rang de dates: {coleccioResultats.NombreTotalMostres} mostres, {coleccioResultats.NombreTotalRegistres} registres");
-            
+            // Mostrar resum
+            string resum = $@"
+RESUM DE LA CÀRREGA PER RANG DE DATES ({dataInici:dd/MM/yyyy} - {dataFi:dd/MM/yyyy}):
+   - Resultats processats: {registresProcessats}
+   - Resultats carregats correctament: {coleccioResultats.NombreTotalResultats}
+   - Resultats amb error: {registresAmbError}
+   - Microorganismes especials trobats: {microorganismesEspecials}";
+
+            if (registresAmbError > 0)
+            {
+                double percentatgeError = (registresAmbError * 100.0 / registresProcessats);
+                resum += $"\n   - Percentatge d'error: {percentatgeError:F2}%";
+            }
+
+            if (mysqlService != null && microorganismesEspecials > 0)
+            {
+                double percentatgeEspecials = (microorganismesEspecials * 100.0 / coleccioResultats.NombreTotalResultats);
+                resum += $"\n   - Percentatge microorganismes especials: {percentatgeEspecials:F2}%";
+            }
+
+            _logger.Info($"📊 {resum}");
+
             return coleccioResultats;
         }
 
         /// <summary>
         /// Obté la consulta SQL per carregar els resultats per rang de dates
         /// IMPORTANT: Concatena PREFIX formatat a 3 caràcters amb ETIQUETA_ID per obtenir identificador únic real
+        /// NOTA: Utilitzada per la funcionalitat de càrrega per rang de dates (disponible però no utilitzada actualment al flux principal)
         /// </summary>
         private string ObtenirConsultaResultatsProvesPerRangDates()
         {

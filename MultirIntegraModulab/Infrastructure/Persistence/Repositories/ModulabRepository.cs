@@ -135,7 +135,7 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         /// <summary>
         /// Carrega resultats per rang de dates
         /// </summary>
-        public ColeccioMostres CarregarResultatsPerRangDates(DateTime dataInici, DateTime dataFi)
+        public ColeccioMostres CarregarResultatsPerRangDates(DateTime dataInici, DateTime dataFi, int limit = 0)
         {
             try
             {

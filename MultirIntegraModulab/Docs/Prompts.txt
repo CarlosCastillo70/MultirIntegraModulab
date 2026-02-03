@@ -2109,3 +2109,13 @@ Processament finalitzat: S'han processat: 216 mostres | Noves -> 213 | Validades
 vull que surti en linees diferents, segons tipus d´incorporació: noves, validades, .... Tambe segons si es positiu, negatiu, ...
 
 ---
+
+M´he trobat amb mostres revalidades amb canvis critics. Investigant veig que el problema està amb el que estem considerant com identificador de una mostra. 
+Fins ara per tractar una mostra estem recuperant tots els registres que tenen la mateixa etiqueta.
+Ara hauriem d´ampliar aquest identificador (etiqueta) amb un altre camp recuperat de modulab. El camp es diu PREFIX i esta a la taula CONT
+Els valors tenen 1, 2 o 3 digits. Hauriem de formatar-lo a 3 caracters (amb 0 a l´esquerra)
+No sé quina es la millor opció. Podriem continuar com fins ara, però a la consulta sql a modulab, afegir la concatenació a la dreta, del prefix.
+Com ho veus tu ?
+
+
+
