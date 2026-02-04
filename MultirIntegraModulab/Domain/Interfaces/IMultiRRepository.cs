@@ -99,6 +99,15 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>True si el diagnòstic té alguna mostra amb aquesta etiqueta, False en cas contrari</returns>
         bool DiagnosticTeMostraAmbEtiqueta(int diagnosticId, string etiqueta, string tipusMostra);
 
+        /// <summary>
+        /// Obté l'ID de la mostra diagnòstic associada a un diagnòstic amb una etiqueta i tipus específics
+        /// </summary>
+        /// <param name="diagnosticId">ID del diagnòstic</param>
+        /// <param name="etiqueta">Etiqueta de la mostra</param>
+        /// <param name="tipusMostra">Tipus de mostra</param>
+        /// <returns>ID de la mostra diagnòstic, o 0 si no existeix</returns>
+        int ObtenirIdMostraDiagnosticPerDiagnosticIEtiqueta(int diagnosticId, string etiqueta, string tipusMostra);
+
         // Mostres diagnòstic
         /// <summary>
         /// Comprova si existeix una mostra diagnòstic
@@ -107,8 +116,9 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <param name="dataMostra">Data de la mostra</param>
         /// <param name="tipusMostra">Tipus de mostra</param>
         /// <param name="valoracio">Valoració de la mostra (opcional). Si té valor, es filtra per aquesta valoració</param>
+        /// <param name="etiqueta">Etiqueta de la mostra (opcional). Si té valor, es filtra per aquesta etiqueta</param>
         /// <returns>ID de la mostra si existeix, 0 si no existeix</returns>
-        int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra, string valoracio = null);
+        int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra, string valoracio = null, string etiqueta = null);
 
         /// <summary>
         /// Comprova si existeix una mostra diagnòstic amb una etiqueta específica

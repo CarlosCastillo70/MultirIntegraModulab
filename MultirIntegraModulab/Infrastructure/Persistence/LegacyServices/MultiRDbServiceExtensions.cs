@@ -1201,8 +1201,9 @@ namespace MultirIntegraModulab
         /// <param name="dataMostra">Data de la mostra</param>
         /// <param name="tipusMostra">Tipus de mostra</param>
         /// <param name="valoracio">Valoració de la mostra (opcional). Si té valor, es filtra per aquesta valoració</param>
+        /// <param name="etiqueta">Etiqueta de la mostra (opcional). Si té valor, es filtra per aquesta etiqueta</param>
         /// <returns>ID del registre si existeix, 0 si no existeix</returns>
-        public int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra, string valoracio = null)
+        public int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra, string valoracio = null, string etiqueta = null)
         {
             if (string.IsNullOrWhiteSpace(pacientSap))
             {
@@ -1212,7 +1213,7 @@ namespace MultirIntegraModulab
 
             if (!dataMostra.HasValue)
             {
-                Logger.Warning("ComprovarMostraDiagnosticExisteix: dataMostra és null");
+                Logger.Warning("ComprovarMostraDiagnosticExists: dataMostra és null");
                 return 0;
             }
 
@@ -1237,6 +1238,12 @@ namespace MultirIntegraModulab
                         sql += " AND valoracio = @valoracio";
                     }
 
+                    // Afegir filtre per etiqueta si s'ha proporcionat
+                    if (!string.IsNullOrWhiteSpace(etiqueta))
+                    {
+                        sql += " AND etiqueta = @etiqueta";
+                    }
+
                     sql += " ORDER BY dt_create DESC LIMIT 1";
 
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -1250,11 +1257,17 @@ namespace MultirIntegraModulab
                             cmd.Parameters.AddWithValue("@valoracio", valoracio);
                         }
 
+                        if (!string.IsNullOrWhiteSpace(etiqueta))
+                        {
+                            cmd.Parameters.AddWithValue("@etiqueta", etiqueta);
+                        }
+
                         var result = cmd.ExecuteScalar();
                         int mostraId = result != null ? Convert.ToInt32(result) : 0;
 
                         string infoValoracio = !string.IsNullOrWhiteSpace(valoracio) ? $" + valoració '{valoracio}'" : "";
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mostra del pacient {pacientSap} + data {dataMostra:dd/MM/yyyy} + tipus '{tipusMostra}'{infoValoracio}: {(mostraId > 0 ? $"JA existeix (ID: {mostraId})" : "NO existeix")}");
+                        string infoEtiqueta = !string.IsNullOrWhiteSpace(etiqueta) ? $" + etiqueta '{etiqueta}'" : "";
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mostra del pacient {pacientSap} + data {dataMostra:dd/MM/yyyy} + tipus '{tipusMostra}'{infoValoracio}{infoEtiqueta}: {(mostraId > 0 ? $"JA existeix (ID: {mostraId})" : "NO existeix")}");
 
                         return mostraId;
                     }
@@ -1291,13 +1304,13 @@ namespace MultirIntegraModulab
 
             if (string.IsNullOrWhiteSpace(valoracio))
             {
-                Logger.Warning("ComprovarMostraDiagnosticPerEtiqueta: valoracio és null o buit");
+                Logger.Warning("ComprovarMostraDiagnosticPerEtiqueta: valoracio és null o buida");
                 return 0;
             }
 
             if (string.IsNullOrWhiteSpace(etiqueta))
             {
-                Logger.Warning("ComprovarMostraDiagnosticPerEtiqueta: etiqueta és null o buit");
+                Logger.Warning("ComprovarMostraDiagnosticPerEtiqueta: etiqueta és null o buida");
                 return 0;
             }
 

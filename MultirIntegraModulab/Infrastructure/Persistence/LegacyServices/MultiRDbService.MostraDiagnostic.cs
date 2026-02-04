@@ -10,6 +10,67 @@ namespace MultirIntegraModulab
     public partial class MultiRDbService
     {
         /// <summary>
+        /// Obté l'ID de la mostra diagnòstic associada a un diagnòstic amb una etiqueta i tipus específics
+        /// </summary>
+        /// <param name="diagnosticId">ID del diagnòstic</param>
+        /// <param name="etiqueta">Etiqueta de la mostra</param>
+        /// <param name="tipusMostra">Tipus de mostra</param>
+        /// <returns>ID de la mostra diagnòstic, o 0 si no existeix</returns>
+        public int ObtenirIdMostraDiagnosticPerDiagnosticIEtiqueta(int diagnosticId, string etiqueta, string tipusMostra)
+        {
+            if (diagnosticId <= 0)
+            {
+                Logger.Warning($"ObtenirIdMostraDiagnosticPerDiagnosticIEtiqueta: diagnosticId invàlid ({diagnosticId})");
+                return 0;
+            }
+
+            if (string.IsNullOrWhiteSpace(etiqueta))
+            {
+                Logger.Warning("ObtenirIdMostraDiagnosticPerDiagnosticIEtiqueta: etiqueta és null o buida");
+                return 0;
+            }
+
+            if (string.IsNullOrWhiteSpace(tipusMostra))
+            {
+                Logger.Warning("ObtenirIdMostraDiagnosticPerDiagnosticIEtiqueta: tipusMostra és null o buit");
+                return 0;
+            }
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+
+                    string sql = @"
+                        SELECT pdm.id 
+                        FROM mostra_microorganisme mm
+                        INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id
+                        WHERE mm.pacient_diagnostic_id = @diagnosticId
+                          AND pdm.etiqueta = @etiqueta
+                          AND pdm.tipus_mostra_m = @tipusMostra
+                          AND pdm.dt_delete IS NULL
+                        LIMIT 1";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@diagnosticId", diagnosticId);
+                        cmd.Parameters.AddWithValue("@etiqueta", etiqueta);
+                        cmd.Parameters.AddWithValue("@tipusMostra", tipusMostra);
+
+                        var result = cmd.ExecuteScalar();
+                        return result != null ? Convert.ToInt32(result) : 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error obtenint ID mostra diagnòstic per diagnòstic {diagnosticId}, etiqueta {etiqueta} i tipus {tipusMostra}: {ex.Message}", ex);
+                return 0;
+            }
+        }
+
+        /// <summary>
         /// Actualitza el camp microorganisme_mecanisme_captat d'una mostra diagnòstic existent.
         /// Si el camp ja té valor, concatena el nou valor amb una coma.
         /// </summary>

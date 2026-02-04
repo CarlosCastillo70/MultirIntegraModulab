@@ -434,7 +434,7 @@ namespace MultirIntegraModulab
         {
             Console.WriteLine($"\n📊 ESTADÍSTIQUES:");
             Console.WriteLine($"   - Total mostres: {mostres.NombreTotalMostres}");
-            Console.WriteLine($"   - Total registres: {mostres.NombreTotalRegistres}");
+            Console.WriteLine($"   - Total registres: {mostres.NombreTotalResultats}");
 
             var valides = mostres.ObtenirMostresValides();
             var pendents = mostres.ObtenirMostresPendentsValidacio();
@@ -460,10 +460,10 @@ namespace MultirIntegraModulab
             foreach (var mostra in exemples)
             {
                 Console.WriteLine($"\n   🧪 {mostra.EtiquetaId} - Pacient: {mostra.PacientSap}");
-                Console.WriteLine($"      - Registres: {mostra.NombreRegistres}");
+                Console.WriteLine($"      - Registres: {mostra.NombreResultats}");
                 Console.WriteLine($"      - Data: {mostra.DataPrimerResultat:dd/MM/yyyy HH:mm}");
 
-                logger.Info($"  🧪 {mostra.EtiquetaId} - Pacient: {mostra.PacientSap} - Registres: {mostra.NombreRegistres} - Data resultat: {mostra.DataPrimerResultat:dd/MM/yyyy HH:mm}");
+                logger.Info($"  🧪 {mostra.EtiquetaId} - Pacient: {mostra.PacientSap} - Registres: {mostra.NombreResultats} - Data resultat: {mostra.DataPrimerResultat:dd/MM/yyyy HH:mm}");
 
 
                 if (mostra.Microorganismes.Any())
