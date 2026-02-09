@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using MultirIntegraModulab.Application.Helpers;
 using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
 using MultirIntegraModulab.Domain.Entities;
@@ -249,28 +250,20 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     resultatMostra.MostraDescripcio, 
                     mostra.EtiquetaId);
 
-                // NotaCC : segons Marti, pot ser que per una mateixa data puguin haver diferents resultats per una mateixa data
-                // Comprovar si el pacient té positius vigents per aquest tipus de mostra o equivalents, amb diferent etiquetaid i diferent datapeticio
-                //bool pacientTePositiusVigents = _multiRRepository.PacientTePositiusVigentsTipusMostraIEquivalents(
-                //    mostra.PacientSap, 
-                //    resultatMostra.MostraDescripcio, 
-                //    mostra.EtiquetaId, 
-                //    mostra.DataPeticio);
 
-                //if (pacientTePositiusVigentsSenseFiltreData != pacientTePositiusVigents)
-                //{
-                //    var aaa = "TODOCC";
-                //}
 
-                
                 if (pacientTePositiusVigents)
                 {
+
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}El pacient té positius vigents per aquest tipus de mostra o equivalents, amb diferent etiquetaid");
 
                     // Comprovar si el pacient té algun negatiu, per al tipus de mostra, amb la mateixa etiqueta
                     // Mostres amb més d´un negatiu, si no es fa aquesta comprovació, afegirà tants negatius com negatius entrin
                     // Sol ha d´entrar el primer negatiu que contraresti el positiu.
 
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Comprovant si ja existeix una mostra negativa, ja incorporada amb la mateixa etiqueta");
+
+
 
                     // Comprovar si ja existeix una mostra negativa (valoració '1') amb aquesta etiqueta específica
                     int mostraNegativaExistent = _multiRRepository.ComprovarMostraDiagnosticPerEtiqueta(
@@ -283,26 +276,18 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     {
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ JA existeix un negatiu per aquesta mostra (ID: {mostraNegativaExistent})");
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}No cal donar d´alta més negatius de la mateixa etiqueta");
-
-                        //// Inserir auditoria amb codi NMRCM (ja s'ha incorporat un negatiu per aquesta mostra)
-                        //bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCM", resultatMostra);
-
-                        //if (auditoriaCreada)
-                        //{
-                        //    resultat.AuditoriasCreades++;
-                        //}
-
-                        //resultat.ResultatsNoIncorporats++;
-                        //return;
                     }
                     else
                     {
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ No existeix cap negatiu previ per aquesta mostra → Continuar amb la incorporació del negatiu");
+                        calIncorporarNegatiu = true;
+                        tipusComprovacio = TipusComprovacioNegatiu.Comprovacio2;
                     }
     
+                    // Cal incorporat les seguents linees dintre de l´if ?????
+                    //calIncorporarNegatiu = true;
+                    //tipusComprovacio = TipusComprovacioNegatiu.Comprovacio2;
 
-                    calIncorporarNegatiu = true;
-                    tipusComprovacio = TipusComprovacioNegatiu.Comprovacio2;
                 }
 
             }
@@ -382,11 +367,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 // ------------------------------------
 
                 // Comprovar si ja existeix la mostra diagnòstic negativa que neutralitzarà els positius
+                // 20260502 Afegeixo etiquetaId
                 int mostraDiagnosticId = _multiRRepository.ComprovarMostraDiagnosticExisteix(
                     mostra.PacientSap,
                     resultatMostra.DataPeticioTrunc,
                     resultatMostra.MostraDescripcio,
-                    "1");
+                    "1", mostra.EtiquetaId);
 
                 int mostraDiagnosticIdFinal = mostraDiagnosticId;
 
@@ -426,6 +412,25 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var diagnosticInfo = _multiRRepository.ObtenirInformDiagnostic(diagnosticId);
                     if (diagnosticInfo != null)
                     {
+                        // COMPROVACIÓ: verificar si el diagnòstic ja té una mostra positiva amb la mateixa etiqueta
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🔍 Verificant si el diagnòstic {diagnosticId} ja té mostra positiva amb etiqueta '{mostra.EtiquetaId}'");
+                        
+                        bool diagnosticTeMostraAmbEtiqueta = _multiRRepository.DiagnosticTeMostraAmbEtiqueta(
+                            diagnosticId, 
+                            mostra.EtiquetaId, 
+                            resultatMostra.MostraDescripcio);
+                        
+                        if (diagnosticTeMostraAmbEtiqueta)
+                        {
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ El diagnòstic {diagnosticId} JA té una mostra amb l'etiqueta '{mostra.EtiquetaId}'");
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}➡️ Descartem aquest diagnòstic per evitar afegir un negatiu quan ja hi ha un positiu de la mateixa mostra");
+                            
+                            // Continuar amb el següent diagnòstic
+                            continue;
+                        }
+                        
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ El diagnòstic {diagnosticId} NO té cap mostra positiva amb l'etiqueta '{mostra.EtiquetaId}'");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}➡️ Continuem amb la incorporació del negatiu");
 
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🔄 Incorporant el resultat negatiu al diagnòstic {diagnosticId}: {diagnosticInfo.MicroorganismeCodi} + {diagnosticInfo.MecanismeId ?? "(sense mecanisme)"}");
 

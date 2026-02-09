@@ -269,7 +269,7 @@ namespace MultirIntegraModulab
             consultaBase += string.Join(" OR ", filtres);
             consultaBase += @"
                   )
-                ORDER BY PET.ETIQUETA_ID";
+                ORDER BY ETIQUETA_ID";
 
             // Afegir límit si cal
             if (limitRegistres > 0)

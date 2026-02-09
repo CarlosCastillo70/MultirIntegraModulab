@@ -9,6 +9,28 @@ using MultirIntegraModulab.Application.Helpers;
 namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 {
     /// <summary>
+    /// Resultat de la comprovació d'un mecanisme individual
+    /// </summary>
+    public class ResultatComprovacioMecanisme
+    {
+        /// <summary>
+        /// Indica si el mecanisme s'ha eliminat perquè està marcat com NO INCORPORAR (MNI)
+        /// </summary>
+        public bool EliminatMNI { get; set; }
+        
+        /// <summary>
+        /// Indica si és una combinació microorganisme+mecanisme prohibida (CNI)
+        /// </summary>
+        public bool EsCombinacioCNI { get; set; }
+        
+        public ResultatComprovacioMecanisme()
+        {
+            EliminatMNI = false;
+            EsCombinacioCNI = false;
+        }
+    }
+    
+    /// <summary>
     /// Resultat de la comprovació de mecanismes de resistència
     /// </summary>
     public class ResultatComprovacioMecanismes
@@ -20,6 +42,17 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
         public List<string> MecanismesNoIncorporats { get; set; }
         public List<string> CombinacionsNoIncorporar { get; set; }
         public Dictionary<string, bool> MecanismesExistents { get; set; }
+        
+        /// <summary>
+        /// Indica si s'han eliminat mecanismes NO INCORPORAR i cal reclassificar la mostra
+        /// </summary>
+        public bool CalReclassificar { get; set; }
+        
+        /// <summary>
+        /// Llista de resultats que s'han de descartar (combinació NO INCORPORAR)
+        /// Conté els índexs dels resultats a eliminar de la col·lecció
+        /// </summary>
+        public List<int> ResultatsADescartar { get; set; }
 
         public ResultatComprovacioMecanismes()
         {
@@ -27,8 +60,10 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
             MecanismesNoIncorporats = new List<string>();
             CombinacionsNoIncorporar = new List<string>();
             MecanismesExistents = new Dictionary<string, bool>();
+            ResultatsADescartar = new List<int>();
             Exitosa = true;
             ContinuarProcessament = true;
+            CalReclassificar = false;
         }
     }
 
@@ -69,16 +104,14 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
             try
             {
                 // Comprovar cada resultat de la mostra
-                foreach (var resultatMostra in mostra.Resultats)
+                for (int i = 0; i < mostra.Resultats.Count; i++)
                 {
-                    ComprovarMecanismesRegistre(resultatMostra, mostra, resultat);
+                    var resultatMostra = mostra.Resultats[i];
                     
-                    // Si es detecta una combinació no incorporar, aturar immediatament
-                    if (!resultat.ContinuarProcessament)
-                    {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Mostra {mostra.EtiquetaId} no es processarà per {resultat.Missatge}");
-                        return resultat;
-                    }
+                    ComprovarMecanismesRegistre(resultatMostra, mostra, resultat, i);
+                    
+                    // Nota: Ja no aturem el processament si es detecta una CNI
+                    // Simplement marquem el resultat per descartar i continuem amb els altres
                 }
 
                 if (resultat.MecanismesCreats.Any())
@@ -89,6 +122,21 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 if (resultat.MecanismesNoIncorporats.Any())
                 {
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Eliminats {resultat.MecanismesNoIncorporats.Count} mecanisme(s) marcats com NO INCORPORAR");
+                }
+                
+                if (resultat.ResultatsADescartar.Any())
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Descartats {resultat.ResultatsADescartar.Count} resultat(s) amb combinació NO INCORPORAR (CNI)");
+                    
+                    // Eliminar els resultats descartats de la col·lecció (en ordre invers per no afectar els índexs)
+                    foreach (var index in resultat.ResultatsADescartar.OrderByDescending(x => x))
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🗑️ Eliminant resultat {index + 1} de {mostra.Resultats.Count} de la col·lecció (combinació CNI)");
+                        mostra.Resultats.RemoveAt(index);
+                    }
+                    
+                    // Marcar que cal reclassificar després d'eliminar resultats
+                    resultat.CalReclassificar = true;
                 }
 
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Comprovació de mecanismes de la mostra, completada");
@@ -112,7 +160,8 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
         private void ComprovarMecanismesRegistre(
             ResultatMostra registre, 
             Mostra mostra,
-            ResultatComprovacioMecanismes resultat)
+            ResultatComprovacioMecanismes resultat,
+            int indexResultat)
         {
             // Obtenir tots els mecanismes de resistència del registre
             var mecanismes = ObtenirMecanismesRegistre(registre);
@@ -127,6 +176,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
             // Llista per guardar els mecanismes que s'han d'eliminar del registre
             var mecanismesAEliminar = new List<int>(); // Posicions (1-5) dels mecanismes a eliminar
+            bool resultatTeCombinacioCNI = false;
 
             // Comprovar cada mecanisme
             for (int i = 0; i < mecanismes.Count; i++)
@@ -134,24 +184,62 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 var mecanisme = mecanismes[i];
                 int posicio = i + 1; // Posició del mecanisme (1-5)
                 
-                bool eliminat = ComprovarMecanisme(mecanisme, registre, mostra, resultat, posicio);
+                var resultatComprovacio = ComprovarMecanisme(mecanisme, registre, mostra, resultat, posicio);
                 
-                if (eliminat)
+                if (resultatComprovacio.EliminatMNI)
                 {
                     mecanismesAEliminar.Add(posicio);
                 }
                 
-                // Si es detecta combinació prohibida (CNI), aturar tot el processament
-                if (!resultat.ContinuarProcessament)
+                // Si es detecta combinació prohibida (CNI), marcar aquest resultat per descartar
+                if (resultatComprovacio.EsCombinacioCNI)
                 {
-                    return;
+                    resultatTeCombinacioCNI = true;
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Resultat amb combinació CNI detectada. Aquest resultat NO es processarà");
+                    // No aturem el bucle, continuem comprovant altres mecanismes per auditoria completa
                 }
             }
+            
+            // Si el resultat té alguna combinació CNI, marcar-lo per descartar
+            if (resultatTeCombinacioCNI)
+            {
+                resultat.ResultatsADescartar.Add(indexResultat);
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Resultat {indexResultat + 1} marcat per descartar (combinació CNI)");
+                return; // No processar més aquest resultat
+            }
 
-            // Eliminar els mecanismes marcats com NO INCORPORAR del registre
+            // Eliminar els mecanismes marcats com NO INCORPORAR del registre (només MNI, no CNI)
             if (mecanismesAEliminar.Any())
             {
                 EliminarMecanismesDelRegistre(registre, mecanismesAEliminar);
+                
+                // Marcar que cal reclassificar la mostra
+                resultat.CalReclassificar = true;
+                
+                // Després d'eliminar els mecanismes NO INCORPORAR, comprovar si encara queden mecanismes vàlids
+                var mecanismesRestants = ObtenirMecanismesRegistre(registre);
+                
+                if (!mecanismesRestants.Any())
+                {
+                    // Si no queden mecanismes i el microorganisme NO és especial, 
+                    // aquest resultat esdevé efectivament un negatiu
+                    bool esMicroorganismeEspecial = registre.EsMicroorganismeEspecial ?? false;
+                    
+                    if (!esMicroorganismeEspecial)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Després d'eliminar mecanismes NO INCORPORAR, el registre no té cap mecanisme vàlid i el microorganisme NO és especial");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Aquest resultat es tractarà com a NEGATIU després de reclassificar");
+                    }
+                    else
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚡ Després d'eliminar mecanismes NO INCORPORAR, el registre no té cap mecanisme però el microorganisme ÉS ESPECIAL");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Aquest resultat es tractarà com a POSITIU (microorganisme especial) després de reclassificar");
+                    }
+                }
+                else
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✔️ Després d'eliminar {mecanismesAEliminar.Count} mecanisme(s) NO INCORPORAR, encara queden {mecanismesRestants.Count} mecanisme(s) vàlid(s) per processar");
+                }
             }
         }
 
@@ -183,14 +271,16 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
         /// <summary>
         /// Comprova un mecanisme individual
         /// </summary>
-        /// <returns>True si el mecanisme s'ha d'eliminar (no incorporar), False en cas contrari</returns>
-        private bool ComprovarMecanisme(
+        /// <returns>Resultat de la comprovació del mecanisme</returns>
+        private ResultatComprovacioMecanisme ComprovarMecanisme(
             (string id, string descripcio) mecanisme, 
             ResultatMostra resultatMostra, 
             Mostra mostra,
             ResultatComprovacioMecanismes resultat,
             int posicio)
         {
+            var resultatMecanisme = new ResultatComprovacioMecanisme();
+            
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Comprovant existencia del mecanisme: '{mecanisme.id} {mecanisme.descripcio}' i combinacions microorganisme / mecanisme, a no incorporar");
 
             // 1. Comprovar si el mecanisme existeix
@@ -236,8 +326,8 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                     // Guardar auditoria (però continuar processant)
                     _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "MNI", resultatMostra, mecanismeInfo);
                     
-                    // Retornar true per indicar que s'ha d'eliminar aquest mecanisme del registre
-                    return true;
+                    // Marcar que s'ha d'eliminar aquest mecanisme del registre
+                    resultatMecanisme.EliminatMNI = true;
                 }
             }
 
@@ -251,21 +341,19 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 if (esNoIncorporar)
                 {
                     // Es una combinació marcada com a no incorporar (CNI)
-                    // En aquest cas SÍ que s'atura tot el processament
+                    // Aquest resultat NO es processarà (ni com a positiu ni com a negatiu)
 
                     string combinacio = $"{resultatMostra.AillamentDescripcio} + {mecanisme.id}";
                     
                     _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Combinació marcada com NO INCORPORAR: {combinacio}");
                     
                     resultat.CombinacionsNoIncorporar.Add(combinacio);
-                    resultat.ContinuarProcessament = false;
-                    resultat.Exitosa = false;
-                    resultat.Missatge = $"Combinació {combinacio} marcada com NO INCORPORAR";
                     
                     // Guardar auditoria
                     _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "CNI", resultatMostra);
                     
-                    // No retornar aquí, deixar que el codi que crida gestioni l'aturada
+                    // Marcar que és una combinació CNI
+                    resultatMecanisme.EsCombinacioCNI = true;
                 }
                 else
                 {
@@ -273,8 +361,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 }
             }
 
-            // Retornar false = aquest mecanisme NO s'ha d'eliminar
-            return false;
+            return resultatMecanisme;
         }
 
         /// <summary>

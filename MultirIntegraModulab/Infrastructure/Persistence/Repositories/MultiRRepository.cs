@@ -59,8 +59,8 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
             _multiRDbService.ObtenirIdMostraDiagnosticPerDiagnosticIEtiqueta(diagnosticId, etiqueta, tipusMostra);
 
         // Mostres diagnòstic
-        public int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra, string valoracio = null) => 
-            _multiRDbService.ComprovarMostraDiagnosticExisteix(pacientSap, dataMostra, tipusMostra, valoracio);
+        public int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra, string valoracio = null, string etiqueta = null) => 
+            _multiRDbService.ComprovarMostraDiagnosticExisteix(pacientSap, dataMostra, tipusMostra, valoracio, etiqueta);
 
         public int ComprovarMostraDiagnosticPerEtiqueta(string pacientSap, string tipusMostra, string valoracio, string etiqueta) =>
             _multiRDbService.ComprovarMostraDiagnosticPerEtiqueta(pacientSap, tipusMostra, valoracio, etiqueta);

@@ -120,7 +120,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     resum.TotalProcessats++;
 
                     _logger.Info($"▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄");
-                    _logger.Info($" Processant mostra del pacient {mostra.PacientSap} i etiqueta : {mostra.EtiquetaId}");
+                    _logger.Info($" Processant mostra {resum.TotalProcessats} de {totesLesMostres.Count} - Pacient: {mostra.PacientSap} - Etiqueta: {mostra.EtiquetaId}");
                     _logger.Info($"▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀");
 
 
@@ -167,10 +167,26 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         resum.MostresAmbError++;
                         continue;
                     }
+                    
+                    // Comprovar si tots els resultats han estat descartats per CNI
+                    if (!mostra.Resultats.Any())
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra {mostra.EtiquetaId} descartada: tots els resultats tenen combinació CNI");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}💥 La mostra NO es processarà (ni com a positiva ni com a negativa)");
+                        resum.MostresAmbError++;
+                        continue;
+                    }
 
                     
                     // FASE 6: Classificar mostra (un sol positiu, múltiples negatius, mixta, ...)
                     var classificacio = _classificarMostraUseCase.Executar(mostra);
+                    
+                    // Si s'han eliminat mecanismes NO INCORPORAR, reclassificar la mostra
+                    if (resultatMecanismes.CalReclassificar)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Reclassificant mostra després d'eliminar mecanismes NO INCORPORAR...");
+                        classificacio = _classificarMostraUseCase.Executar(mostra);
+                    }
 
 
                     // FASE 7: Processar segons el tipus de mostra

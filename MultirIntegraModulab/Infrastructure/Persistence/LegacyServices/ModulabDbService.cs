@@ -281,7 +281,7 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
 		   AND
 		   (DETALL.DATA_VALIDACIO_TRUNC >= trunc(sysdate-:diesEndarrera) OR DETALL.DATA_RESULTAT_TRUNC >= trunc(sysdate-:diesEndarrera)) 
       )
-                ORDER BY PET.ETIQUETA_ID";
+                ORDER BY ETIQUETA_ID";
 
             // Afegir clàusula ROWNUM si hi ha límit especificat
             if (limitRegistres > 0)
@@ -655,7 +655,7 @@ RESUM DE LA CÀRREGA PER RANG DE DATES ({dataInici:dd/MM/yyyy} - {dataFi:dd/MM/y
                          OR
                          (DETALL.DATA_RESULTAT >= :dataInici AND DETALL.DATA_RESULTAT <= :dataFi)
                         )
-                ORDER BY PET.ETIQUETA_ID";
+                ORDER BY ETIQUETA_ID";
         }
 
         /// <summary>
