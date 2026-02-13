@@ -29,7 +29,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Comprovant / creant mostra_microorganisme {diagnosticId} {mostraDiagnosticId}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells .Comprovacio)}🔎 Comprovant / creant mostra_microorganisme {diagnosticId} {mostraDiagnosticId}");
 
                     conn.Open();
                     using (var cmd = new MySqlCommand(sql, conn))

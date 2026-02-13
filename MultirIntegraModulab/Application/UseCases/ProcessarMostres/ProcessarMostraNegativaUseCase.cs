@@ -341,7 +341,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             else if (tipusComprovacio == TipusComprovacioNegatiu.Comprovacio2)
             {
                 // Comprovació 2: Recuperar diagnòstics positius vigents per aquest tipus de mostra o equivalents (amb diferent etiqueta que la que s´esta processant)
-                diagnosticsPositiusANeutralitzar = _multiRRepository.ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(
+                diagnosticsPositiusANeutralitzar = _multiRRepository.ObtenirDiagnosticsPositiusVigentsTipusMostra(
                     mostra.PacientSap, 
                     resultatMostra.MostraDescripcio, 
                     mostra.EtiquetaId);
@@ -360,52 +360,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics positius a neutralitzar: {idsDiagnostics}");
 
                 
-                // S´han trobat diagnòstics positius a neutralitzar, procedim a crear la mostra diagnòstic per al negatiu que neutralitzarà els positius
-                // Procedim a crear la mostra diagnòstic per al negatiu que neutralitzarà els positius (serà la mateixa per a tots els diagnòstics positius)
-
-                // Pacients_diagnostics_mostres
-                // ------------------------------------
-
-                // Comprovar si ja existeix la mostra diagnòstic negativa que neutralitzarà els positius
-                // 20260502 Afegeixo etiquetaId
-                int mostraDiagnosticId = _multiRRepository.ComprovarMostraDiagnosticExisteix(
-                    mostra.PacientSap,
-                    resultatMostra.DataPeticioTrunc,
-                    resultatMostra.MostraDescripcio,
-                    "1", mostra.EtiquetaId);
-
-                int mostraDiagnosticIdFinal = mostraDiagnosticId;
-
-                if (mostraDiagnosticId == 0)
-                {
-                    // Obtenir el microorganisme del resultat per incloure'l al camp microorganismeMecanismeCaptat
-                    var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultatMostra.AillamentDescripcio);
-                    string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio ?? "";
-                    
-
-                    // Crear mostra negativa (amb microorganisme) que neutralitza una positiva
-                    int nouMostraDiagnosticId = _multiRRepository.CrearMostraDiagnostic(
-                        mostra.PacientSap,
-                        resultatMostra.DataPeticioTrunc,
-                        resultatMostra.MostraDescripcio,
-                        resultatMostra.ProvaDescripcio,
-                        mostra.EtiquetaId,
-                        mostra.DataUltimResultat, // agafar data resultat de la mostra (no del resultat, ja que per una mostra poden haver diferents valors)
-                        resultatMostra.DataValidacio,
-                        "", // sense mecanisme
-                        resultatMostra.EsMicroorganismeEspecial,
-                        microorganismeCodi + "-"); // Per a negatius, només tenim el microorganisme (sense mecanisme)
-
-                    if (nouMostraDiagnosticId > 0)
-                    {
-                        mostraDiagnosticIdFinal = nouMostraDiagnosticId;
-                        resultat.MostresDiagnosticCreades++;
-                    }
-                }
-
-
                 // FASE 3: PER CADA DIAGNÒSTIC POSITIU INCORPORAR EL RESULTAT NEGATIU 
                 // ------------------------------------
+                
+                // Variable per controlar si s'ha creat la mostra diagnòstic
+                int mostraDiagnosticIdFinal = 0;
+                bool mostraDiagnosticCreada = false;
 
                 foreach (var diagnosticId in diagnosticsPositiusANeutralitzar)
                 {
@@ -413,7 +373,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (diagnosticInfo != null)
                     {
                         // COMPROVACIÓ: verificar si el diagnòstic ja té una mostra positiva amb la mateixa etiqueta
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🔍 Verificant si el diagnòstic {diagnosticId} ja té mostra positiva amb etiqueta '{mostra.EtiquetaId}'");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🔍 Verificant si el diagnòstic {diagnosticId} ja té mostra positiva amb etiqueta '{mostra.EtiquetaId}' i tipus de mostra '{resultatMostra.MostraDescripcio}' ");
                         
                         bool diagnosticTeMostraAmbEtiqueta = _multiRRepository.DiagnosticTeMostraAmbEtiqueta(
                             diagnosticId, 
@@ -422,15 +382,69 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         
                         if (diagnosticTeMostraAmbEtiqueta)
                         {
-                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ El diagnòstic {diagnosticId} JA té una mostra amb l'etiqueta '{mostra.EtiquetaId}'");
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ El diagnòstic {diagnosticId} JA té una mostra amb l'etiqueta '{mostra.EtiquetaId}' i tipus de mostra '{resultatMostra.MostraDescripcio}'");
                             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}➡️ Descartem aquest diagnòstic per evitar afegir un negatiu quan ja hi ha un positiu de la mateixa mostra");
                             
                             // Continuar amb el següent diagnòstic
                             continue;
                         }
                         
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ El diagnòstic {diagnosticId} NO té cap mostra positiva amb l'etiqueta '{mostra.EtiquetaId}'");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ El diagnòstic {diagnosticId} NO té cap mostra positiva amb l'etiqueta '{mostra.EtiquetaId}' i tipus de mostra '{resultatMostra.MostraDescripcio}'");
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}➡️ Continuem amb la incorporació del negatiu");
+
+                        // Crear la mostra diagnòstic només si encara no s'ha creat i hem superat la comprovació
+                        if (!mostraDiagnosticCreada)
+                        {
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Creant mostra diagnòstic negativa per neutralitzar els positius...");
+                            
+                            // Comprovar si ja existeix la mostra diagnòstic negativa
+                            int mostraDiagnosticExistent = _multiRRepository.ComprovarMostraDiagnosticExisteix(
+                                mostra.PacientSap,
+                                resultatMostra.DataPeticioTrunc,
+                                resultatMostra.MostraDescripcio,
+                                "1", // Valoració '1' = negatiu
+                                mostra.EtiquetaId);
+
+                            if (mostraDiagnosticExistent > 0)
+                            {
+                                mostraDiagnosticIdFinal = mostraDiagnosticExistent;
+                                mostraDiagnosticCreada = true;
+                                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Mostra diagnòstic negativa JA existeix (ID: {mostraDiagnosticIdFinal})");
+                            }
+                            else
+                            {
+                                // Obtenir el microorganisme del resultat per incloure'l al camp microorganismeMecanismeCaptat
+                                var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultatMostra.AillamentDescripcio);
+                                string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio ?? "";
+                                
+                                // Crear mostra negativa (amb microorganisme) que neutralitza una positiva
+                                int nouMostraDiagnosticId = _multiRRepository.CrearMostraDiagnostic(
+                                    mostra.PacientSap,
+                                    resultatMostra.DataPeticioTrunc,
+                                    resultatMostra.MostraDescripcio,
+                                    resultatMostra.ProvaDescripcio,
+                                    mostra.EtiquetaId,
+                                    mostra.DataUltimResultat,
+                                    resultatMostra.DataValidacio,
+                                    "", // sense mecanisme
+                                    resultatMostra.EsMicroorganismeEspecial,
+                                    microorganismeCodi + "-"); // Per a negatius, només tenim el microorganisme (sense mecanisme)
+
+                                if (nouMostraDiagnosticId > 0)
+                                {
+                                    mostraDiagnosticIdFinal = nouMostraDiagnosticId;
+                                    mostraDiagnosticCreada = true;
+                                    resultat.MostresDiagnosticCreades++;
+                                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra diagnòstic negativa creada (ID: {mostraDiagnosticIdFinal})");
+                                }
+                                else
+                                {
+                                    _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Error creant la mostra diagnòstic negativa");
+                                    // Continuar amb el següent diagnòstic
+                                    continue;
+                                }
+                            }
+                        }
 
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🔄 Incorporant el resultat negatiu al diagnòstic {diagnosticId}: {diagnosticInfo.MicroorganismeCodi} + {diagnosticInfo.MecanismeId ?? "(sense mecanisme)"}");
 

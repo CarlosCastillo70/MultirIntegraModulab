@@ -511,18 +511,28 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // ------------------------------------
 
                     // Obtenir tots els diagnòstics positius del pacient per aquest tipus de mostra (excloent l'actual)
-                    var altresDiagnosticsPositius = _multiRRepository.ObtenirDiagnosticsPositiusPacientPerTipusMostra(
+                    //var altresDiagnosticsPositius = _multiRRepository.ObtenirDiagnosticsPositiusPacientPerTipusMostra(
+                    //    mostra.PacientSap,
+                    //    resultatMostra.MostraDescripcio,
+                    //    mostra.EtiquetaId
+                    //    );
+
+
+                    // Obtenir tots els diagnòstics positius del pacient per aquest tipus de mostra (excloent l'actual)
+                    // 20260213. Afegim també la cerca de tipus de mostra equivalent, per assegurar que capturem tots els positius que poden formar part de la mateixa mostra (etiqueta) encara que el tipus de mostra sigui diferent però equivalent
+                    var altresDiagnosticsPositiusPacientPerTipusMostraIEquivalents = _multiRRepository.ObtenirDiagnosticsPositiusPacientPerTipusMostraIEquivalents(
                         mostra.PacientSap,
                         resultatMostra.MostraDescripcio,
                         mostra.EtiquetaId
                         );
 
 
+
                     // Filtrar els diagnòstics que tenen alguna mostra amb la mateixa etiqueta que la mostra actual
                     // Això evita crear negatius per diagnòstics que formen part de la mateixa mostra que estem processant
                     var diagnosticsPositius = new List<int>();
                     
-                    foreach (var diagId in altresDiagnosticsPositius)
+                    foreach (var diagId in altresDiagnosticsPositiusPacientPerTipusMostraIEquivalents)
                     {
                         // Comprovar si aquest diagnòstic té alguna mostra amb l'etiqueta actual i el mateix tipus de mostra
                         bool teMostraAmbMateixaEtiqueta = _multiRRepository.DiagnosticTeMostraAmbEtiqueta(

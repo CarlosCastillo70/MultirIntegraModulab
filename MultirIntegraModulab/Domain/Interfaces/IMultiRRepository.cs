@@ -64,6 +64,19 @@ namespace MultirIntegraModulab.Domain.Interfaces
         List<int> ObtenirDiagnosticsPositiusPacientPerTipusMostra(string pacientSap, string tipusMostra, string etiquetaExcloure = null, string microorganisme = null, string mecanisme = null);
 
         /// <summary>
+        /// Obtingué els IDs dels diagnòstics positius d'un pacient per un tipus de mostra específic
+        /// i els seus tipus de mostra equivalents, excloent opcionalment una etiqueta concreta.
+        /// Similar a ObtenirDiagnosticsPositiusPacientPerTipusMostra però també cerca pels tipus equivalents.
+        /// </summary>
+        /// <param name="pacientSap">Identificador del pacient</param>
+        /// <param name="tipusMostra">Tipus de mostra (MOSTRA_DESCRIPCIO)</param>
+        /// <param name="etiquetaExcloure">Etiqueta a excloure de la cerca (opcional)</param>
+        /// <param name="microorganisme">Microorganisme per filtrar (opcional)</param>
+        /// <param name="mecanisme">Mecanisme de resistència per filtrar (opcional)</param>
+        /// <returns>Llista d'IDs de diagnòstics positius. Retorna llista buida si no n'hi ha</returns>
+        List<int> ObtenirDiagnosticsPositiusPacientPerTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiquetaExcloure = null, string microorganisme = null, string mecanisme = null);
+
+        /// <summary>
         /// Obté els IDs de tots els diagnòstics positius d'un pacient per qualsevol tipus de mostra
         /// Utilitzat per la Comprovació 1 de mostres negatives (comportament = 1)
         /// </summary>
@@ -71,6 +84,17 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <param name="etiqueta">Etiqueta a excloure de la cerca (opcional)</param>
         /// <returns>Llista d'IDs de diagnòstics positius. Retorna llista buida si no n'hi ha</returns>
         List<int> ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(string pacientSap, string etiqueta = null);
+
+        /// <summary>
+        /// Obté els IDs dels diagnòstics positius vigents d'un pacient per un tipus de mostra 
+        /// específic
+        /// Utilitzat per la Comprovació 2 de mostres negatives
+        /// </summary>
+        /// <param name="pacientSap">Identificador del pacient</param>
+        /// <param name="tipusMostra">Tipus de mostra (MOSTRA_DESCRIPCIO)</param>
+        /// <param name="etiqueta">Etiqueta a excloure de la cerca (opcional)</param>
+        /// <returns>Llista d'IDs de diagnòstics positius vigents. Retorna llista buida si no n'hi ha</returns>
+        List<int> ObtenirDiagnosticsPositiusVigentsTipusMostra(string pacientSap, string tipusMostra, string etiqueta = null);
 
         /// <summary>
         /// Obté els IDs dels diagnòstics positius vigents d'un pacient per un tipus de mostra 
@@ -364,6 +388,26 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <param name="diesRetencio">Nombre de dies a mantenir (per defecte 90)</param>
         /// <returns>Nombre de registres esborrats</returns>
         int NetejarHistorialSincronitzacio(int diesRetencio = 90);
+
+        #endregion
+
+        #region Vigència de Diagnòstics
+
+        /// <summary>
+        /// Marca un diagnòstic com a no vigent
+        /// </summary>
+        /// <param name="diagnosticId">ID del diagnòstic</param>
+        /// <param name="responsable">Usuari que marca com a no vigent</param>
+        /// <returns>True si s'ha actualitzat correctament</returns>
+        bool MarcarDiagnosticNoVigent(int diagnosticId, string responsable);
+
+        /// <summary>
+        /// Reactiva un diagnòstic (el torna a marcar com a vigent)
+        /// </summary>
+        /// <param name="diagnosticId">ID del diagnòstic</param>
+        /// <param name="responsable">Usuari que reactiva</param>
+        /// <returns>True si s'ha actualitzat correctament</returns>
+        bool ReactivarDiagnostic(int diagnosticId, string responsable);
 
         #endregion
     }

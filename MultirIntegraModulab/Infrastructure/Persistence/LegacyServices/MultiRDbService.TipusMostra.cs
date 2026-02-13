@@ -185,7 +185,7 @@ namespace MultirIntegraModulab
                 return false;
             }
 
-            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Tipus de mostra amb comportament 1 (incorporar si el pacient té positius)");
+            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Tipus de mostra amb comportament 1 (incorporar si el pacient té positius)");
 
             string sql = @"
                         SELECT COUNT(DISTINCT pd.id)  AS positius_algun_tipus_mostra 
@@ -197,6 +197,7 @@ namespace MultirIntegraModulab
                             AND pdm.valoracio = '2'
                             AND pdm.dt_delete IS NULL
                             AND pd.dt_delete IS NULL  
+                            AND pd.vigent = 'S'
                             AND tm.dt_delete IS NULL";
 
 
@@ -215,11 +216,11 @@ namespace MultirIntegraModulab
                         
                         if (tePositius)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✓ Comprovació 1 COMPLERTA: Pacient {pacientSap} té {count} diagnòstics positius prèvis. SI cal incorporar el negatiu");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✓ Comprovació 1 COMPLERTA: Pacient {pacientSap} té {count} diagnòstics positius prèvis. SI cal incorporar el negatiu");
                         }
                         else
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Comprovació 1: Pacient {pacientSap} NO té positius previs → Continuar amb comprovació 2");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Comprovació 1: Pacient {pacientSap} NO té positius previs → Continuar amb comprovació 2");
                         }
                         
                         return tePositius;
@@ -260,7 +261,9 @@ namespace MultirIntegraModulab
             string sql = @"
                 SELECT pdm.id AS id_mostra_positiva 
                 FROM pacients_diagnostics_mostra pdm	 
-                JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.descripcio 		 
+                    INNER JOIN mostra_microorganisme mm ON pdm.id = mm.pacient_diagnostic_mostra_id
+                    INNER JOIN pacients_diagnostics pd ON mm.pacient_diagnostic_id = pd.id
+                    INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.descripcio 		 
                 WHERE pdm.npat = @pacientSap
                   AND ( 
                     UPPER(tm.descripcio) = UPPER(@tipusMostra) 
@@ -280,6 +283,8 @@ namespace MultirIntegraModulab
                     OR pdm.data_mostra >= DATE_SUB(CURRENT_DATE, INTERVAL tm.dies_vigencia_positiu DAY) 
                   ) 
                   AND pdm.dt_delete IS NULL 
+                  AND pd.dt_delete IS NULL
+                  AND pd.vigent = 'S'
                   AND tm.dt_delete IS NULL";
 
             // Si s'especifica una etiqueta a excloure, afegir la condició
@@ -348,7 +353,7 @@ namespace MultirIntegraModulab
             }
             catch (Exception ex)
             {
-                Logger.Error($"⚠️ Error comprovant positius vigents del pacient {pacientSap} per tipus mostra {tipusMostra}", ex);
+                Logger.Error($"⚠️ Error comprobant positius vigents del pacient {pacientSap} per tipus mostra {tipusMostra}", ex);
                 return false;
             }
         }

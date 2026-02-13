@@ -2118,4 +2118,15 @@ No sé quina es la millor opció. Podriem continuar com fins ara, però a la con
 Com ho veus tu ?
 
 
+---
+
+Nou requeriment: vigència dels diagnostics (pacients_diagnostics)
+
+Els diagnostics deixen d´estar vigents per treus motius. Per ara sol tractarem el primer dels motius:
+
+1) Es canvia manualment a no vigent a la taula pacients_diagnostics
+
+Vull saber en tot moment si el diagnostic és vigent o no. En cas que no sigui vigent, vull saber qui ha estat el responsable de marcar-lo com a no vigent, i quan s´ha marcat com a no vigent.
+
+Com ho puc fer ?
 

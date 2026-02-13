@@ -34,29 +34,30 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
             _multiRDbService.InserirPacient(dadesPacient);
 
         // Diagnòstics
-        public int ComprovarDiagnosticExisteix(string pacientSap, string microorganisme, string mecanisme, string tipusMecanisme) => 
+        public int ComprovarDiagnosticExisteix(string pacientSap, string microorganisme, string mecanisme, string tipusMecanisme) =>
             _multiRDbService.ComprovarDiagnosticExisteix(pacientSap, microorganisme, mecanisme, tipusMecanisme);
 
-        public int CrearDiagnosticPacient(string pacientSap, string microorganisme, string mecanisme, string tipusMecanisme) => 
+        public int CrearDiagnosticPacient(string pacientSap, string microorganisme, string mecanisme, string tipusMecanisme) =>
             _multiRDbService.CrearDiagnosticPacient(pacientSap, microorganisme, mecanisme, tipusMecanisme);
 
         public List<int> ObtenirDiagnosticsPositiusPacientPerTipusMostra(string pacientSap, string tipusMostra, string etiquetaExcloure = null, string microorganisme = null, string mecanisme = null) =>
             _multiRDbService.ObtenirDiagnosticsPositiusPacientPerTipusMostra(pacientSap, tipusMostra, etiquetaExcloure, microorganisme, mecanisme);
 
+        public List<int> ObtenirDiagnosticsPositiusPacientPerTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiquetaExcloure = null, string microorganisme = null, string mecanisme = null) =>
+            _multiRDbService.ObtenirDiagnosticsPositiusPacientPerTipusMostraIEquivalents(pacientSap, tipusMostra, etiquetaExcloure, microorganisme, mecanisme);
+
+
         public List<int> ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(string pacientSap, string etiqueta = null) =>
             _multiRDbService.ObtenirDiagnosticsPositiusPacientAlgunTipusMostra(pacientSap, etiqueta);
 
-        public List<int> ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiqueta = null) =>
-            _multiRDbService.ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(pacientSap, tipusMostra, etiqueta);
+        //public List<int> ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiqueta = null) =>
+        //    _multiRDbService.ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(pacientSap, tipusMostra, etiqueta);
 
         public DiagnosticInfo ObtenirInformDiagnostic(int diagnosticId) =>
             _multiRDbService.ObtenirInformDiagnostic(diagnosticId);
 
         public bool DiagnosticTeMostraAmbEtiqueta(int diagnosticId, string etiqueta, string tipusMostra) =>
             _multiRDbService.DiagnosticTeMostraAmbEtiqueta(diagnosticId, etiqueta, tipusMostra);
-
-        public int ObtenirIdMostraDiagnosticPerDiagnosticIEtiqueta(int diagnosticId, string etiqueta, string tipusMostra) =>
-            _multiRDbService.ObtenirIdMostraDiagnosticPerDiagnosticIEtiqueta(diagnosticId, etiqueta, tipusMostra);
 
         // Mostres diagnòstic
         public int ComprovarMostraDiagnosticExisteix(string pacientSap, DateTime? dataMostra, string tipusMostra, string valoracio = null, string etiqueta = null) => 
@@ -185,9 +186,6 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool PacientTePositiusAlgunTipusMostra(string pacientSap) =>
             _multiRDbService.PacientTePositiusAlgunTipusMostra(pacientSap);
 
-        public bool PacientTePositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra) =>
-            _multiRDbService.PacientTePositiusVigentsTipusMostraIEquivalents(pacientSap, tipusMostra);
-
         public bool PacientTePositiusVigentsTipusMostraIEquivalents(
             string pacientSap, 
             string tipusMostra, 
@@ -251,20 +249,46 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public int NetejarHistorialAntic(int diesRetencio = 90) => 
             _multiRDbService.NetejarHistorialAntic(diesRetencio);
 
-#region Control de Sincronització
+        #region Control de Sincronització
 
-public DadesSincronitzacio ObtenirUltimaSincronitzacio() =>
-    _multiRDbService.ObtenirUltimaSincronitzacio();
+        public DadesSincronitzacio ObtenirUltimaSincronitzacio() =>
+            _multiRDbService.ObtenirUltimaSincronitzacio();
 
-public int GuardarDadesSincronitzacio(DadesSincronitzacio dades) =>
-    _multiRDbService.GuardarDadesSincronitzacio(dades);
+        public int GuardarDadesSincronitzacio(DadesSincronitzacio dades) =>
+            _multiRDbService.GuardarDadesSincronitzacio(dades);
 
-public bool ActualitzarEstatSincronitzacio(int id, string estat, string observacions = null) =>
-    _multiRDbService.ActualitzarEstatSincronitzacio(id, estat, observacions);
+        public bool ActualitzarEstatSincronitzacio(int id, string estat, string observacions = null) =>
+            _multiRDbService.ActualitzarEstatSincronitzacio(id, estat, observacions);
 
-public int NetejarHistorialSincronitzacio(int diesRetencio = 90) =>
-    _multiRDbService.NetejarHistorialSincronitzacio(diesRetencio);
+        public int NetejarHistorialSincronitzacio(int diesRetencio = 90) =>
+            _multiRDbService.NetejarHistorialSincronitzacio(diesRetencio);
 
-#endregion
+        #endregion
+
+        #region Vigència de Diagnòstics
+
+        public bool MarcarDiagnosticNoVigent(int diagnosticId, string responsable) =>
+            _multiRDbService.MarcarDiagnosticNoVigent(diagnosticId, responsable);
+
+        public bool ReactivarDiagnostic(int diagnosticId, string responsable) =>
+            _multiRDbService.ReactivarDiagnostic(diagnosticId, responsable);
+
+
+        List<int> IMultiRRepository.ObtenirDiagnosticsPositiusVigentsTipusMostra(string pacientSap, string tipusMostra, string etiqueta)
+        {
+            throw new NotImplementedException();
+        }
+
+        int IMultiRRepository.ObtenirIdMostraDiagnosticPerDiagnosticIEtiqueta(int diagnosticId, string etiqueta, string tipusMostra)
+        {
+            throw new NotImplementedException();
+        }
+
+        List<int> IMultiRRepository.ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiqueta)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
     }
 }

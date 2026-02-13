@@ -30,8 +30,11 @@
 
   <ItemGroup>
     <!-- ❌ Excloure la carpeta _Legacy de la compilació -->
+    <Compile Remove="MultirRevisioVigencia\**" />
     <Compile Remove="_Legacy\**" />
+    <EmbeddedResource Remove="MultirRevisioVigencia\**" />
     <EmbeddedResource Remove="_Legacy\**" />
+    <None Remove="MultirRevisioVigencia\**" />
     <None Remove="_Legacy\**" />
   </ItemGroup>
 
