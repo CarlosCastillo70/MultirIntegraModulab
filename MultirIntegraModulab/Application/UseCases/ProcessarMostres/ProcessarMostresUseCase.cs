@@ -155,7 +155,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var resultatMicroorganismes = _comprovadorMicroorganismesUseCase.Executar(mostra);
                     if (!resultatMicroorganismes.Exitosa)
                     {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Error comprovant microorganismes: {resultatMicroorganismes.Missatge}");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ Error comprovant microorganismes: {resultatMicroorganismes.Missatge}");
                     }
 
 
@@ -163,7 +163,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var resultatMecanismes = _comprovadorMecanismesUseCase.Executar(mostra);
                     if (!resultatMecanismes.ContinuarProcessament)
                     {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra {mostra.EtiquetaId} descartada: {resultatMecanismes.Missatge}");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Mostra {mostra.EtiquetaId} descartada: {resultatMecanismes.Missatge}");
                         resum.MostresAmbError++;
                         continue;
                     }
@@ -171,8 +171,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // Comprovar si tots els resultats han estat descartats per CNI
                     if (!mostra.Resultats.Any())
                     {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra {mostra.EtiquetaId} descartada: tots els resultats tenen combinació CNI");
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}💥 La mostra NO es processarà (ni com a positiva ni com a negativa)");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Mostra {mostra.EtiquetaId} descartada: tots els resultats tenen combinació CNI");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}💥 La mostra NO es processarà (ni com a positiva ni com a negativa)");
                         resum.MostresAmbError++;
                         continue;
                     }
@@ -184,7 +184,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // Si s'han eliminat mecanismes NO INCORPORAR, reclassificar la mostra
                     if (resultatMecanismes.CalReclassificar)
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Reclassificant mostra després d'eliminar mecanismes NO INCORPORAR...");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🔄 Reclassificant mostra després d'eliminar mecanismes NO INCORPORAR...");
                         classificacio = _classificarMostraUseCase.Executar(mostra);
                     }
 
@@ -531,7 +531,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         mostraExistent.DataValidacio,
                         combinacionsNoves,
                         mostra.DataUltimResultat,
-                        mostra.Resultats.FirstOrDefault()?.DataValidacio);
+                        mostra.Resultats.FirstOrDefault()?.DataValidacio,
+                        mostra.PacientSap); // Afegir npat del pacient
 
                     if (historialGuardat)
                     {
@@ -739,7 +740,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         mostraExistent.DataValidacio,
                         combinacionsNoves,
                         mostra.DataUltimResultat,
-                        mostra.Resultats.FirstOrDefault()?.DataValidacio);
+                        mostra.Resultats.FirstOrDefault()?.DataValidacio,
+                        mostra.PacientSap); // Afegir npat del pacient
 
                     if (historialGuardat)
                     {
@@ -782,7 +784,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// </summary>
         private bool TractarMostraRevalidada(Mostra mostra, TipusIncorporacio tipusIncorporacio)
         {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Mostra revalidada - comprovant canvis...");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Mostra revalidada - comprobant canvis...");
 
             try
             {
@@ -841,7 +843,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 else
                 {
                     // CAS 2: Hi ha canvis - guardar historial, esborrar i continuar
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Mostres diferents - guardant historial i esborrant dades...");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Mostres diferents - es detallen els canvis. Guardant historial i esborrant dades...");
                     
                     // Mostrar canvis detectats
                     foreach (var canvi in resultatComparacio.CanvisDetectats)
@@ -865,7 +867,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         mostraExistent.DataValidacio,
                         combinacionsNoves,
                         mostra.DataUltimResultat,
-                        mostra.Resultats.FirstOrDefault()?.DataValidacio);
+                        mostra.Resultats.FirstOrDefault()?.DataValidacio,
+                        mostra.PacientSap); // Afegir npat del pacient
 
                     if (historialGuardat)
                     {

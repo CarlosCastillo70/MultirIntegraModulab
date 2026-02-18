@@ -207,6 +207,7 @@ namespace MultirIntegraModulab
         /// <param name="combinacionsNoves">Combinacions microorganisme+mecanisme noves (JSON o text)</param>
         /// <param name="dataResultatNova">Data resultat nova</param>
         /// <param name="dataValidacioNova">Data validació nova</param>
+        /// <param name="npat">Número de pacient (NPAT)</param>
         /// <returns>True si s'ha guardat correctament</returns>
         public bool GuardarHistorialMostra(
             string etiquetaId, 
@@ -216,7 +217,8 @@ namespace MultirIntegraModulab
             DateTime? dataValidacioAnterior = null,
             string combinacionsNoves = null,
             DateTime? dataResultatNova = null,
-            DateTime? dataValidacioNova = null)
+            DateTime? dataValidacioNova = null,
+            string npat = null)
         {
             if (string.IsNullOrWhiteSpace(etiquetaId))
             {
@@ -251,12 +253,12 @@ namespace MultirIntegraModulab
                                   (etiqueta, versio, tipus_canvi, 
                                    combinacions_anteriors, data_resultat_anterior, data_validacio_anterior,
                                    combinacions_noves, data_resultat_nova, data_validacio_nova,
-                                   data_canvi, proces_origen)
+                                   data_canvi, proces_origen, npat)
                                   VALUES 
                                   (@etiquetaId, @versio, @tipusCanvi,
                                    @combinacionsAnteriors, @dataResultatAnterior, @dataValidacioAnterior,
                                    @combinacionsNoves, @dataResultatNova, @dataValidacioNova,
-                                   NOW(), 'IntegracioModulab')";
+                                   NOW(), 'IntegracioModulab', @npat)";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -269,6 +271,7 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@combinacionsNoves", combinacionsNoves ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@dataResultatNova", dataResultatNova ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@dataValidacioNova", dataValidacioNova ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@npat", npat ?? (object)DBNull.Value);
 
                         int filesAfectades = cmd.ExecuteNonQuery();
 

@@ -116,22 +116,22 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
                 if (resultat.MecanismesCreats.Any())
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Creats {resultat.MecanismesCreats.Count} mecanismes nous");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Creats {resultat.MecanismesCreats.Count} mecanismes nous");
                 }
 
                 if (resultat.MecanismesNoIncorporats.Any())
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Eliminats {resultat.MecanismesNoIncorporats.Count} mecanisme(s) marcats com NO INCORPORAR");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Eliminats {resultat.MecanismesNoIncorporats.Count} mecanisme(s) marcats com NO INCORPORAR");
                 }
                 
                 if (resultat.ResultatsADescartar.Any())
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Descartats {resultat.ResultatsADescartar.Count} resultat(s) amb combinació NO INCORPORAR (CNI)");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Descartats {resultat.ResultatsADescartar.Count} resultat(s) amb combinació NO INCORPORAR (CNI)");
                     
                     // Eliminar els resultats descartats de la col·lecció (en ordre invers per no afectar els índexs)
                     foreach (var index in resultat.ResultatsADescartar.OrderByDescending(x => x))
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🗑️ Eliminant resultat {index + 1} de {mostra.Resultats.Count} de la col·lecció (combinació CNI)");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🗑️ Eliminant resultat {index + 1} de {mostra.Resultats.Count} de la col·lecció (combinació CNI)");
                         mostra.Resultats.RemoveAt(index);
                     }
                     
@@ -168,7 +168,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
             if (!mecanismes.Any())
             {
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registre amb microorganisme '{registre.AillamentDescripcio}' SENSE mecanismes de resistència");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Registre amb microorganisme '{registre.AillamentDescripcio}' SENSE mecanismes de resistència");
                 return;
             }
 
@@ -195,7 +195,6 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 if (resultatComprovacio.EsCombinacioCNI)
                 {
                     resultatTeCombinacioCNI = true;
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Resultat amb combinació CNI detectada. Aquest resultat NO es processarà");
                     // No aturem el bucle, continuem comprovant altres mecanismes per auditoria completa
                 }
             }
@@ -204,7 +203,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
             if (resultatTeCombinacioCNI)
             {
                 resultat.ResultatsADescartar.Add(indexResultat);
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Resultat {indexResultat + 1} marcat per descartar (combinació CNI)");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}📝 Resultat {indexResultat + 1} marcat per descartar (combinació CNI)");
                 return; // No processar més aquest resultat
             }
 
@@ -227,18 +226,18 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                     
                     if (!esMicroorganismeEspecial)
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Després d'eliminar mecanismes NO INCORPORAR, el registre no té cap mecanisme vàlid i el microorganisme NO és especial");
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Aquest resultat es tractarà com a NEGATIU després de reclassificar");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Després d'eliminar mecanismes NO INCORPORAR, el registre no té cap mecanisme vàlid i el microorganisme NO és especial");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Aquest resultat es tractarà com a NEGATIU després de reclassificar");
                     }
                     else
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚡ Després d'eliminar mecanismes NO INCORPORAR, el registre no té cap mecanisme però el microorganisme ÉS ESPECIAL");
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Aquest resultat es tractarà com a POSITIU (microorganisme especial) després de reclassificar");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚡ Després d'eliminar mecanismes NO INCORPORAR, el registre no té cap mecanisme però el microorganisme ÉS ESPECIAL");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Aquest resultat es tractarà com a POSITIU (microorganisme especial) després de reclassificar");
                     }
                 }
                 else
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✔️ Després d'eliminar {mecanismesAEliminar.Count} mecanisme(s) NO INCORPORAR, encara queden {mecanismesRestants.Count} mecanisme(s) vàlid(s) per processar");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Després d'eliminar {mecanismesAEliminar.Count} mecanisme(s) NO INCORPORAR, encara queden {mecanismesRestants.Count} mecanisme(s) vàlid(s) per processar");
                 }
             }
         }

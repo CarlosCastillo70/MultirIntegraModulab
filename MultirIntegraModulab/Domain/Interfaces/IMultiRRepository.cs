@@ -344,6 +344,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <param name="combinacionsNoves">Combinacions microorganisme+mecanisme noves (JSON o text)</param>
         /// <param name="dataResultatNova">Data resultat nova</param>
         /// <param name="dataValidacioNova">Data validació nova</param>
+        /// <param name="npat">Número de pacient (NPAT)</param>
         /// <returns>True si s'ha guardat correctament</returns>
         bool GuardarHistorialMostra(
             string etiquetaId, 
@@ -353,7 +354,8 @@ namespace MultirIntegraModulab.Domain.Interfaces
             DateTime? dataValidacioAnterior = null,
             string combinacionsNoves = null,
             DateTime? dataResultatNova = null,
-            DateTime? dataValidacioNova = null);
+            DateTime? dataValidacioNova = null,
+            string npat = null);
         
         bool GuardarHistorialAutomaticMostra(Mostra mostra, TipusIncorporacio tipusIncorporacio, string observacions = null);
         int NetejarHistorialAntic(int diesRetencio = 90);

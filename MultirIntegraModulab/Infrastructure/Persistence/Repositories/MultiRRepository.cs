@@ -232,7 +232,8 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
             DateTime? dataValidacioAnterior = null,
             string combinacionsNoves = null,
             DateTime? dataResultatNova = null,
-            DateTime? dataValidacioNova = null) => 
+            DateTime? dataValidacioNova = null,
+            string npat = null) => 
             _multiRDbService.GuardarHistorialMostra(
                 etiquetaId, 
                 tipusCanvi, 
@@ -241,7 +242,8 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
                 dataValidacioAnterior, 
                 combinacionsNoves, 
                 dataResultatNova, 
-                dataValidacioNova);
+                dataValidacioNova,
+                npat);
 
         public bool GuardarHistorialAutomaticMostra(Mostra mostra, TipusIncorporacio tipusIncorporacio, string observacions = null) => 
             _multiRDbService.GuardarHistorialAutomaticMostra(mostra, tipusIncorporacio, observacions);

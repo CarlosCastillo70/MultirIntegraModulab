@@ -511,14 +511,14 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // ------------------------------------
 
                     // Obtenir tots els diagnòstics positius del pacient per aquest tipus de mostra (excloent l'actual)
-                    //var altresDiagnosticsPositius = _multiRRepository.ObtenirDiagnosticsPositiusPacientPerTipusMostra(
-                    //    mostra.PacientSap,
-                    //    resultatMostra.MostraDescripcio,
-                    //    mostra.EtiquetaId
-                    //    );
+                    var altresDiagnosticsPositius = _multiRRepository.ObtenirDiagnosticsPositiusPacientPerTipusMostra(
+                        mostra.PacientSap,
+                        resultatMostra.MostraDescripcio,
+                        mostra.EtiquetaId
+                        );
 
 
-                    // Obtenir tots els diagnòstics positius del pacient per aquest tipus de mostra (excloent l'actual)
+                    // Obtenir tots els diagnòstics positius del pacient per aquest tipus de mostra i equivalents (excloent l'actual)
                     // 20260213. Afegim també la cerca de tipus de mostra equivalent, per assegurar que capturem tots els positius que poden formar part de la mateixa mostra (etiqueta) encara que el tipus de mostra sigui diferent però equivalent
                     var altresDiagnosticsPositiusPacientPerTipusMostraIEquivalents = _multiRRepository.ObtenirDiagnosticsPositiusPacientPerTipusMostraIEquivalents(
                         mostra.PacientSap,
@@ -527,6 +527,10 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         );
 
 
+                    if (altresDiagnosticsPositius.Count() != altresDiagnosticsPositiusPacientPerTipusMostraIEquivalents.Count())
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}El nombre de positius incloent o no els equivalents, ÉS DIFERENT {altresDiagnosticsPositius.Count()} vs {altresDiagnosticsPositiusPacientPerTipusMostraIEquivalents.Count()}");
+                    }
 
                     // Filtrar els diagnòstics que tenen alguna mostra amb la mateixa etiqueta que la mostra actual
                     // Això evita crear negatius per diagnòstics que formen part de la mateixa mostra que estem processant
