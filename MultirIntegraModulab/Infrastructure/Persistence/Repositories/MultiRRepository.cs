@@ -278,17 +278,17 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
 
         List<int> IMultiRRepository.ObtenirDiagnosticsPositiusVigentsTipusMostra(string pacientSap, string tipusMostra, string etiqueta)
         {
-            throw new NotImplementedException();
+            return _multiRDbService.ObtenirDiagnosticsPositiusVigentsTipusMostra(pacientSap, tipusMostra, etiqueta);
         }
 
         int IMultiRRepository.ObtenirIdMostraDiagnosticPerDiagnosticIEtiqueta(int diagnosticId, string etiqueta, string tipusMostra)
         {
-            throw new NotImplementedException();
+            return _multiRDbService.ObtenirIdMostraDiagnosticPerDiagnosticIEtiqueta(diagnosticId, etiqueta, tipusMostra);
         }
 
         List<int> IMultiRRepository.ObtenirDiagnosticsPositiusVigentsTipusMostraIEquivalents(string pacientSap, string tipusMostra, string etiqueta)
         {
-            throw new NotImplementedException();
+            return _multiRDbService.ObtenirDiagnosticsPositiusPacientPerTipusMostraIEquivalents(pacientSap, tipusMostra, etiqueta);
         }
 
         #endregion
