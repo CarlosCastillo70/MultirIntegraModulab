@@ -138,6 +138,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         public bool Exitosa { get; set; }
         public string Missatge { get; set; }
         
+        /// <summary>
+        /// Indica si s'ha afegit almenys un positiu nou durant aquest processament
+        /// </summary>
+        public bool PositiuAfegit { get; set; }
+        
         // Comptadors positius
         public bool PacientCreat { get; set; }
         public int DiagnosticsCreats { get; set; }
@@ -166,6 +171,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         public ResultatProcessamentMixte()
         {
             Exitosa = true;
+            PositiuAfegit = false;
         }
     }
 
@@ -244,6 +250,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 resultat.IntegracionsCreades = resultatPositius.IntegracionsCreades;
                 resultat.MostresNegativesCreades = resultatPositius.MostresNegativesCreades;
                 resultat.AuditoriasCreades = resultatPositius.AuditoriasCreades;
+                resultat.PositiuAfegit = resultatPositius.PositiuAfegit;  // Copiar també si s'ha afegit positiu
 
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✔️ Processats {resultatPositius.MecanismesProcessats} resultat(s) positiu(s)");
 

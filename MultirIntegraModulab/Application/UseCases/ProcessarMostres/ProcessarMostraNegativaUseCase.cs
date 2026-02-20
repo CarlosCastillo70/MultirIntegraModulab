@@ -357,7 +357,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 
                 // Mostrar els IDs dels diagnòstics positius trobats, que s'han de neutralitzar
                 string idsDiagnostics = string.Join(", ", diagnosticsPositiusANeutralitzar);
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics positius a neutralitzar: {idsDiagnostics}");
+                // _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics positius a neutralitzar: {idsDiagnostics}");
 
                 
                 // FASE 3: PER CADA DIAGNÒSTIC POSITIU INCORPORAR EL RESULTAT NEGATIU 
@@ -435,11 +435,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                     mostraDiagnosticIdFinal = nouMostraDiagnosticId;
                                     mostraDiagnosticCreada = true;
                                     resultat.MostresDiagnosticCreades++;
-                                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra diagnòstic negativa creada (ID: {mostraDiagnosticIdFinal})");
+                                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra diagnòstic negativa creada per neutralitzar positiu (ID: {mostraDiagnosticIdFinal})");
                                 }
                                 else
                                 {
-                                    _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Error creant la mostra diagnòstic negativa");
+                                    _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Error creant la mostra diagnòstic negativa per neutralitzar positiu");
                                     // Continuar amb el següent diagnòstic
                                     continue;
                                 }

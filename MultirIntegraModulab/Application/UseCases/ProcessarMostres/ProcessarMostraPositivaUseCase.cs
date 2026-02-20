@@ -18,6 +18,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         public bool Exitosa { get; set; }
         public string Missatge { get; set; }
         public bool PacientCreat { get; set; }
+        
+        /// <summary>
+        /// Indica si s'ha afegit almenys un positiu nou durant aquest processament
+        /// </summary>
+        public bool PositiuAfegit { get; set; }
 
         // Comptadors detallats
         public int DiagnosticsCreats { get; set; }
@@ -34,6 +39,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         public ResultatProcessamentPositiu()
         {
             Exitosa = true;
+            PositiuAfegit = false;
         }
     }
 
@@ -319,6 +325,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         {
                             diagnosticIdFinal = nouDiagnosticId;
                             resultat.DiagnosticsCreats++;
+                            
+                            // Marcar que s'ha afegit un positiu NOU
+                            resultat.PositiuAfegit = true;
                         }
                     }
                     else

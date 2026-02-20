@@ -4,8 +4,12 @@ using MultirIntegraModulab.Application.DTOs;
 using MultirIntegraModulab.Application.Interfaces;
 using MultirIntegraModulab.Application.UseCases.ProcessarMostres;
 using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
+using MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes;
+using MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes;
+using MultirIntegraModulab.Application.UseCases.DeterminarTipus;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Interfaces;
+using MultirIntegraModulab.Infrastructure.Configuration;
 
 namespace MultirIntegraModulab.Application.Services
 {
@@ -40,8 +44,9 @@ namespace MultirIntegraModulab.Application.Services
             // Inicialitzar Use Cases
             _validarMostraUseCase = new ValidarMostraUseCase(_logger);
             _classificarMostraUseCase = new ClassificarMostraUseCase(_multiRRepository, _logger);
+            
             _processarMostresUseCase = new ProcessarMostresUseCase(
-                _modulabRepository, 
+                _modulabRepository,
                 _multiRRepository,
                 _pacientWebService,
                 _logger,

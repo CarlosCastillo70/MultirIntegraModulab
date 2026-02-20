@@ -411,6 +411,36 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>True si s'ha actualitzat correctament</returns>
         bool ReactivarDiagnostic(int diagnosticId, string responsable);
 
+        /// <summary>
+        /// Obté els diagnòstics actius (vigents) d'un pacient amb el darrer positiu associat
+        /// </summary>
+        /// <param name="pacientSap">Identificador del pacient (npat)</param>
+        /// <returns>Llista de diagnòstics actius amb informació del darrer positiu</returns>
+        List<DiagnosticActiuPacient> ObtenirDiagnosticsActiusPacient(string pacientSap);
+
+        /// <summary>
+        /// Confecciona la nota del curs clínic amb la llista de diagnòstics actius del pacient
+        /// </summary>
+        /// <param name="pacientSap">Identificador del pacient</param>
+        /// <returns>Nota formattejada amb els diagnòstics actius</returns>
+        string ConfeccionarNotaCursClinic(string pacientSap);
+
+        /// <summary>
+        /// Afegeix una nota al curs clínic del pacient si s'han creat nous diagnòstics positius
+        /// </summary>
+        /// <param name="pacientSap">Identificador del pacient</param>
+        /// <param name="sShanAfegitPositius">Indica si s'han afegit positius en el processament</param>
+        /// <returns>True si s'ha inserit la nota, false en cas contrari</returns>
+        bool AfegirNotaCursClinicSiCal(string pacientSap, bool sShanAfegitPositius);
+
+        /// <summary>
+        /// Insereix una nota al curs clínic d'un pacient
+        /// </summary>
+        /// <param name="npat">Identificador del pacient</param>
+        /// <param name="nota">Contingut de la nota</param>
+        /// <returns>True si s'ha inserit correctament</returns>
+        bool InserirNotaCursClinic(string npat, string nota);
+
         #endregion
     }
 }

@@ -2130,3 +2130,64 @@ Vull saber en tot moment si el diagnostic és vigent o no. En cas que no sigui v
 
 Com ho puc fer ?
 
+
+---
+
+Necessito una funció que, donat un pacient (npat) retorni una llista dels diagnostics actius (vigents) del pacient.
+
+De cada diagnostic, vull recuperar el darrer positiu associat a aquest diagnostic.
+
+Per cada diagnostic, vull recuperar :
+
+- el tipus de mostra i la descripció del tipus de mostra
+- la data de la mostra
+- el microorganisme
+- el mecanisme de resistencia (pot no tenir valor en el cas que el positiu sigui per un microorganisme especial sense mecanisme de resistencia)
+- el camp nota_curs_clinic (tinyint(1)) de la taula mecanismes
+- el camp nota_curs_clinic (tinyint(1)) de la taula microorganismes (pot ser null)
+
+
+---
+
+En el procés de tractament de les mostres, després del tractament d´una mostra, es comprovarà si s´ha afegit algun positiu
+En cas afirmatiu, s´ha de afegir una nova nota al curs clinic del pacient. 
+
+Abans de res, necessito que em facis una funció que, donat un pacient, confeccioni la nota del curs clinic.
+
+Aquesta nota del curs clinic serà una llista dels diagnostics actius del pacient, amb la informació que he detallat a l´apartat anterior.
+
+Un cop confeccionada la nota del curs clinic, s´ha d´afegir aquesta nota a la taula de notes de curs clinic.
+
+
+Per fer-ho, afegir un registre per al pacient a la taula 
+
+CREATE TABLE `notes_curs_clinic` ( 
+
+`id` int(11) NOT NULL AUTO_INCREMENT, 
+
+`npat` varchar(20) DEFAULT NULL, 
+
+`nota` varchar(1000) DEFAULT NULL, 
+
+`dt_create` timestamp NULL DEFAULT current_timestamp(), 
+
+`dt_update` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(), 
+
+`dt_delete` timestamp NULL DEFAULT NULL, 
+
+`enviada` tinyint(1) DEFAULT 1 COMMENT 'Enviada a SAP : 1 = SI 0 = NO', 
+
+PRIMARY KEY (`id`), 
+
+KEY `notes_curs_clinic_npat_IDX` (`npat`) USING BTREE 
+
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Notes de curs clinic'; 
+
+
+El contingut de la nota serà (per ara) el resultat de la crida a la funció per confeccionar la nota del curs clinic. 
+
+Per ara, la funció per confeccionar consistirà en la llista de diagnostics que et retorni la funció que acabes de crear ObtenirDiagnosticsActiusPacient  
+
+
+
+

@@ -275,6 +275,18 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool ReactivarDiagnostic(int diagnosticId, string responsable) =>
             _multiRDbService.ReactivarDiagnostic(diagnosticId, responsable);
 
+        public List<DiagnosticActiuPacient> ObtenirDiagnosticsActiusPacient(string pacientSap) =>
+            _multiRDbService.ObtenirDiagnosticsActiusPacient(pacientSap);
+
+        public string ConfeccionarNotaCursClinic(string pacientSap) =>
+            _multiRDbService.ConfeccionarNotaCursClinic(pacientSap);
+
+        public bool AfegirNotaCursClinicSiCal(string pacientSap, bool sShanAfegitPositius) =>
+            _multiRDbService.AfegirNotaCursClinicSiCal(pacientSap, sShanAfegitPositius);
+
+        public bool InserirNotaCursClinic(string npat, string nota) =>
+            _multiRDbService.InserirNotaCursClinic(npat, nota);
+
 
         List<int> IMultiRRepository.ObtenirDiagnosticsPositiusVigentsTipusMostra(string pacientSap, string tipusMostra, string etiqueta)
         {

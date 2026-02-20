@@ -580,9 +580,9 @@ CÀRREGA DE DADES:
   - Límit resultats: {(LimitResultatsProves == 0 ? "Il·limitat" : LimitResultatsProves.ToString())}
   
   Estats de càrrega:
-    1. Incremental: {(CarregaIncremental_Activa ? "✓ ACTIVA" : "✗ Inactiva")}
-    2. Dies Enrere: {(CarregaDiesEnrere_Activa ? "✓ ACTIVA" : "✗ Inactiva")}
-    3. Rang Dates:  {(CarregaRangDates_Activa ? "✓ ACTIVA" : "✗ Inactiva")}
+    1. Incremental: {(CarregaIncremental_Activa ? "✅ ACTIVA" : "✗ Inactiva")}
+    2. Dies Enrere: {(CarregaDiesEnrere_Activa ? "✅ ACTIVA" : "✗ Inactiva")}
+    3. Rang Dates:  {(CarregaRangDates_Activa ? "✅ ACTIVA" : "✗ Inactiva")}
 
 FILTRATGE DE MOSTRES:
   - Etiquetes a processar: {etiquetesResum}

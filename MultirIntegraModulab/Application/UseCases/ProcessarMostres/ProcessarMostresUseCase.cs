@@ -245,6 +245,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// </summary>
         private async Task ProcessarPerTipusMostraAsync(Mostra mostra, ResultatClassificacio classificacio, ResumProcessamentDto resum)
         {
+            bool sShanAfegitPositius = false;
+
             switch (classificacio.TipusMostra)
             {
                 case TipusMostra.UnSolResultatPositiu:
@@ -252,6 +254,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (resultatPositiu.Exitosa)
                     {
                         resum.MostresPositives++;
+                        // Comprovar si s'ha afegit algun positiu
+                        sShanAfegitPositius = resultatPositiu.PositiuAfegit;
                     }
                     else
                     {
@@ -264,6 +268,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (resultatPositives.Exitosa)
                     {
                         resum.MostresPositives++;
+                        // Comprovar si s'ha afegit algun positiu
+                        sShanAfegitPositius = resultatPositives.PositiuAfegit;
                     }
                     else
                     {
@@ -300,6 +306,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (resultatMixta.Exitosa)
                     {
                         resum.MostresMixtes++;
+                        // Comprovar si s'ha afegit algun positiu (les mixtes també poden tenir positius)
+                        sShanAfegitPositius = resultatMixta.PositiuAfegit;
                     }
                     else
                     {
@@ -311,6 +319,32 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Tipus de mostra desconegut: {classificacio.TipusMostra}");
                     resum.MostresAmbError++;
                     break;
+            }
+
+            // Després del tractament de la mostra, comprovar si s'han afegit positius
+            // i en cas afirmatiu, crear la nota del curs clínic
+            if (sShanAfegitPositius)
+            {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📋 S'han detectat nous positius per al pacient {mostra.PacientSap}");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Procedint a crear nota del curs clínic...");
+
+                try
+                {
+                    bool notaCreada = _multiRRepository.AfegirNotaCursClinicSiCal(mostra.PacientSap, sShanAfegitPositius);
+
+                    if (notaCreada)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Nota del curs clínic creada correctament per al pacient {mostra.PacientSap}");
+                    }
+                    else
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}ℹ️ No s'ha creat nota del curs clínic (pot ser que no hi hagi diagnòstics actius)");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Error creant nota del curs clínic: {ex.Message}", ex);
+                }
             }
         }
 
