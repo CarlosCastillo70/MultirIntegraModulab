@@ -325,9 +325,6 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         {
                             diagnosticIdFinal = nouDiagnosticId;
                             resultat.DiagnosticsCreats++;
-                            
-                            // Marcar que s'ha afegit un positiu NOU
-                            resultat.PositiuAfegit = true;
                         }
                     }
                     else
@@ -350,6 +347,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (mostraDiagnosticId == 0)
                     {
                         // No existeix la mostra diagnòstic positiva. Es crea
+
+                        // Marcar que s'ha afegit un positiu nou per crear després el curs clinic
+                        resultat.PositiuAfegit = true;
 
                         // Construir la combinació microorganisme + mecanisme per a captat
                         string microorganismeMecanismeCaptat = !string.IsNullOrWhiteSpace(mecanismeId)

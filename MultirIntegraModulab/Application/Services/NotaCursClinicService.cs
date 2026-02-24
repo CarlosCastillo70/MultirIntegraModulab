@@ -51,16 +51,28 @@ namespace MultirIntegraModulab.Application.Services
                 // Notes especials
                 List<string> notes = new List<string>();
                 
-                if (diagnostic.MicroorganismeNotaCursClinic.HasValue && 
-                    diagnostic.MicroorganismeNotaCursClinic.Value)
+                if (diagnostic.MicroorganismeNotaCursClinic.HasValue)
                 {
-                    notes.Add("Microorganisme amb nota curs clínic");
+                    if (diagnostic.MicroorganismeNotaCursClinic.Value == 1)
+                    {
+                        notes.Add("Microorganisme amb nota curs clínic (tipus 1: general)");
+                    }
+                    else if (diagnostic.MicroorganismeNotaCursClinic.Value == 2)
+                    {
+                        notes.Add("Microorganisme amb nota curs clínic (tipus 2: àrees crítiques)");
+                    }
                 }
                 
-                if (diagnostic.MecanismeNotaCursClinic.HasValue && 
-                    diagnostic.MecanismeNotaCursClinic.Value)
+                if (diagnostic.MecanismeNotaCursClinic.HasValue)
                 {
-                    notes.Add("Mecanisme amb nota curs clínic");
+                    if (diagnostic.MecanismeNotaCursClinic.Value == 1)
+                    {
+                        notes.Add("Mecanisme amb nota curs clínic (tipus 1: general)");
+                    }
+                    else if (diagnostic.MecanismeNotaCursClinic.Value == 2)
+                    {
+                        notes.Add("Mecanisme amb nota curs clínic (tipus 2: àrees crítiques)");
+                    }
                 }
 
                 if (notes.Any())

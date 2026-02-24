@@ -54,13 +54,15 @@ namespace MultirIntegraModulab.Domain.Entities
 
         /// <summary>
         /// Indica si el mecanisme requereix nota al curs clínic (taula mecanismes.nota_curs_clinic)
+        /// Valors possibles: NULL (sense nota), 1 (nota general), 2 (nota específica àrees crítiques)
         /// </summary>
-        public bool? MecanismeNotaCursClinic { get; set; }
+        public int? MecanismeNotaCursClinic { get; set; }
 
         /// <summary>
         /// Indica si el microorganisme requereix nota al curs clínic (taula microorganismes.nota_curs_clinic)
+        /// Valors possibles: NULL (sense nota), 1 (nota general), 2 (nota específica àrees crítiques)
         /// </summary>
-        public bool? MicroorganismeNotaCursClinic { get; set; }
+        public int? MicroorganismeNotaCursClinic { get; set; }
 
         /// <summary>
         /// Retorna una representació textual del diagnòstic actiu

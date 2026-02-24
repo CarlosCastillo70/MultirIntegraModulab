@@ -323,6 +323,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             // Després del tractament de la mostra, comprovar si s'han afegit positius
             // i en cas afirmatiu, crear la nota del curs clínic
+            
             if (sShanAfegitPositius)
             {
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📋 S'han detectat nous positius per al pacient {mostra.PacientSap}");

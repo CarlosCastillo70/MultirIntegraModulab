@@ -3,6 +3,7 @@ using MultirIntegraModulab.Domain.Entities;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace MultirIntegraModulab
@@ -158,7 +159,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🔎 Obtenint diagnòstics actius del pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🔎 Obtenint diagnòstics actius del pacient {pacientSap} amb data del darrer positiu");
 
                     conn.Open();
 
@@ -217,6 +218,20 @@ namespace MultirIntegraModulab
                         {
                             while (reader.Read())
                             {
+                                // Lectura dels camps nota_curs_clinic
+                                // Amb TINYINT(2), MySQL retorna el valor com a byte (0-255)
+                                int? mecanismeNota = null;
+                                if (reader["mecanisme_nota_curs_clinic"] != DBNull.Value)
+                                {
+                                    mecanismeNota = Convert.ToInt32(reader["mecanisme_nota_curs_clinic"]);
+                                }
+
+                                int? microorganismeNota = null;
+                                if (reader["microorganisme_nota_curs_clinic"] != DBNull.Value)
+                                {
+                                    microorganismeNota = Convert.ToInt32(reader["microorganisme_nota_curs_clinic"]);
+                                }
+
                                 diagnostics.Add(new DiagnosticActiuPacient
                                 {
                                     DiagnosticId = reader.GetInt32("diagnostic_id"),
@@ -228,12 +243,8 @@ namespace MultirIntegraModulab
                                     DataDarrerPositiu = reader["data_darrer_positiu"] as DateTime?,
                                     TipusMostra = reader["tipus_mostra"]?.ToString(),
                                     DescripcioTipusMostra = reader["descripcio_tipus_mostra"]?.ToString(),
-                                    MecanismeNotaCursClinic = reader["mecanisme_nota_curs_clinic"] != DBNull.Value 
-                                        ? Convert.ToBoolean(reader["mecanisme_nota_curs_clinic"]) 
-                                        : (bool?)null,
-                                    MicroorganismeNotaCursClinic = reader["microorganisme_nota_curs_clinic"] != DBNull.Value 
-                                        ? Convert.ToBoolean(reader["microorganisme_nota_curs_clinic"]) 
-                                        : (bool?)null
+                                    MecanismeNotaCursClinic = mecanismeNota,
+                                    MicroorganismeNotaCursClinic = microorganismeNota
                                 });
                             }
                         }
@@ -247,11 +258,11 @@ namespace MultirIntegraModulab
                         foreach (var diag in diagnostics)
                         {
                             string infoMecanisme = !string.IsNullOrWhiteSpace(diag.Mecanisme) 
-                                ? $" + {diag.Mecanisme}" 
+                                ? $"{diag.Mecanisme} - {diag.TipusMecanisme}" 
                                 : "";
 
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}  • Diagnòstic {diag.DiagnosticId}: {diag.Microorganisme}{infoMecanisme} " +
-                                       $"(Darrer positiu: {diag.DataDarrerPositiu:dd/MM/yyyy}, Tipus: {diag.TipusMostra})");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}  - Id: {diag.DiagnosticId}. Tipus mostra: {diag.TipusMostra}. Data mostra darrer positiu: {diag.DataDarrerPositiu:dd/MM/yyyy}. Microorganisme: {diag.Microorganisme}. Mecanisme: {infoMecanisme}");
+
                         }
                     }
                 }
@@ -290,12 +301,63 @@ namespace MultirIntegraModulab
                     return string.Empty;
                 }
 
+                // Filtrar diagnòstics que tenen nota especificada
+                // Un diagnòstic requereix nota si:
+                // - Té mecanisme de resistència i mecanisme.nota_curs_clinic té valor (1 o 2)
+                // - NO té mecanisme de resistència (microorganisme especial) i microorganisme.nota_curs_clinic té valor (1 o 2)
+                var diagnosticsAmbNota = diagnostics.Where(d =>
+                {
+                    // Si té mecanisme, comprovar si el mecanisme té nota
+                    if (!string.IsNullOrWhiteSpace(d.Mecanisme))
+                    {
+                        return d.MecanismeNotaCursClinic.HasValue;
+                    }
+                    // Si no té mecanisme (microorganisme especial), comprovar si el microorganisme té nota
+                    else
+                    {
+                        return d.MicroorganismeNotaCursClinic.HasValue;
+                    }
+                }).ToList();
+
+                if (diagnosticsAmbNota.Count == 0)
+                {
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}ℹ️ El pacient no té diagnòstics amb nota especificada");
+                    return string.Empty;
+                }
+
+                // Determinar el tipus de nota més restrictiu
+                // Si hi ha algun diagnòstic amb nota tipus 1 → text general (més restrictiu)
+                // Si TOTS són tipus 2 → text específic (àrees crítiques)
+                // NOTA: El camp nota_curs_clinic pot ser NULL, 1 o 2
+                
+                bool hiHaTipus1 = diagnosticsAmbNota.Any(d =>
+                {
+                    // Comprovar si el mecanisme té nota de tipus 1
+                    if (!string.IsNullOrWhiteSpace(d.Mecanisme) && d.MecanismeNotaCursClinic.HasValue)
+                    {
+                        return d.MecanismeNotaCursClinic.Value == 1; // Tipus 1 = nota general
+                    }
+                    // Comprovar si el microorganisme té nota de tipus 1
+                    if (d.MicroorganismeNotaCursClinic.HasValue)
+                    {
+                        return d.MicroorganismeNotaCursClinic.Value == 1; // Tipus 1 = nota general
+                    }
+                    return false;
+                });
+
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Numero de diagnòstics amb tipus de nota: {diagnosticsAmbNota.Count}. Hi ha diagnòstics amb tipus 1 (més general): {hiHaTipus1}");
+
                 // Confeccionar la nota
+
+                // Capçalera de la nota
                 var nota = new StringBuilder();
-                nota.AppendLine("DIAGNÒSTICS ACTIUS:");
+                nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ ");
+                nota.AppendLine();
+                nota.AppendLine("El Servei de Medicina Preventiva i Salut Pública de l'Hospital Universitari de Girona Dr. Josep Trueta informa que el/s cultiu/s de:");
                 nota.AppendLine();
 
-                foreach (var diagnostic in diagnostics)
+                // Detall de cada diagnòstic amb nota
+                foreach (var diagnostic in diagnosticsAmbNota)
                 {
                     // Tipus de mostra
                     string tipusMostra = !string.IsNullOrWhiteSpace(diagnostic.DescripcioTipusMostra)
@@ -306,8 +368,8 @@ namespace MultirIntegraModulab
                     string microorganisme = diagnostic.Microorganisme ?? "N/D";
 
                     // Mecanisme de resistència (opcional)
-                    string mecanisme = !string.IsNullOrWhiteSpace(diagnostic.Mecanisme)
-                        ? $" + {diagnostic.Mecanisme}"
+                    string infoMecanisme = !string.IsNullOrWhiteSpace(diagnostic.Mecanisme)
+                        ? $"{diagnostic.Mecanisme} - {diagnostic.TipusMecanisme}"
                         : "";
 
                     // Data del darrer positiu
@@ -316,25 +378,40 @@ namespace MultirIntegraModulab
                         : "N/D";
 
                     // Afegir línia del diagnòstic
-                    nota.AppendLine($"- {microorganisme}{mecanisme}");
-                    nota.AppendLine($"  Tipus mostra: {tipusMostra}");
-                    nota.AppendLine($"  Darrer positiu: {dataPositiu}");
-                    
-                    // Afegir notes si cal
-                    bool teNotaClinica = (diagnostic.MecanismeNotaCursClinic.HasValue && diagnostic.MecanismeNotaCursClinic.Value) ||
-                                        (diagnostic.MicroorganismeNotaCursClinic.HasValue && diagnostic.MicroorganismeNotaCursClinic.Value);
-
-                    if (teNotaClinica)
-                    {
-                        nota.AppendLine($"  ⚠️ Requereix seguiment clínic");
-                    }
-
+                    nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} és positiu per {microorganisme} {infoMecanisme} ");
                     nota.AppendLine();
                 }
 
+                nota.AppendLine();
+
+                // Recomanació (depenent del tipus de nota més restrictiu)
+                if (hiHaTipus1)
+                {
+                    // Tipus 1: Recomanacions generals (més restrictiu)
+                    nota.AppendLine("Recomanem que s'han de seguir les següents precaucions per a reduir el risc de transmissió per contacte:");
+                }
+                else
+                {
+                    // Tipus 2: Recomanacions específiques per àrees crítiques
+                    nota.AppendLine("Recomanem que s'han de seguir les següents precaucions per a reduir el risc de transmissió per contacte únicament durant l'ingrés en àrea de crítics (UCI/UCO/UCIP, Quiròfan/Intervencionisme, REA/URPA, UCRI, SCP, Unitat d'Ictus, Neonatologia (CIN/CSIN) i Oncohematologia):");
+                }
+
+                // Altres recomanacions generals que s'afegeixen sempre
+                nota.AppendLine();
+                nota.AppendLine("• Realització de la higiene de mans dels professionals amb productes de base alcohòlica ABANS i DESPRÉS de qualsevol contacte amb l’usuari.");
+                nota.AppendLine();
+                nota.AppendLine("• Utilització de guants si es preveu contacte amb l’usuari. Cal realitzar la higiene de mans ABANS i DESPRÉS del seu ús.");
+                nota.AppendLine();
+                nota.AppendLine("• Utilització de bata d’un sol ús si es preveu la realització de cures o de contacte pròxim amb l’usuari.  ");
+                nota.AppendLine();
+                nota.AppendLine("• Desinfecció de les superfícies o equipaments que han estat en contacte amb l’usuari amb productes tipus Surfasafe®.");
+                nota.AppendLine();
+                nota.AppendLine();
+                nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensió 2394 o al cercapersones 4383. ");
+
                 string notaFinal = nota.ToString().TrimEnd();
 
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✅ Nota confeccionada: {diagnostics.Count} diagnòstic(s)");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✅ Nota confeccionada: {diagnosticsAmbNota.Count} diagnòstic(s) amb nota especificada");
 
                 return notaFinal;
             }
@@ -367,8 +444,6 @@ namespace MultirIntegraModulab
 
             try
             {
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}📋 S'han afegit positius. Procedint a afegir nota al curs clínic...");
-
                 // Confeccionar la nota
                 string nota = ConfeccionarNotaCursClinic(pacientSap);
 
@@ -427,7 +502,7 @@ namespace MultirIntegraModulab
                         INSERT INTO notes_curs_clinic 
                             (npat, nota, dt_create, dt_update, enviada) 
                         VALUES 
-                            (@npat, @nota, NOW(), NOW(), 1)";
+                            (@npat, @nota, NOW(), NOW(), 0)";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
