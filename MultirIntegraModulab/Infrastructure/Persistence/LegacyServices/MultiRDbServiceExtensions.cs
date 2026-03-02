@@ -1382,11 +1382,23 @@ namespace MultirIntegraModulab
 
                     conn.Open();
 
-                    // Determinar si la mostra és positiva: té mecanisme o el microorganisme és especial
-                    bool esMostraPositiva = !string.IsNullOrWhiteSpace(mecanismeId) ||
-                                           (esMicroorganismeEspecial.HasValue && esMicroorganismeEspecial.Value);
+                    // Determinar si el microorganisme és un Virus Respiratori
+                    bool esVirusRespiratori = false;
+                    if (!string.IsNullOrWhiteSpace(microorganismeMecanismeCaptat))
+                    {
+                        var tipusMicroorganisme = ObtenirTipusMicroorganisme(microorganismeMecanismeCaptat);
+                        esVirusRespiratori = (tipusMicroorganisme == TipusMicroorganisme.VirusRespiratori);
+                    }
 
-                    // Determinar valoració segons si la mostra és positiva o negativa
+                    // Determinar si la mostra és positiva:
+                    // - Té mecanisme de resistència, o
+                    // - El microorganisme és especial, o
+                    // - És un Virus Respiratori (sempre positiu)
+                    bool esMostraPositiva = !string.IsNullOrWhiteSpace(mecanismeId) ||
+                                           (esMicroorganismeEspecial.HasValue && esMicroorganismeEspecial.Value) ||
+                                           esVirusRespiratori;
+
+                    // Determinar valoració segons si la mostra és positiva (2) o negativa (1)
                     string valoracio = esMostraPositiva ? "2" : "1";
 
                     // Determinar estat d'integració segons si està validada o no
@@ -1609,14 +1621,14 @@ namespace MultirIntegraModulab
             {
                 resultat.HiHaCanvis = true;
 
-                // Identificar combinacions noves (que estan a l'entrant però no a l'existent)
+                // Identificar combinacions noves (queestan a l'entrant però no a l'existent)
                 var combinacionsNoves = conjuntEntrant.Except(conjuntExistent).ToList();
                 if (combinacionsNoves.Any())
                 {
                     resultat.CanvisDetectats.Add($"Combinacions noves: [{string.Join(", ", combinacionsNoves)}]");
                 }
 
-                // Identificar combinacions eliminades (que estan a l'existent però no a l'entrant)
+                // Identificar combinacions eliminades (queestan a l'existent però no a l'entrant)
                 var combinacionsEliminades = conjuntExistent.Except(conjuntEntrant).ToList();
                 if (combinacionsEliminades.Any())
                 {
@@ -2168,7 +2180,6 @@ namespace MultirIntegraModulab
             return diagnostics;
         }
 
-
         /// <summary>
         /// Obté els IDs dels diagnòstics positius VIGENTS d'un pacient per un tipus de mostra específic,
         /// excloent opcionalment una etiqueta concreta.
@@ -2196,8 +2207,6 @@ namespace MultirIntegraModulab
 
                     conn.Open();
 
-                    // Query per obtenir diagnòstics positius VIGENTS per tipus de mostra específic
-                    // (sense incloure equivalents)
                     string sql = @"
                         SELECT DISTINCT pd.id
                         FROM pacients_diagnostics pd
@@ -2215,7 +2224,6 @@ namespace MultirIntegraModulab
                             AND pd.dt_delete IS NULL
                             AND pd.vigent = 'S'";
 
-                    // Afegir condició per excloure etiqueta si s'ha proporcionat
                     if (!string.IsNullOrWhiteSpace(etiqueta))
                     {
                         sql += @"
@@ -2246,15 +2254,12 @@ namespace MultirIntegraModulab
 
                     Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positius VIGENT(s) per pacient {pacientSap} i tipus mostra '{tipusMostra}' {infoEtiqueta}");
 
-                    // Mostrar els IDs trobats al log
                     if (diagnostics.Any())
                     {
                         string idsText = string.Join(", ", diagnostics);
                         Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics positius vigents trobats: [{idsText}]");
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -2263,7 +2268,6 @@ namespace MultirIntegraModulab
 
             return diagnostics;
         }
-
 
         /// <summary>
         /// Obté els IDs dels diagnòstics positius d'un pacient per un tipus de mostra específic i els seus equivalents,
@@ -2313,18 +2317,7 @@ namespace MultirIntegraModulab
                             INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi
                         WHERE pd.npat = @pacientSap 
                             AND pdm.valoracio = '2'
-                            AND ( 
-                                UPPER(tm.descripcio) = UPPER(@tipusMostra) 
-                                OR tm.id IN ( 
-                                    SELECT tipusmostra_id_equivalent 
-                                    FROM tipusmostra_equivalents 
-                                    WHERE tipusmostra_id = ( 
-                                        SELECT id  
-                                        FROM tipusmostra_m tmm  
-                                        WHERE UPPER(tmm.descripcio) = UPPER(@tipusMostra) 
-                                    ) 
-                                ) 
-                            ) 
+                            AND pdm.tipus_mostra_m = @tipusMostra
                             AND pdm.dt_delete IS NULL
                             AND pd.dt_delete IS NULL
                             AND pd.vigent = 'S'";
@@ -2401,7 +2394,6 @@ namespace MultirIntegraModulab
 
             return diagnostics;
         }
-
 
         /// <summary>
         /// Esborra les dades d'una mostra (soft delete)
@@ -2555,6 +2547,7 @@ namespace MultirIntegraModulab
                 return false;
             }
         }
+
 
         #endregion
     }

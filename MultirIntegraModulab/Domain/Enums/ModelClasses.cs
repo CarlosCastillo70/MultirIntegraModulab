@@ -5,7 +5,7 @@ using MultirIntegraModulab.Domain.Entities;
 namespace MultirIntegraModulab.Domain.Enums
 {
     /// <summary>
-    /// Estat d'un mecanisme de resistËncia
+    /// Estat d'un mecanisme de resist√®ncia
     /// </summary>
     public class EstatMecanisme
     {
@@ -30,7 +30,7 @@ namespace MultirIntegraModulab.Domain.Enums
     }
 
     /// <summary>
-    /// Tipus d'estat d'un resultat segons la comparaciÛ Oracle vs MySQL
+    /// Tipus d'estat d'un resultat segons la comparaci√≥ Oracle vs MySQL
     /// </summary>
     public enum TipusEstatResultat
     {
@@ -44,7 +44,7 @@ namespace MultirIntegraModulab.Domain.Enums
     }
 
     /// <summary>
-    /// InformaciÛ sobre un mecanisme de resistËncia
+    /// Informaci√≥ sobre un mecanisme de resist√®ncia
     /// </summary>
     public class MecanismeResistenciaInfo
     {
@@ -53,7 +53,7 @@ namespace MultirIntegraModulab.Domain.Enums
     }
 
     /// <summary>
-    /// CombinaciÛ ˙nica de microorganisme i mecanisme de resistËncia
+    /// Combinaci√≥ √∫nica de microorganisme i mecanisme de resist√®ncia
     /// </summary>
     public class CombinacioMicroorganismeMecanisme
     {
@@ -117,7 +117,7 @@ namespace MultirIntegraModulab.Domain.Enums
         public DateTime DataCreacio { get; set; }
 
         /// <summary>
-        /// ObtÈ les combinacions anteriors deserialitzades
+        /// Obt√© les combinacions anteriors deserialitzades
         /// </summary>
         public HashSet<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsAnteriors()
         {
@@ -125,7 +125,7 @@ namespace MultirIntegraModulab.Domain.Enums
         }
 
         /// <summary>
-        /// ObtÈ les combinacions noves deserialitzades
+        /// Obt√© les combinacions noves deserialitzades
         /// </summary>
         public HashSet<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsNoves()
         {
@@ -173,7 +173,7 @@ namespace MultirIntegraModulab.Domain.Enums
     }
 
     /// <summary>
-    /// EstadÌstiques de l'historial de mostres
+    /// Estad√≠stiques de l'historial de mostres
     /// </summary>
     public class EstadistiquesHistorial
     {
@@ -189,7 +189,7 @@ namespace MultirIntegraModulab.Domain.Enums
     }
 
     /// <summary>
-    /// InformaciÛ detallada sobre els registres d'una etiqueta
+    /// Informaci√≥ detallada sobre els registres d'una etiqueta
     /// </summary>
     public class InformacioRegistresEtiqueta
     {
@@ -242,7 +242,7 @@ namespace MultirIntegraModulab.Domain.Enums
     }
 
     /// <summary>
-    /// Resultat d'una acciÛ de processament
+    /// Resultat d'una acci√≥ de processament
     /// </summary>
     public class ResultatAccio
     {
@@ -253,7 +253,7 @@ namespace MultirIntegraModulab.Domain.Enums
     }
 
     /// <summary>
-    /// Tipus d'incorporaciÛ d'una mostra
+    /// Tipus d'incorporaci√≥ d'una mostra
     /// </summary>
     public enum TipusIncorporacio
     {
@@ -263,6 +263,34 @@ namespace MultirIntegraModulab.Domain.Enums
         Desvalidada,
         Validada,
         Revalidada
+    }
+
+    /// <summary>
+    /// Tipus de microorganisme segons la seva naturalesa
+    /// </summary>
+    public enum TipusMicroorganisme
+    {
+        /// <summary>
+        /// Microorganisme multiresistent (MMR)
+        /// Camp tipus = 'M' a la taula microorganismes
+        /// Pot tenir mecanismes de resist√®ncia (1-5)
+        /// </summary>
+        Multiresistent = 0,
+        
+        /// <summary>
+        /// Virus respiratori (VR)
+        /// Camp tipus = 'R' a la taula microorganismes
+        /// No t√© mecanismes de resist√®ncia
+        /// Sempre s'incorpora
+        /// </summary>
+        VirusRespiratori = 1,
+        
+        /// <summary>
+        /// Mostra mixta (MMR + VR)
+        /// Cont√© tant microorganismes multiresistents com virus respiratoris
+        /// Es processa en dues parts: primer MMR, despr√©s VR
+        /// </summary>
+        Mixt = 2
     }
 
     /// <summary>
@@ -278,7 +306,7 @@ namespace MultirIntegraModulab.Domain.Enums
     }
 
     /// <summary>
-    /// ClassificaciÛ d'una mostra amb els seus resultats positius i negatius
+    /// Classificaci√≥ d'una mostra amb els seus resultats positius i negatius
     /// </summary>
     public class ClassificacioMostra
     {

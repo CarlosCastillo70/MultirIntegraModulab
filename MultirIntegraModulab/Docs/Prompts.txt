@@ -2189,5 +2189,31 @@ El contingut de la nota serà (per ara) el resultat de la crida a la funció per
 Per ara, la funció per confeccionar consistirà en la llista de diagnostics que et retorni la funció que acabes de crear ObtenirDiagnosticsActiusPacient  
 
 
+-----
 
+Comencem la gestió de virus respiratoris.
+
+Fins ara sol estabem gestionant microorganismes multiresistens. Ara també volem gestionar els virus respiratoris.
+
+
+Per diferenciar si un microorganisme és multiresistent o bé virus respiratori (un microorganisme no pot ser les dues coses alhora), he afegit
+un camp nou a la taula de microorganismes, que es diu tipus (varchar(1)), i que té valor 'M' si és multiresistent i 'R' si és un virus respiratori.
+
+El procés de tractament de les mostres serà molt semblant. 
+
+Les mostres amb multiresistents i les mostres amb virus respiratoris es gestionaran de la mateixa manera, però s´haurà de tenir en compte que els microorganismes que es busquen per a cada tipus de mostra seran diferents.
+
+Les mostres amb virus respiratoris només tenen microorganisme. No tenen mecanismes de resistencia associats.
+
+Les mostres amb virus respiratoris s´han d´incorporar sempre.
+
+La comprovació del tipus de microorganisme, per veure si es multiresistent o bé virus respiratori s´ha de fer després de la comprovació de combinació a no incorporar. 
+
+No vull que facis res encara, però diguem com ho pots plantejar.
+
+
+hauria de ser el mateix per a un positiu de multiresistent que per a un positiu de virus respiratori.
+
+
+Els microorganismes que causen virus respiratoris estan identificats a la taula microorganismes amb el camp virus_respiratori = 1
 

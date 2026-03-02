@@ -112,6 +112,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool ComprovarICrearMicroorganisme(string microorganismeDescripcio) => 
             _multiRDbService.ComprovarICrearMicroorganisme(microorganismeDescripcio);
 
+        public TipusMicroorganisme ObtenirTipusMicroorganisme(string microorganismeDescripcio) =>
+            _multiRDbService.ObtenirTipusMicroorganisme(microorganismeDescripcio);
+
         // Mecanismes de resistència
         public EstatMecanisme ComprovarExistenciaMecanisme(string mecanismeCodi) => 
             _multiRDbService.ComprovarExistenciaMecanisme(mecanismeCodi);
@@ -284,8 +287,14 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool AfegirNotaCursClinicSiCal(string pacientSap, bool sShanAfegitPositius) =>
             _multiRDbService.AfegirNotaCursClinicSiCal(pacientSap, sShanAfegitPositius);
 
-        public bool InserirNotaCursClinic(string npat, string nota) =>
-            _multiRDbService.InserirNotaCursClinic(npat, nota);
+        public bool InserirNotaCursClinic(string npat, string nota, string tipus = "M") =>
+            _multiRDbService.InserirNotaCursClinic(npat, nota, tipus);
+
+        public string ConfeccionarNotaCursClinicVirusRespiratori(string pacientSap) =>
+            _multiRDbService.ConfeccionarNotaCursClinicVirusRespiratori(pacientSap);
+
+        public bool AfegirNotaCursClinicVirusRespiratoriSiCal(string pacientSap, bool sShanAfegitPositius) =>
+            _multiRDbService.AfegirNotaCursClinicVirusRespiratoriSiCal(pacientSap, sShanAfegitPositius);
 
 
         List<int> IMultiRRepository.ObtenirDiagnosticsPositiusVigentsTipusMostra(string pacientSap, string tipusMostra, string etiqueta)

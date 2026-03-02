@@ -216,6 +216,18 @@ namespace MultirIntegraModulab.Domain.Interfaces
         string ObtenirEstadistiquesCache();
         bool ComprovarICrearMicroorganisme(string microorganismeDescripcio);
 
+        /// <summary>
+        /// Obté el tipus de microorganisme (Multiresistent o Virus Respiratori)
+        /// basant-se en el camp 'tipus' de la taula microorganismes
+        /// </summary>
+        /// <param name="microorganismeDescripcio">Descripció del microorganisme</param>
+        /// <returns>
+        /// TipusMicroorganisme.Multiresistent si tipus = 'M'
+        /// TipusMicroorganisme.VirusRespiratori si tipus = 'R'
+        /// TipusMicroorganisme.Multiresistent per defecte si no existeix o tipus és null
+        /// </returns>
+        TipusMicroorganisme ObtenirTipusMicroorganisme(string microorganismeDescripcio);
+
         // Mecanismes de resistència
         EstatMecanisme ComprovarExistenciaMecanisme(string mecanismeCodi);
         bool CrearMecanisme(string mecanismeCodi, string mecanismeDescripcio);
@@ -438,8 +450,24 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// </summary>
         /// <param name="npat">Identificador del pacient</param>
         /// <param name="nota">Contingut de la nota</param>
+        /// <param name="tipus">Tipus de nota: 'M' = Multiresistent, 'R' = Respiratori (per defecte 'M')</param>
         /// <returns>True si s'ha inserit correctament</returns>
-        bool InserirNotaCursClinic(string npat, string nota);
+        bool InserirNotaCursClinic(string npat, string nota, string tipus = "M");
+
+        /// <summary>
+        /// Confecciona la nota del curs clínic per Virus Respiratoris amb la llista de diagnòstics actius del pacient
+        /// </summary>
+        /// <param name="pacientSap">Identificador del pacient</param>
+        /// <returns>Nota formattejada amb els diagnòstics actius de Virus Respiratoris</returns>
+        string ConfeccionarNotaCursClinicVirusRespiratori(string pacientSap);
+
+        /// <summary>
+        /// Afegeix una nota al curs clínic del pacient per Virus Respiratoris si s'han creat nous diagnòstics positius
+        /// </summary>
+        /// <param name="pacientSap">Identificador del pacient</param>
+        /// <param name="sShanAfegitPositius">Indica si s'han afegit positius VR en el processament</param>
+        /// <returns>True si s'ha inserit la nota, false en cas contrari</returns>
+        bool AfegirNotaCursClinicVirusRespiratoriSiCal(string pacientSap, bool sShanAfegitPositius);
 
         #endregion
     }

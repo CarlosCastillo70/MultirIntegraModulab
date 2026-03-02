@@ -12,6 +12,7 @@ using MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes;
 using MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes;
 using TipusIncorporacio = MultirIntegraModulab.Domain.Enums.TipusIncorporacio;
 using TipusMostra = MultirIntegraModulab.Domain.Enums.TipusMostra;
+using TipusMicroorganisme = MultirIntegraModulab.Domain.Enums.TipusMicroorganisme;
 
 namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 {
@@ -40,6 +41,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         private readonly ProcessarMostresPositivesUseCase _processarPositivesUseCase;
         private readonly ProcessarMostresNegativesUseCase _processarNegativesUseCase;
         private readonly ProcessarMostraMixtaUseCase _processarMixtaUseCase;
+        private readonly ProcessarMostraVirusRespiratoriUseCase _processarVirusRespiratoriUseCase;
+        private readonly ProcessarMostraMixtaMMRVRUseCase _processarMixtaMMRVRUseCase;
 
         public ProcessarMostresUseCase(
             IModulabRepository modulabRepository,
@@ -68,6 +71,18 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             _processarPositivesUseCase = new ProcessarMostresPositivesUseCase(_multiRRepository, _pacientWebService, _logger);
             _processarNegativesUseCase = new ProcessarMostresNegativesUseCase(_multiRRepository, _logger);
             _processarMixtaUseCase = new ProcessarMostraMixtaUseCase(_multiRRepository, _pacientWebService, _logger);
+            _processarVirusRespiratoriUseCase = new ProcessarMostraVirusRespiratoriUseCase(_multiRRepository, _pacientWebService, _logger);
+            _processarMixtaMMRVRUseCase = new ProcessarMostraMixtaMMRVRUseCase(
+                _multiRRepository, 
+                _pacientWebService, 
+                _logger, 
+                _classificarMostraUseCase, 
+                _processarPositivaUseCase, 
+                _processarNegativaUseCase, 
+                _processarPositivesUseCase, 
+                _processarNegativesUseCase, 
+                _processarMixtaUseCase, 
+                _processarVirusRespiratoriUseCase);
         }
 
         /// <summary>
@@ -177,20 +192,88 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         continue;
                     }
 
-                    
-                    // FASE 6: Classificar mostra (un sol positiu, múltiples negatius, mixta, ...)
-                    var classificacio = _classificarMostraUseCase.Executar(mostra);
-                    
-                    // Si s'han eliminat mecanismes NO INCORPORAR, reclassificar la mostra
-                    if (resultatMecanismes.CalReclassificar)
+                    // FASE 6: DETERMINAR TIPUS DE MICROORGANISME (MR vs VR vs MIXT)
+                    var tipusMicroorganisme = DeterminarTipusMicroorganismeMostra(mostra);
+
+                    if (tipusMicroorganisme == TipusMicroorganisme.VirusRespiratori)
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🔄 Reclassificant mostra després d'eliminar mecanismes NO INCORPORAR...");
-                        classificacio = _classificarMostraUseCase.Executar(mostra);
+                        // ═══════════════════════════════════════════════════════════
+                        // FLUX 100% VIRUS RESPIRATORI
+                        // ═══════════════════════════════════════════════════════════
+                        
+                        _logger.Info($"🦠 FLUX VIRUS RESPIRATORI activat");
+                        
+                        var resultatVR = await _processarVirusRespiratoriUseCase.ExecutarAsync(mostra);
+                        
+                        if (resultatVR.Exitosa)
+                        {
+                            resum.MostresPositives++;
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Mostra VR processada correctament");
+                        }
+                        else
+                        {
+                            resum.MostresAmbError++;
+                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Error processant mostra VR");
+                        }
                     }
+                    else if (tipusMicroorganisme == TipusMicroorganisme.Mixt)
+                    {
+                        // ═══════════════════════════════════════════════════════════
+                        // FLUX MIXT (MMR + VR)
+                        // ═══════════════════════════════════════════════════════════
+                        
+                        _logger.Info($"🔀 FLUX MIXT (MMR + VR) activat");
+                        
+                        var resultatMixt = await _processarMixtaMMRVRUseCase.ExecutarAsync(mostra);
+                        
+                        if (resultatMixt.Exitosa)
+                        {
+                            resum.MostresMixtes++;
+                            resum.MostresPositives++;
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Mostra mixta (MMR+VR) processada correctament");
+                        }
+                        else
+                        {
+                            resum.MostresAmbError++;
+                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Error processant mostra mixta (MMR+VR)");
+                        }
+                    }
+                    else
+                    {
+                        // ═══════════════════════════════════════════════════════════
+                        // FLUX 100% MULTIRESISTENT (EXISTENT - NO MODIFICAT)
+                        // ═══════════════════════════════════════════════════════════
+                        
+                        _logger.Info($"🧬 FLUX MULTIRESISTENT activat");
+                    
+                        // FASE 7: Classificar mostra (un sol positiu, múltiples negatius, mixta, ...)
+                        _logger.Info($"📋 Classificant mostra...");
+                        var classificacio = _classificarMostraUseCase.Executar(mostra);
+                        
+                        if (classificacio == null)
+                        {
+                            _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ Error: ClassificarMostraUseCase ha retornat null");
+                            resum.MostresAmbError++;
+                            continue;
+                        }
+                        
+                        // Si s'han eliminat mecanismes NO INCORPORAR, reclassificar la mostra
+                        if (resultatMecanismes.CalReclassificar)
+                        {
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🔄 Reclassificant mostra després d'eliminar mecanismes NO INCORPORAR...");
+                            classificacio = _classificarMostraUseCase.Executar(mostra);
+                            
+                            if (classificacio == null)
+                            {
+                                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ Error: Reclassificació ha retornat null");
+                                resum.MostresAmbError++;
+                                continue;
+                            }
+                        }
 
-
-                    // FASE 7: Processar segons el tipus de mostra
-                    await ProcessarPerTipusMostraAsync(mostra, classificacio, resum);
+                        // FASE 8: Processar segons el tipus de mostra
+                        await ProcessarPerTipusMostraAsync(mostra, classificacio, resum);
+                    }
 
 
                     _logger.Info($"✅ Mostra {mostra.EtiquetaId} processada correctament");
@@ -245,6 +328,14 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// </summary>
         private async Task ProcessarPerTipusMostraAsync(Mostra mostra, ResultatClassificacio classificacio, ResumProcessamentDto resum)
         {
+            // Validar que la classificació no sigui null
+            if (classificacio == null)
+            {
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Error: Classificació de mostra és null");
+                resum.MostresAmbError++;
+                return;
+            }
+
             bool sShanAfegitPositius = false;
 
             switch (classificacio.TipusMostra)
@@ -448,26 +539,26 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Dates actualitzades correctament");
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   - Data resultat: {dataResultat:dd/MM/yyyy HH:mm}");
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   - Data validació: {(dataValidacio.HasValue ? dataValidacio.Value.ToString("dd/MM/yyyy HH:mm") : "NULL")}");
+
+                    // Inserir auditoria amb codi EMCA (Estat Mostra Cas Antic)
+                    bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                        mostra,
+                        "EMCA",
+                        primerResultat,
+                        null);
+
+                    if (auditoriaCreada)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Auditoria EMCA (Estat Mostra Cas Antic) creada correctament");
+                    }
+                    else
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut crear l'auditoria EMCA");
+                    }
                 }
                 else
                 {
                     _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'han pogut actualitzar les dates");
-                }
-
-                // Inserir auditoria amb codi EMCA (Estat Mostra Cas Antic)
-                bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
-                    mostra,
-                    "EMCA",
-                    primerResultat,
-                    null);
-
-                if (auditoriaCreada)
-                {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Auditoria EMCA (Estat Mostra Cas Antic) creada correctament");
-                }
-                else
-                {
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut crear l'auditoria EMCA");
                 }
             }
             catch (Exception ex)
@@ -723,27 +814,27 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (actualitzat)
                     {
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Data validació actualitzada a {(novaDataValidacio.HasValue ? novaDataValidacio.Value.ToString("dd/MM/yyyy HH:mm") : "NULL")} i estat_integracio_m a 'V'");
+
+                        // Inserir auditoria EMCV (Estat Mostra Cas Validat sense canvis)
+                        var primerResultat = mostra.Resultats[0];
+                        bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                            mostra,
+                            "EMCV",
+                            primerResultat,
+                            null);
+
+                        if (auditoriaCreada)
+                        {
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✅ Auditoria EMCV (Estat Mostra Cas Validat sense canvis) creada correctament");
+                        }
+                        else
+                        {
+                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut crear l'auditoria EMCV");
+                        }
                     }
                     else
                     {
                         _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut actualitzar la data de validació");
-                    }
-
-                    // Inserir auditoria EMCV (Estat Mostra Cas Validat sense canvis)
-                    var primerResultat = mostra.Resultats[0];
-                    bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
-                        mostra,
-                        "EMCV",
-                        primerResultat,
-                        null);
-
-                    if (auditoriaCreada)
-                    {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✅ Auditoria EMCV (Estat Mostra Cas Validat sense canvis) creada correctament");
-                    }
-                    else
-                    {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut crear l'auditoria EMCV");
                     }
 
                     return false; // No continuar processament
@@ -850,27 +941,27 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (actualitzat)
                     {
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Data validació actualitzada a {(novaDataValidacio.HasValue ? novaDataValidacio.Value.ToString("dd/MM/yyyy HH:mm") : "NULL")} i estat_integracio_m a 'V'");
+
+                        // Inserir auditoria EMCRV (Estat Mostra Cas Revalidat sense canvis)
+                        var primerResultat = mostra.Resultats[0];
+                        bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
+                            mostra,
+                            "EMCRV",
+                            primerResultat,
+                            null);
+
+                        if (auditoriaCreada)
+                        {
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✅ Auditoria EMCRV (Estat Mostra Cas Revalidat sense canvis) creada correctament");
+                        }
+                        else
+                        {
+                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut crear l'auditoria EMCRV");
+                        }
                     }
                     else
                     {
                         _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut actualitzar la data de validació");
-                    }
-
-                    // Inserir auditoria EMCRV (Estat Mostra Cas Revalidat sense canvis)
-                    var primerResultat = mostra.Resultats[0];
-                    bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(
-                        mostra,
-                        "EMCRV",
-                        primerResultat,
-                        null);
-
-                    if (auditoriaCreada)
-                    {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✅ Auditoria EMCRV (Estat Mostra Cas Revalidat sense canvis) creada correctament");
-                    }
-                    else
-                    {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut crear l'auditoria EMCRV");
                     }
 
                     return false; // No continuar processament
@@ -936,6 +1027,65 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             {
                 _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error tractant mostra revalidada: {ex.Message}", ex);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Determina el tipus de microorganisme d'una mostra
+        /// Analitza tots els resultats i retorna:
+        /// - VirusRespiratori: si TOTS són VR
+        /// - Multiresistent: si TOTS són MMR
+        /// - Mixt: si hi ha barreja de MMR i VR
+        /// </summary>
+        private TipusMicroorganisme DeterminarTipusMicroorganismeMostra(Mostra mostra)
+        {
+            if (mostra == null || mostra.Resultats == null || !mostra.Resultats.Any())
+            {
+                _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Mostra sense resultats - assumint Multiresistent");
+                return TipusMicroorganisme.Multiresistent;
+            }
+
+            _logger.Info($"🔬 Determinant tipus de microorganisme de la mostra");
+
+            bool teVR = false;
+            bool teMMR = false;
+
+            foreach (var resultat in mostra.Resultats)
+            {
+                // Si no té microorganisme, és MMR negatiu
+                if (string.IsNullOrWhiteSpace(resultat.AillamentDescripcio))
+                {
+                    teMMR = true;
+                    continue;
+                }
+
+                // Consultar tipus de microorganisme
+                var tipusMicro = _multiRRepository.ObtenirTipusMicroorganisme(resultat.AillamentDescripcio);
+
+                if (tipusMicro == TipusMicroorganisme.VirusRespiratori)
+                    teVR = true;
+                else
+                    teMMR = true;
+            }
+
+            // Decidir tipus de mostra
+            if (teVR && teMMR)
+            {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}MOSTRA MIXTA detectada (MMR + VR)");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}La mostra es processarà en dues parts");
+                return TipusMicroorganisme.Mixt;
+            }
+            else if (teVR)
+            {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}VIRUS RESPIRATORI detectat");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}La mostra es processarà com a VIRUS RESPIRATORI");
+                return TipusMicroorganisme.VirusRespiratori;
+            }
+            else
+            {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}MULTIRESISTENT detectat");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}La mostra es processarà com a MULTIRESISTENT");
+                return TipusMicroorganisme.Multiresistent;
             }
         }
     }
