@@ -497,7 +497,7 @@ namespace MultirIntegraModulab
 
                 if (string.IsNullOrWhiteSpace(nota))
                 {
-                    Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ La nota VR està buida. No s'afegirà al curs clínic");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ La nota VR està buida. No s'afegirà al curs clínic");
                     return false;
                 }
 
@@ -560,7 +560,7 @@ namespace MultirIntegraModulab
 
                 if (diagnosticsAmbNota.Count == 0)
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}ℹ️ El pacient no té diagnòstics VR amb nota especificada");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}ℹ️ El pacient no té diagnòstics VR amb tipus de nota de curs clìnic especificada");
                     return string.Empty;
                 }
 
