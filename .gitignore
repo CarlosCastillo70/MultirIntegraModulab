@@ -29,7 +29,7 @@ bld/
 [Ll]ogs/
 
 # IMPORTANT: Configuració amb credencials
-App.config
+
 
 # NuGet Packages
 *.nupkg
