@@ -52,8 +52,8 @@ namespace MultirIntegraModulab
                             if (reader.Read())
                             {
                                 estat.Existeix = true;
-                                estat.IncorporaModulab = reader["incorpora_modulab"] != DBNull.Value ?
-                                    Convert.ToBoolean(reader["incorpora_modulab"]) : true;
+                                estat.IncorporaModulab = reader["incorporara_modulab"] != DBNull.Value ?
+                                    Convert.ToBoolean(reader["incorporara_modulab"]) : true;
                             }
                         }
                     }
@@ -2052,6 +2052,7 @@ namespace MultirIntegraModulab
         /// Obté els IDs dels diagnòstics positius d'un pacient per un tipus de mostra específic,
         /// excloent opcionalment una etiqueta concreta
         /// Un diagnòstic positiu és aquell que té mecanisme de resistència (no null/buit)
+        /// NOMÉS retorna diagnòstics de microorganismes multiresistents (exclou virus respiratoris).
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
         /// <param name="tipusMostra">Tipus de mostra (MOSTRA_DESCRIPCIO)</param>
@@ -2093,6 +2094,7 @@ namespace MultirIntegraModulab
                     // - Que tenen mostres del mateix tipus de mostra
                     // - Excloent l'etiqueta especificada si s'ha proporcionat
                     // - Filtrant per microorganisme i/o mecanisme si s'han proporcionat
+                    // NOMÉS microorganismes multiresistents (tipus = 'M' o NULL, excloent tipus = 'R')
 
                     string sql = @"
                         SELECT DISTINCT pd.id
@@ -2100,12 +2102,16 @@ namespace MultirIntegraModulab
                             INNER JOIN mostra_microorganisme mm ON pd.id = mm.pacient_diagnostic_id 
                             INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id 
                             INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi
+                            LEFT JOIN microorganismes m ON pd.microorganisme = m.descripcio 
+                                AND m.dt_delete IS NULL 
+                                AND m.actiu = 1
                         WHERE pd.npat = @pacientSap 
                             AND pdm.valoracio = '2'
                             AND pdm.tipus_mostra_m = @tipusMostra
                             AND pdm.dt_delete IS NULL
                             AND pd.dt_delete IS NULL
-                            AND pd.vigent = 'S'";
+                            AND pd.vigent = 'S'
+                            AND (m.tipus IS NULL OR m.tipus != 'R')";
 
                     // Afegir condició per excloure etiqueta si s'ha proporcionat
                     if (!string.IsNullOrWhiteSpace(etiquetaExcloure))
@@ -2127,6 +2133,8 @@ namespace MultirIntegraModulab
                         sql += @"
                             AND pd.mecanisme != @mecanisme";
                     }
+
+// HOLACARACOLA
 
                     sql += @"
                         ORDER BY pd.id";
@@ -2207,12 +2215,17 @@ namespace MultirIntegraModulab
 
                     conn.Open();
 
+                    // Query per obtenir diagnòstics positius per tipus de mostra i equivalents
+                    // NOMÉS microorganismes multiresistents (tipus = 'M' o NULL, excloent tipus = 'R')
                     string sql = @"
                         SELECT DISTINCT pd.id
                         FROM pacients_diagnostics pd
                             INNER JOIN mostra_microorganisme mm ON pd.id = mm.pacient_diagnostic_id 
                             INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id 
                             INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi
+                            LEFT JOIN microorganismes m ON pd.microorganisme = m.descripcio 
+                                AND m.dt_delete IS NULL 
+                                AND m.actiu = 1
                         WHERE pd.npat = @pacientSap 
                             AND pdm.valoracio = '2'
                             AND pdm.tipus_mostra_m = @tipusMostra
@@ -2222,8 +2235,10 @@ namespace MultirIntegraModulab
                             )
                             AND pdm.dt_delete IS NULL
                             AND pd.dt_delete IS NULL
-                            AND pd.vigent = 'S'";
+                            AND pd.vigent = 'S'
+                            AND (m.tipus IS NULL OR m.tipus != 'R')";
 
+                    // Afegir condició per excloure etiqueta si s'ha proporcionat
                     if (!string.IsNullOrWhiteSpace(etiqueta))
                     {
                         sql += @"
@@ -2254,10 +2269,11 @@ namespace MultirIntegraModulab
 
                     Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positius VIGENT(s) per pacient {pacientSap} i tipus mostra '{tipusMostra}' {infoEtiqueta}");
 
+                    // Mostrar els IDs trobats al log
                     if (diagnostics.Any())
                     {
                         string idsText = string.Join(", ", diagnostics);
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics positius vigents trobats: [{idsText}]");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics positius trobats: [{idsText}]");
                     }
                 }
             }
@@ -2271,8 +2287,9 @@ namespace MultirIntegraModulab
 
         /// <summary>
         /// Obté els IDs dels diagnòstics positius d'un pacient per un tipus de mostra específic i els seus equivalents,
-        /// excloent opcionalment una etiqueta concreta
-        /// Un diagnòstic positiu és aquell que té mecanisme de resistència (no null/buit)
+        /// excloent opcionalment una etiqueta concreta.
+        /// Un diagnòstic positiu és aquell que té mecanisme de resistència (no null/buit).
+        /// NOMÉS retorna diagnòstics de microorganismes multiresistents (exclou virus respiratoris).
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
         /// <param name="tipusMostra">Tipus de mostra (MOSTRA_DESCRIPCIO)</param>
@@ -2304,23 +2321,28 @@ namespace MultirIntegraModulab
                     if (!string.IsNullOrWhiteSpace(mecanisme))
                         infoFiltres += $" i mecanisme '{mecanisme}'";
 
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Buscant altres diagnòstics positius per tipus mostra '{tipusMostra}' i equivalents {infoEtiqueta} {infoFiltres}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Buscant altres diagnòstics positius MULTIRESISTENTS per tipus mostra '{tipusMostra}' i equivalents {infoEtiqueta} {infoFiltres}");
 
                     conn.Open();
 
                     // Query per obtenir diagnòstics positius per tipus de mostra i equivalents
+                    // NOMÉS microorganismes multiresistents (tipus = 'M' o NULL, excloent tipus = 'R')
                     string sql = @"
                         SELECT DISTINCT pd.id
                         FROM pacients_diagnostics pd
                             INNER JOIN mostra_microorganisme mm ON pd.id = mm.pacient_diagnostic_id 
                             INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id 
                             INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi
+                            LEFT JOIN microorganismes m ON pd.microorganisme = m.descripcio 
+                                AND m.dt_delete IS NULL 
+                                AND m.actiu = 1
                         WHERE pd.npat = @pacientSap 
                             AND pdm.valoracio = '2'
                             AND pdm.tipus_mostra_m = @tipusMostra
                             AND pdm.dt_delete IS NULL
                             AND pd.dt_delete IS NULL
-                            AND pd.vigent = 'S'";
+                            AND pd.vigent = 'S'
+                            AND (m.tipus IS NULL OR m.tipus != 'R')";
 
                     // Afegir condició per excloure etiqueta si s'ha proporcionat
                     if (!string.IsNullOrWhiteSpace(etiquetaExcloure))
@@ -2332,7 +2354,7 @@ namespace MultirIntegraModulab
                     // Afegir condició per filtrar per microorganisme si s'ha proporcionat
                     if (!string.IsNullOrWhiteSpace(microorganisme))
                     {
-                        sql += @"
+                    sql += @"
                             AND pd.microorganisme != @microorganisme";
                     }
 
@@ -2375,13 +2397,13 @@ namespace MultirIntegraModulab
                         }
                     }
 
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) per pacient {pacientSap} i tipus mostra '{tipusMostra}' i equivalents {infoEtiqueta} {infoFiltres}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) multiresistents(s) per pacient {pacientSap} i tipus mostra '{tipusMostra}' i equivalents {infoEtiqueta} {infoFiltres}");
 
                     // Mostrar els IDs trobats al log
                     if (diagnostics.Any())
                     {
                         string idsText = string.Join(", ", diagnostics);
-                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics positius trobats: [{idsText}]");
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs dels diagnòstics positius multiresistents trobats: [{idsText}]");
                     }
 
                 }
@@ -2389,7 +2411,7 @@ namespace MultirIntegraModulab
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error obtenint diagnòstics positius per pacient {pacientSap} i tipus mostra '{tipusMostra}' i equivalents: {ex.Message}", ex);
+                Logger.Error($"Error obtenint diagnòstics positius multiresistents per pacient {pacientSap} i tipus mostra '{tipusMostra}' i equivalents: {ex.Message}", ex);
             }
 
             return diagnostics;
@@ -2547,7 +2569,6 @@ namespace MultirIntegraModulab
                 return false;
             }
         }
-
 
         #endregion
     }
