@@ -344,7 +344,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
                     string combinacio = $"{resultatMostra.AillamentDescripcio} + {mecanisme.id}";
                     
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Combinació marcada com NO INCORPORAR: {combinacio}");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Combinació marcada com NO INCORPORAR: {combinacio}");
                     
                     resultat.CombinacionsNoIncorporar.Add(combinacio);
                     

@@ -120,5 +120,52 @@ namespace MultirIntegraModulab
                 return false;
             }
         }
+
+        /// <summary>
+        /// Comprova si un tipus de prova permet incorporar virus respiratoris
+        /// </summary>
+        /// <param name="codiProva">Codi de la prova (PROVA_DESCRIPCIO de Modulab)</param>
+        /// <returns>True si incorpora_virus_respiratori = 1, False en cas contrari o si no existeix</returns>
+        public bool TipusProvaPermitIncorporarVirusRespiratori(string codiProva)
+        {
+            if (string.IsNullOrWhiteSpace(codiProva))
+            {
+                Logger.Warning("Intentant comprovar tipus prova VR amb codi null o buit");
+                return false;
+            }
+
+            string sql = @"
+                SELECT incorpora_virus_respiratori 
+                FROM tipusprova 
+                WHERE UPPER(codi) = UPPER(@codiProva) 
+                  AND actiu = 1";
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@codiProva", codiProva);
+
+                        object result = cmd.ExecuteScalar();
+
+                        if (result != null && result != DBNull.Value)
+                        {
+                            int incorporaVR = Convert.ToInt32(result);
+                            return incorporaVR == 1;
+                        }
+
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error comprovant incorporació VR per tipus prova: {codiProva}", ex);
+                return false;
+            }
+        }
     }
 }

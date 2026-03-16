@@ -335,6 +335,40 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>True si s'ha creat correctament, False en cas contrari</returns>
         bool CrearTipusProva(string codiProva);
 
+        /// <summary>
+        /// Comprova si un tipus de prova permet incorporar virus respiratoris
+        /// </summary>
+        /// <param name="codiProva">Codi de la prova (PROVA_DESCRIPCIO de Modulab)</param>
+        /// <returns>True si incorpora_virus_respiratori = 1, False en cas contrari o si no existeix</returns>
+        bool TipusProvaPermitIncorporarVirusRespiratori(string codiProva);
+
+        #region Paràmetres d'Aplicació
+
+        /// <summary>
+        /// Comprova si un valor està a la llista de paràmetres actius d'una categoria
+        /// </summary>
+        /// <param name="categoria">Categoria del paràmetre (ex: VR_CENTRES)</param>
+        /// <param name="valor">Valor a comprovar (ex: nom del centre)</param>
+        /// <returns>True si el valor està a la llista i està actiu</returns>
+        bool ExisteixParametre(string categoria, string valor);
+
+        /// <summary>
+        /// Obté el valor d'un paràmetre de l'aplicació
+        /// </summary>
+        /// <param name="categoria">Categoria del paràmetre</param>
+        /// <param name="clau">Clau del paràmetre</param>
+        /// <returns>Valor del paràmetre o null si no existeix</returns>
+        string ObtenirParametre(string categoria, string clau);
+
+        /// <summary>
+        /// Obté tots els paràmetres actius d'una categoria (retorna les claus)
+        /// </summary>
+        /// <param name="categoria">Categoria dels paràmetres</param>
+        /// <returns>Llista de claus dels paràmetres actius</returns>
+        List<string> ObtenirParametresPerCategoria(string categoria);
+
+        #endregion
+
         // Integració
         bool InserirIntegracioResultats(string etiquetaId, ResultatMostra registre, string mecanismeId, 
             string estat, string observacions, bool incorporaModulab);
@@ -427,8 +461,9 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// Obté els diagnòstics actius (vigents) d'un pacient amb el darrer positiu associat
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient (npat)</param>
+        /// <param name="tipusMicroorganisme">Tipus de microorganisme per filtrar (Multiresistent, VirusRespiratori o null per tots)</param>
         /// <returns>Llista de diagnòstics actius amb informació del darrer positiu</returns>
-        List<DiagnosticActiuPacient> ObtenirDiagnosticsActiusPacient(string pacientSap);
+        List<DiagnosticActiuPacient> ObtenirDiagnosticsActiusPacient(string pacientSap, TipusMicroorganisme? tipusMicroorganisme = null);
 
         /// <summary>
         /// Confecciona la nota del curs clínic amb la llista de diagnòstics actius del pacient

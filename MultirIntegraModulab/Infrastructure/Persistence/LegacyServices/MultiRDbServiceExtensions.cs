@@ -52,8 +52,8 @@ namespace MultirIntegraModulab
                             if (reader.Read())
                             {
                                 estat.Existeix = true;
-                                estat.IncorporaModulab = reader["incorporara_modulab"] != DBNull.Value ?
-                                    Convert.ToBoolean(reader["incorporara_modulab"]) : true;
+                                estat.IncorporaModulab = reader["incorpora_modulab"] != DBNull.Value ?
+                                    Convert.ToBoolean(reader["incorpora_modulab"]) : true;
                             }
                         }
                     }

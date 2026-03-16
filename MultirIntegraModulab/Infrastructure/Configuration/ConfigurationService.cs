@@ -301,7 +301,7 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
 
         #region Configuració de Cache
 
-        public int MinutsVigenciaCache
+        public virtual int MinutsVigenciaCache
         {
             get { return LlegirIntConfiguracio("MinutsVigenciaCache", 30); }
         }
@@ -310,7 +310,7 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
 
         #region Configuració de Manteniment
 
-        public int DiesRetencioHistorial
+        public virtual int DiesRetencioHistorial
         {
             get { return LlegirIntConfiguracio("DiesRetencioHistorial", 90); }
         }
@@ -333,42 +333,42 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
 
         #region Configuració d'Email
 
-        public bool EnviarEmailLog
+        public virtual bool EnviarEmailLog
         {
             get { return LlegirBoolConfiguracio("EnviarEmailLog", false); }
         }
 
-        public string SmtpServer
+        public virtual string SmtpServer
         {
             get { return LlegirStringConfiguracio("SmtpServer", ""); }
         }
 
-        public int SmtpPort
+        public virtual int SmtpPort
         {
             get { return LlegirIntConfiguracio("SmtpPort", 587); }
         }
 
-        public string SmtpUsuari
+        public virtual string SmtpUsuari
         {
             get { return LlegirStringConfiguracio("SmtpUsuari", ""); }
         }
 
-        public string SmtpPassword
+        public virtual string SmtpPassword
         {
             get { return LlegirStringConfiguracio("SmtpPassword", ""); }
         }
 
-        public bool SmtpUsarSSL
+        public virtual bool SmtpUsarSSL
         {
             get { return LlegirBoolConfiguracio("SmtpUsarSSL", true); }
         }
 
-        public string EmailFrom
+        public virtual string EmailFrom
         {
             get { return LlegirStringConfiguracio("EmailFrom", ""); }
         }
 
-        public List<string> EmailsDestinataris
+        public virtual List<string> EmailsDestinataris
         {
             get 
             { 
@@ -380,7 +380,7 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
             }
         }
 
-        public bool EmailNomesEnErrors
+        public virtual bool EmailNomesEnErrors
         {
             get { return LlegirBoolConfiguracio("EmailNomesEnErrors", false); }
         }
@@ -500,7 +500,7 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
             }
         }
 
-        public string ObtenirResumConfiguracio()
+        public virtual string ObtenirResumConfiguracio()
         {
             // Determinar si s'utilitza autenticació SMTP
             bool utilitzaAutenticacio = !string.IsNullOrWhiteSpace(SmtpUsuari) && 

@@ -104,7 +104,7 @@ namespace MultirIntegraModulab
                 
                 if (responseNode == null)
                 {
-                    Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ No s'ha trobat element consultaPacientResponse per pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ No s'ha trobat element consultaPacientResponse per pacient {pacientSap}");
                     return null;
                 }
 
@@ -112,14 +112,14 @@ namespace MultirIntegraModulab
                 var resultNode = responseNode.SelectSingleNode("Result");
                 if (resultNode == null)
                 {
-                    Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ No s'ha trobat element Result per pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ No s'ha trobat element Result per pacient {pacientSap}");
                     return null;
                 }
 
                 string xmlInteriorCodificat = resultNode.InnerText;
                 if (string.IsNullOrWhiteSpace(xmlInteriorCodificat))
                 {
-                    Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ El node Result està buit per pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}❌ El node Result està buit per pacient {pacientSap}");
                     return null;
                 }
 

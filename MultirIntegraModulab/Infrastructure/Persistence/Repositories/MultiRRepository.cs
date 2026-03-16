@@ -209,6 +209,22 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool CrearTipusProva(string codiProva) =>
             _multiRDbService.CrearTipusProva(codiProva);
 
+        public bool TipusProvaPermitIncorporarVirusRespiratori(string codiProva) =>
+            _multiRDbService.TipusProvaPermitIncorporarVirusRespiratori(codiProva);
+
+        #region Paràmetres d'Aplicació
+
+        public bool ExisteixParametre(string categoria, string valor) =>
+            _multiRDbService.ExisteixParametre(categoria, valor);
+
+        public string ObtenirParametre(string categoria, string clau) =>
+            _multiRDbService.ObtenirParametre(categoria, clau);
+
+        public List<string> ObtenirParametresPerCategoria(string categoria) =>
+            _multiRDbService.ObtenirParametresPerCategoria(categoria);
+
+        #endregion
+
         // Integració
         public bool InserirIntegracioResultats(string etiquetaId, ResultatMostra registre, string mecanismeId, 
             string estat, string observacions, bool incorporaModulab) => 
@@ -278,8 +294,14 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool ReactivarDiagnostic(int diagnosticId, string responsable) =>
             _multiRDbService.ReactivarDiagnostic(diagnosticId, responsable);
 
-        public List<DiagnosticActiuPacient> ObtenirDiagnosticsActiusPacient(string pacientSap) =>
-            _multiRDbService.ObtenirDiagnosticsActiusPacient(pacientSap);
+        /// <summary>
+        /// Obté els diagnòstics actius (vigents) d'un pacient amb el darrer positiu associat
+        /// </summary>
+        /// <param name="pacientSap">Identificador del pacient (npat)</param>
+        /// <param name="tipusMicroorganisme">Tipus de microorganisme per filtrar (Multiresistent, VirusRespiratori o null per tots)</param>
+        /// <returns>Llista de diagnòstics actius amb informació del darrer positiu</returns>
+        public List<DiagnosticActiuPacient> ObtenirDiagnosticsActiusPacient(string pacientSap, TipusMicroorganisme? tipusMicroorganisme = null) =>
+            _multiRDbService.ObtenirDiagnosticsActiusPacient(pacientSap, tipusMicroorganisme);
 
         public string ConfeccionarNotaCursClinic(string pacientSap) =>
             _multiRDbService.ConfeccionarNotaCursClinic(pacientSap);

@@ -186,7 +186,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // Comprovar si tots els resultats han estat descartats per CNI
                     if (!mostra.Resultats.Any())
                     {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Mostra {mostra.EtiquetaId} descartada: tots els resultats tenen combinació CNI");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Mostra {mostra.EtiquetaId} descartada: tots els resultats tenen combinació CNI");
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}💥 La mostra NO es processarà (ni com a positiva ni com a negativa)");
                         resum.MostresAmbError++;
                         continue;
@@ -213,7 +213,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         else
                         {
                             resum.MostresAmbError++;
-                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Error processant mostra VR");
+                            // _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Error processant mostra VR");
                         }
                     }
                     else if (tipusMicroorganisme == TipusMicroorganisme.Mixt)

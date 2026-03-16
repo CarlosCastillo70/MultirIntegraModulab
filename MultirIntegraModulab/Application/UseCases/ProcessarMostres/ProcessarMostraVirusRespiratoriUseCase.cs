@@ -96,15 +96,76 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant mostra VR amb {mostra.Resultats.Count} resultat(s) VR");
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}------------------------------------------------------------------------------");
 
+                // Comprovar si la mostra té resultats
+                if (mostra.Resultats == null || mostra.Resultats.Count == 0)
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Mostra sense resultats");
+                    resultat.Exitosa = false;
+                    resultat.Missatge = "Mostra sense resultats";
+                    return resultat;
+                }
+
+                // FASE 0: COMPROVAR TIPUS DE PROVA (NOMÉS PER VR)
+                // Obtenir el tipus de prova del primer resultat (tots els resultats d'una mostra tenen el mateix tipus de prova)
+
+                string tipusProva = mostra.Resultats[0].ProvaDescripcio;
+                
+                _logger.Info($"🔎 Comprovant tipus de prova: '{tipusProva}'");
+                
+                bool permitIncorporar = _multiRRepository.TipusProvaPermitIncorporarVirusRespiratori(tipusProva);
+                
+                if (!permitIncorporar)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ El tipus de prova '{tipusProva}' NO existeix o bé NO permet incorporar virus respiratoris");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ La mostra NO es processarà");
+                    
+                    // Inserir auditoria per cada resultat VR
+                    foreach (var resultatMostra in mostra.Resultats)
+                    {
+                        _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "TPNIVR", resultatMostra);
+                    }
+                    
+                    resultat.Exitosa = false;
+                    resultat.Missatge = $"Tipus de prova '{tipusProva}' no permet incorporar VR";
+                    return resultat;
+                }
+                
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Tipus de prova '{tipusProva}' permet incorporar virus respiratoris");
+
+                // FASE 0b: COMPROVAR CENTRE (NOMÉS PER VR)
+                // Obtenir el centre del primer resultat (tots els resultats d'una mostra tenen el mateix centre)
+                string centreDescripcio = mostra.Resultats[0].CentreDescripcio;
+                
+                _logger.Info($"🔎 Comprovant si centre: '{centreDescripcio}' és un del centres configurats a Parametres / VR_CENTRES");
+                
+                bool centrePermitVR = _multiRRepository.ExisteixParametre("VR_CENTRES", centreDescripcio);
+                
+                if (!centrePermitVR)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ El centre '{centreDescripcio}' NO està configurat a Parametres / VR_CENTRES per incorporar virus respiratoris");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}💥 La mostra NO es processarà");
+                    
+                    // Inserir auditoria per cada resultat VR
+                    foreach (var resultatMostra in mostra.Resultats)
+                    {
+                        _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "CNIVR", resultatMostra);
+                    }
+                    
+                    resultat.Exitosa = false;
+                    resultat.Missatge = $"Centre '{centreDescripcio}' no permet incorporar VR";
+                    return resultat;
+                }
+                
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Centre '{centreDescripcio}' permet incorporar virus respiratoris");
 
                 // FASE 1: PROCESSAR PACIENT
-                _logger.Info($"🔎 Comprovant/creant pacient: {mostra.PacientSap}");
+                _logger.Info($"🔎 Comprovant / creant pacient: {mostra.PacientSap}");
                 
                 bool pacientProcessat = await ProcessarPacientAsync(mostra);
                 
                 if (!pacientProcessat)
                 {
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut processar el pacient");
+                    // _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut processar el pacient");
                     resultat.Exitosa = false;
                     resultat.Missatge = "Error processant pacient";
                     return resultat;
@@ -185,7 +246,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 if (dadesPacient == null)
                 {
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'han pogut obtenir dades del pacient");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'han pogut obtenir dades del pacient");
                     
                     // Inserir auditoria NPWS
                     var primerResultat = mostra.Resultats[0];

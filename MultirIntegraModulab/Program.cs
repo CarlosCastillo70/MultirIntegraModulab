@@ -23,12 +23,19 @@ namespace MultirIntegraModulab
             // FASE 1: CONFIGURACIÓ - INICIALITZACIÓ
             // ===========================================================
 
-            // 1.1 Configurar els serveis d'infraestructura
-            var configService = new ConfigurationService();
+            // 1.1 Configurar els serveis d'infraestructura bàsics
             var loggerService = new LoggerService();
-
             loggerService.MarcarIniciExecucio();
             loggerService.Info("=== Iniciant aplicació d' integració de dades de Modulab a MultiR ===");
+
+            // 1.2 Configurar connexió temporal a MultiR per llegir paràmetres
+            // NOTA: Utilitzem ConfigurationService base per obtenir connection string
+            var configServiceTemp = new ConfigurationService();
+            var multiRDbServiceTemp = new MultiRDbService(configServiceTemp.MySqlConnectionString);
+            var multiRRepositoryTemp = new MultiRRepository(multiRDbServiceTemp, loggerService);
+
+            // 1.3 Crear ConfigurationService HÍBRID que llegeix de BD + App.config
+            var configService = new ConfigurationServiceHibrid(multiRRepositoryTemp, loggerService);
 
             Application.DTOs.ResumProcessamentDto resum = null;
             bool hiHaHagutError = false;
@@ -38,6 +45,9 @@ namespace MultirIntegraModulab
             {
                 // 1.2 Validar i mostrar configuració
                 configService.ValidarConfiguracio();
+                
+                // Mostrar resum de configuració amb un log únic i compacte
+                loggerService.Info("📋 Carregant configuració de l'aplicació...");
                 var resumConfig = configService.ObtenirResumConfiguracio();
                 loggerService.Info(resumConfig);
                 Console.WriteLine(resumConfig);
