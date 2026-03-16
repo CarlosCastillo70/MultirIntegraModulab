@@ -221,7 +221,7 @@ namespace MultirIntegraModulab
                   DWDIMICS.DIM_LAB_PETICIONS_DT PET,
                   DWDIMICS.V_DIM_LAB_CONTENIDOR_DT CONT,
                   DWDIMICS.V_DIM_LAB_MOSTRA_DT MOS,
-                  DWFACTICS.FAC_LAB_PROVES_DT2 DETALL
+                  DWFACTICS.FAC_LAB_PROVES_DT DETALL
                 WHERE
                   ( PET.PACIENT_ID = PA.PACIENT_ID(+) AND  PET.ORIGEN = PA.ORIGEN(+)  )
                   AND  ( PET.METGE_ID = ME.METGE_ID AND  PET.ORIGEN = ME.ORIGEN  )
