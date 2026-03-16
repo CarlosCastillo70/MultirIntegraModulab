@@ -194,7 +194,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     
                     if (notaCreada)
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ Nota curs clínic VR creada");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✔️ Nota curs clínic VR creada");
                     }
                     else
                     {
@@ -203,7 +203,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 }
 
                 resultat.Missatge = $"VR processada correctament: {resultat.ResultatsProcessats} resultats";
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Mostra VR {mostra.EtiquetaId} processada: {resultat}");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✔️ Mostra VR {mostra.EtiquetaId} processada: {resultat}");
 
                 return resultat;
             }

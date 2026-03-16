@@ -1,4 +1,4 @@
-using MultirIntegraModulab.Application.Helpers;
+Ôªøusing MultirIntegraModulab.Application.Helpers;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Enums;
 using MySql.Data.MySqlClient;
@@ -10,29 +10,29 @@ using System.Text;
 namespace MultirIntegraModulab
 {
     /// <summary>
-    /// Extensions per MultiRDbService per gestionar la vigËncia dels diagnÚstics
+    /// Extensions per MultiRDbService per gestionar la vig√®ncia dels diagn√≤stics
     /// </summary>
     public partial class MultiRDbService
     {
-        #region VigËncia de DiagnÚstics
+        #region Vig√®ncia de Diagn√≤stics
 
         /// <summary>
-        /// Marca un diagnÚstic com a no vigent
+        /// Marca un diagn√≤stic com a no vigent
         /// </summary>
-        /// <param name="diagnosticId">ID del diagnÚstic</param>
+        /// <param name="diagnosticId">ID del diagn√≤stic</param>
         /// <param name="responsable">Usuari que marca com a no vigent</param>
         /// <returns>True si s'ha actualitzat correctament</returns>
         public bool MarcarDiagnosticNoVigent(int diagnosticId, string responsable)
         {
             if (diagnosticId <= 0)
             {
-                Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}MarcarDiagnosticNoVigent: diagnosticId inv‡lid ({diagnosticId})");
+                Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}MarcarDiagnosticNoVigent: diagnosticId inv√†lid ({diagnosticId})");
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(responsable))
             {
-                Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}MarcarDiagnosticNoVigent: responsable Ès null o buit");
+                Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}MarcarDiagnosticNoVigent: responsable √©s null o buit");
                 return false;
             }
 
@@ -61,12 +61,12 @@ namespace MultirIntegraModulab
 
                         if (filesAfectades > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? DiagnÚstic {diagnosticId} marcat com a NO vigent per {responsable}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? Diagn√≤stic {diagnosticId} marcat com a NO vigent per {responsable}");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? No s'ha pogut marcar diagnÚstic {diagnosticId} com a no vigent (ja era no vigent o no existeix)");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? No s'ha pogut marcar diagn√≤stic {diagnosticId} com a no vigent (ja era no vigent o no existeix)");
                             return false;
                         }
                     }
@@ -74,28 +74,28 @@ namespace MultirIntegraModulab
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error marcant diagnÚstic {diagnosticId} com a no vigent: {ex.Message}", ex);
+                Logger.Error($"Error marcant diagn√≤stic {diagnosticId} com a no vigent: {ex.Message}", ex);
                 return false;
             }
         }
 
         /// <summary>
-        /// Reactiva un diagnÚstic (el torna a marcar com a vigent)
+        /// Reactiva un diagn√≤stic (el torna a marcar com a vigent)
         /// </summary>
-        /// <param name="diagnosticId">ID del diagnÚstic</param>
+        /// <param name="diagnosticId">ID del diagn√≤stic</param>
         /// <param name="responsable">Usuari que reactiva</param>
         /// <returns>True si s'ha actualitzat correctament</returns>
         public bool ReactivarDiagnostic(int diagnosticId, string responsable)
         {
             if (diagnosticId <= 0)
             {
-                Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}ReactivarDiagnostic: diagnosticId inv‡lid ({diagnosticId})");
+                Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}ReactivarDiagnostic: diagnosticId inv√†lid ({diagnosticId})");
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(responsable))
             {
-                Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}ReactivarDiagnostic: responsable Ès null o buit");
+                Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}ReactivarDiagnostic: responsable √©s null o buit");
                 return false;
             }
 
@@ -123,12 +123,12 @@ namespace MultirIntegraModulab
 
                         if (filesAfectades > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? DiagnÚstic {diagnosticId} reactivat per {responsable}");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? Diagn√≤stic {diagnosticId} reactivat per {responsable}");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? No s'ha pogut reactivar diagnÚstic {diagnosticId} (ja era vigent o no existeix)");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? No s'ha pogut reactivar diagn√≤stic {diagnosticId} (ja era vigent o no existeix)");
                             return false;
                         }
                     }
@@ -136,24 +136,24 @@ namespace MultirIntegraModulab
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error reactivant diagnÚstic {diagnosticId}: {ex.Message}", ex);
+                Logger.Error($"Error reactivant diagn√≤stic {diagnosticId}: {ex.Message}", ex);
                 return false;
             }
         }
 
         /// <summary>
-        /// ObtÈ els diagnÚstics actius (vigents) d'un pacient amb el darrer positiu associat
+        /// Obt√© els diagn√≤stics actius (vigents) d'un pacient amb el darrer positiu associat
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient (npat)</param>
         /// <param name="tipusMicroorganisme">Tipus de microorganisme per filtrar (Multiresistent, VirusRespiratori o null per tots)</param>
-        /// <returns>Llista de diagnÚstics actius amb informaciÛ del darrer positiu</returns>
+        /// <returns>Llista de diagn√≤stics actius amb informaci√≥ del darrer positiu</returns>
         public List<DiagnosticActiuPacient> ObtenirDiagnosticsActiusPacient(string pacientSap, TipusMicroorganisme? tipusMicroorganisme = null)
         {
             var diagnostics = new List<DiagnosticActiuPacient>();
 
             if (string.IsNullOrWhiteSpace(pacientSap))
             {
-                Logger.Warning("ObtenirDiagnosticsActiusPacient: pacientSap Ès null o buit");
+                Logger.Warning("ObtenirDiagnosticsActiusPacient: pacientSap √©s null o buit");
                 return diagnostics;
             }
 
@@ -165,11 +165,11 @@ namespace MultirIntegraModulab
                         ? (tipusMicroorganisme.Value == TipusMicroorganisme.Multiresistent ? " (MMR)" : " (VR)")
                         : "";
                     
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? Obtenint diagnÚstics actius{filtreTipus} del pacient {pacientSap} amb data del darrer positiu");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Obtenint diagn√≤stics actius{filtreTipus} del pacient {pacientSap} amb data del darrer positiu");
 
                     conn.Open();
 
-                    // Query per obtenir els diagnÚstics vigents amb el darrer positiu associat
+                    // Query per obtenir els diagn√≤stics vigents amb el darrer positiu associat
                     string sql = @"
                         SELECT DISTINCT
                             pd.id AS diagnostic_id,
@@ -186,7 +186,7 @@ namespace MultirIntegraModulab
                             mec.nota_curs_clinic AS mecanisme_nota_curs_clinic,
                             micro.nota_curs_clinic AS microorganisme_nota_curs_clinic
                         FROM pacients_diagnostics pd
-                            -- RelaciÛ amb mostres a travÈs de mostra_microorganisme
+                            -- Relaci√≥ amb mostres a trav√©s de mostra_microorganisme
                             INNER JOIN mostra_microorganisme mm ON pd.id = mm.pacient_diagnostic_id
                             INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id
                             -- Obtenir el darrer positiu
@@ -270,9 +270,9 @@ namespace MultirIntegraModulab
                         }
                     }
 
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnÚstic(s) actiu(s){filtreTipus} per al pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagn√≤stic(s) actiu(s){filtreTipus} per al pacient {pacientSap}");
 
-                    // Mostrar detall de cada diagnÚstic
+                    // Mostrar detall de cada diagn√≤stic
                     if (diagnostics.Count > 0)
                     {
                         foreach (var diag in diagnostics)
@@ -288,50 +288,50 @@ namespace MultirIntegraModulab
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error obtenint diagnÚstics actius del pacient {pacientSap}: {ex.Message}", ex);
+                Logger.Error($"Error obtenint diagn√≤stics actius del pacient {pacientSap}: {ex.Message}", ex);
             }
 
             return diagnostics;
         }
 
         /// <summary>
-        /// Confecciona la nota del curs clÌnic amb la llista de diagnÚstics actius del pacient
+        /// Confecciona la nota del curs cl√≠nic amb la llista de diagn√≤stics actius del pacient
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
-        /// <returns>Nota formattejada amb els diagnÚstics actius</returns>
+        /// <returns>Nota formattejada amb els diagn√≤stics actius</returns>
         public string ConfeccionarNotaCursClinic(string pacientSap)
         {
             if (string.IsNullOrWhiteSpace(pacientSap))
             {
-                Logger.Warning("ConfeccionarNotaCursClinic: pacientSap Ès null o buit");
+                Logger.Warning("ConfeccionarNotaCursClinic: pacientSap √©s null o buit");
                 return string.Empty;
             }
 
             try
             {
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? Confeccionant nota curs clÌnic per pacient {pacientSap}");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? Confeccionant nota curs cl√≠nic per pacient {pacientSap}");
 
-                // Obtenir els diagnÚstics actius del pacient (filtrant per Multiresistents)
+                // Obtenir els diagn√≤stics actius del pacient (filtrant per Multiresistents)
                 var diagnostics = ObtenirDiagnosticsActiusPacient(pacientSap, TipusMicroorganisme.Multiresistent);
 
                 if (diagnostics == null || diagnostics.Count == 0)
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? El pacient no tÈ diagnÚstics actius");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? El pacient no t√© diagn√≤stics actius");
                     return string.Empty;
                 }
 
-                // Filtrar diagnÚstics que tenen nota especificada
-                // Un diagnÚstic requereix nota si:
-                // - TÈ mecanisme de resistËncia i mecanisme.nota_curs_clinic tÈ valor (1 o 2)
-                // - NO tÈ mecanisme de resistËncia (microorganisme especial) i microorganisme.nota_curs_clinic tÈ valor (1 o 2)
+                // Filtrar diagn√≤stics que tenen nota especificada
+                // Un diagn√≤stic requereix nota si:
+                // - T√© mecanisme de resist√®ncia i mecanisme.nota_curs_clinic t√© valor (1 o 2)
+                // - NO t√© mecanisme de resist√®ncia (microorganisme especial) i microorganisme.nota_curs_clinic t√© valor (1 o 2)
                 var diagnosticsAmbNota = diagnostics.Where(d =>
                 {
-                    // Si tÈ mecanisme, comprovar si el mecanisme tÈ nota
+                    // Si t√© mecanisme, comprovar si el mecanisme t√© nota
                     if (!string.IsNullOrWhiteSpace(d.Mecanisme))
                     {
                         return d.MecanismeNotaCursClinic.HasValue;
                     }
-                    // Si no tÈ mecanisme (microorganisme especial), comprovar si el microorganisme tÈ nota
+                    // Si no t√© mecanisme (microorganisme especial), comprovar si el microorganisme t√© nota
                     else
                     {
                         return d.MicroorganismeNotaCursClinic.HasValue;
@@ -340,23 +340,23 @@ namespace MultirIntegraModulab
 
                 if (diagnosticsAmbNota.Count == 0)
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? El pacient no tÈ diagnÚstics amb nota especificada");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? El pacient no t√© diagn√≤stics amb nota especificada");
                     return string.Empty;
                 }
 
-                // Determinar el tipus de nota mÈs restrictiu
-                // Si hi ha algun diagnÚstic amb nota tipus 1 ? text general (mÈs restrictiu)
-                // Si TOTS sÛn tipus 2 ? text especÌfic (‡rees crÌtiques)
+                // Determinar el tipus de nota m√©s restrictiu
+                // Si hi ha algun diagn√≤stic amb nota tipus 1 ? text general (m√©s restrictiu)
+                // Si TOTS s√≥n tipus 2 ? text espec√≠fic (√†rees cr√≠tiques)
                 // NOTA: El camp nota_curs_clinic pot ser NULL, 1 o 2
                 
                 bool hiHaTipus1 = diagnosticsAmbNota.Any(d =>
                 {
-                    // Comprovar si el mecanisme tÈ nota de tipus 1
+                    // Comprovar si el mecanisme t√© nota de tipus 1
                     if (!string.IsNullOrWhiteSpace(d.Mecanisme) && d.MecanismeNotaCursClinic.HasValue)
                     {
                         return d.MecanismeNotaCursClinic.Value == 1; // Tipus 1 = nota general
                     }
-                    // Comprovar si el microorganisme tÈ nota de tipus 1
+                    // Comprovar si el microorganisme t√© nota de tipus 1
                     if (d.MicroorganismeNotaCursClinic.HasValue)
                     {
                         return d.MicroorganismeNotaCursClinic.Value == 1; // Tipus 1 = nota general
@@ -364,18 +364,18 @@ namespace MultirIntegraModulab
                     return false;
                 });
 
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Numero de diagnÚstics amb tipus de nota: {diagnosticsAmbNota.Count}. Hi ha diagnÚstics amb tipus 1 (mÈs general): {hiHaTipus1}");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Numero de diagn√≤stics amb tipus de nota: {diagnosticsAmbNota.Count}. Hi ha diagn√≤stics amb tipus 1 (m√©s general): {hiHaTipus1}");
 
                 // Confeccionar la nota
 
-                // CapÁalera de la nota
+                // Cap√ßalera de la nota
                 var nota = new StringBuilder();
-                nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI” ");
+                nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI√ì ");
                 nota.AppendLine();
-                nota.AppendLine("El Servei de Medicina Preventiva i Salut P˙blica de l'Hospital Universitari de Girona Dr. Josep Trueta informa que el/s cultiu/s de:");
+                nota.AppendLine("El Servei de Medicina Preventiva i Salut P√∫blica de l'Hospital Universitari de Girona Dr. Josep Trueta informa que el/s cultiu/s de:");
                 nota.AppendLine();
 
-                // Detall de cada diagnÚstic amb nota
+                // Detall de cada diagn√≤stic amb nota
                 foreach (var diagnostic in diagnosticsAmbNota)
                 {
                     // Tipus de mostra
@@ -386,7 +386,7 @@ namespace MultirIntegraModulab
                     // Microorganisme
                     string microorganisme = diagnostic.Microorganisme ?? "N/D";
 
-                    // Mecanisme de resistËncia (opcional)
+                    // Mecanisme de resist√®ncia (opcional)
                     string infoMecanisme = !string.IsNullOrWhiteSpace(diagnostic.Mecanisme)
                         ? $"{diagnostic.Mecanisme} - {diagnostic.TipusMecanisme}"
                         : "";
@@ -396,53 +396,53 @@ namespace MultirIntegraModulab
                         ? diagnostic.DataDarrerPositiu.Value.ToString("dd/MM/yyyy")
                         : "N/D";
 
-                    // Afegir lÌnia del diagnÚstic
-                    nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} Ès positiu per {microorganisme} {infoMecanisme} ");
+                    // Afegir l√≠nia del diagn√≤stic
+                    nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} √©s positiu per {microorganisme} {infoMecanisme} ");
                     nota.AppendLine();
                 }
 
                 nota.AppendLine();
 
-                // RecomanaciÛ (depenent del tipus de nota mÈs restrictiu)
+                // Recomanaci√≥ (depenent del tipus de nota m√©s restrictiu)
                 if (hiHaTipus1)
                 {
-                    // Tipus 1: Recomanacions generals (mÈs restrictiu)
-                    nota.AppendLine("Recomanem que s'han de seguir les seg¸ents precaucions per a reduir el risc de transmissiÛ per contacte:");
+                    // Tipus 1: Recomanacions generals (m√©s restrictiu)
+                    nota.AppendLine("Recomanem que s'han de seguir les seg√ºents precaucions per a reduir el risc de transmissi√≥ per contacte:");
                 }
                 else
                 {
-                    // Tipus 2: Recomanacions especÌfiques per ‡rees crÌtiques
-                    nota.AppendLine("Recomanem que s'han de seguir les seg¸ents precaucions per a reduir el risc de transmissiÛ per contacte ˙nicament durant l'ingrÈs en ‡rea de crÌtics (UCI/UCO/UCIP, QuirÚfan/Intervencionisme, REA/URPA, UCRI, SCP, Unitat d'Ictus, Neonatologia (CIN/CSIN) i Oncohematologia):");
+                    // Tipus 2: Recomanacions espec√≠fiques per √†rees cr√≠tiques
+                    nota.AppendLine("Recomanem que s'han de seguir les seg√ºents precaucions per a reduir el risc de transmissi√≥ per contacte √∫nicament durant l'ingr√©s en √†rea de cr√≠tics (UCI/UCO/UCIP, Quir√≤fan/Intervencionisme, REA/URPA, UCRI, SCP, Unitat d'Ictus, Neonatologia (CIN/CSIN) i Oncohematologia):");
                 }
 
                 // Altres recomanacions generals que s'afegeixen sempre
                 nota.AppendLine();
-                nota.AppendLine("ï RealitzaciÛ de la higiene de mans dels professionals amb productes de base alcohÚlica ABANS i DESPR…S de qualsevol contacte amb líusuari.");
+                nota.AppendLine("‚Ä¢ Realitzaci√≥ de la higiene de mans dels professionals amb productes de base alcoh√≤lica ABANS i DESPR√âS de qualsevol contacte amb l‚Äôusuari.");
                 nota.AppendLine();
-                nota.AppendLine("ï UtilitzaciÛ de guants si es preveu contacte amb líusuari. Cal realitzar la higiene de mans ABANS i DESPR…S del seu ˙s.");
+                nota.AppendLine("‚Ä¢ Utilitzaci√≥ de guants si es preveu contacte amb l‚Äôusuari. Cal realitzar la higiene de mans ABANS i DESPR√âS del seu √∫s.");
                 nota.AppendLine();
-                nota.AppendLine("ï UtilitzaciÛ de bata díun sol ˙s si es preveu la realitzaciÛ de cures o de contacte prÚxim amb líusuari.  ");
+                nota.AppendLine("‚Ä¢ Utilitzaci√≥ de bata d‚Äôun sol √∫s si es preveu la realitzaci√≥ de cures o de contacte pr√≤xim amb l‚Äôusuari.  ");
                 nota.AppendLine();
-                nota.AppendLine("ï DesinfecciÛ de les superfÌcies o equipaments que han estat en contacte amb líusuari amb productes tipus SurfasafeÆ.");
+                nota.AppendLine("‚Ä¢ Desinfecci√≥ de les superf√≠cies o equipaments que han estat en contacte amb l‚Äôusuari amb productes tipus Surfasafe¬Æ.");
                 nota.AppendLine();
                 nota.AppendLine();
-                nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensiÛ 2394 o al cercapersones 4383. ");
+                nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensi√≥ 2394 o al cercapersones 4383. ");
 
                 string notaFinal = nota.ToString().TrimEnd();
 
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}? Nota confeccionada: {diagnosticsAmbNota.Count} diagnÚstic(s) amb nota especificada");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}? Nota confeccionada: {diagnosticsAmbNota.Count} diagn√≤stic(s) amb nota especificada");
 
                 return notaFinal;
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error confeccionant nota curs clÌnic per pacient {pacientSap}: {ex.Message}", ex);
+                Logger.Error($"Error confeccionant nota curs cl√≠nic per pacient {pacientSap}: {ex.Message}", ex);
                 return string.Empty;
             }
         }
 
         /// <summary>
-        /// Afegeix una nota al curs clÌnic del pacient si s'han creat nous diagnÚstics positius
+        /// Afegeix una nota al curs cl√≠nic del pacient si s'han creat nous diagn√≤stics positius
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
         /// <param name="sShanAfegitPositius">Indica si s'han afegit positius en el processament</param>
@@ -451,13 +451,13 @@ namespace MultirIntegraModulab
         {
             if (!sShanAfegitPositius)
             {
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? No s'han afegit positius. No cal afegir nota al curs clÌnic");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? No s'han afegit positius. No cal afegir nota al curs cl√≠nic");
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(pacientSap))
             {
-                Logger.Warning("AfegirNotaCursClinicSiCal: pacientSap Ès null o buit");
+                Logger.Warning("AfegirNotaCursClinicSiCal: pacientSap √©s null o buit");
                 return false;
             }
 
@@ -468,7 +468,7 @@ namespace MultirIntegraModulab
 
                 if (string.IsNullOrWhiteSpace(nota))
                 {
-                    Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? La nota est‡ buida. No s'afegir‡ al curs clÌnic");
+                    Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? La nota est√† buida. No s'afegir√† al curs cl√≠nic");
                     return false;
                 }
 
@@ -477,20 +477,20 @@ namespace MultirIntegraModulab
 
                 if (inserit)
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}? Nota afegida correctament al curs clÌnic del pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}? Nota afegida correctament al curs cl√≠nic del pacient {pacientSap}");
                 }
 
                 return inserit;
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error afegint nota curs clÌnic per pacient {pacientSap}: {ex.Message}", ex);
+                Logger.Error($"Error afegint nota curs cl√≠nic per pacient {pacientSap}: {ex.Message}", ex);
                 return false;
             }
         }
 
         /// <summary>
-        /// Afegeix una nota al curs clÌnic del pacient per Virus Respiratoris si s'han creat nous diagnÚstics positius
+        /// Afegeix una nota al curs cl√≠nic del pacient per Virus Respiratoris si s'han creat nous diagn√≤stics positius
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
         /// <param name="sShanAfegitPositius">Indica si s'han afegit positius en el processament</param>
@@ -499,24 +499,24 @@ namespace MultirIntegraModulab
         {
             if (!sShanAfegitPositius)
             {
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? No s'han afegit positius VR. No cal afegir nota al curs clÌnic");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? No s'han afegit positius VR. No cal afegir nota al curs cl√≠nic");
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(pacientSap))
             {
-                Logger.Warning("AfegirNotaCursClinicVirusRespiratoriSiCal: pacientSap Ès null o buit");
+                Logger.Warning("AfegirNotaCursClinicVirusRespiratoriSiCal: pacientSap √©s null o buit");
                 return false;
             }
 
             try
             {
-                // Confeccionar la nota especÌfica per Virus Respiratoris
+                // Confeccionar la nota espec√≠fica per Virus Respiratoris
                 string nota = ConfeccionarNotaCursClinicVirusRespiratori(pacientSap);
 
                 if (string.IsNullOrWhiteSpace(nota))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? La nota VR est‡ buida. No s'afegir‡ al curs clÌnic");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}‚ö†Ô∏è La nota VR est√† buida. No s'afegir√† al curs cl√≠nic");
                     return false;
                 }
 
@@ -525,66 +525,66 @@ namespace MultirIntegraModulab
 
                 if (inserit)
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}? Nota VR afegida correctament al curs clÌnic del pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}‚úîÔ∏è Nota VR afegida correctament al curs cl√≠nic del pacient {pacientSap}");
                 }
 
                 return inserit;
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error afegint nota VR curs clÌnic per pacient {pacientSap}: {ex.Message}", ex);
+                Logger.Error($"Error afegint nota VR curs cl√≠nic per pacient {pacientSap}: {ex.Message}", ex);
                 return false;
             }
         }
 
         /// <summary>
-        /// Confecciona la nota del curs clÌnic per Virus Respiratoris amb la llista de diagnÚstics actius del pacient
+        /// Confecciona la nota del curs cl√≠nic per Virus Respiratoris amb la llista de diagn√≤stics actius del pacient
         /// </summary>
         /// <param name="pacientSap">Identificador del pacient</param>
-        /// <returns>Nota formattejada amb els diagnÚstics actius de Virus Respiratoris</returns>
+        /// <returns>Nota formattejada amb els diagn√≤stics actius de Virus Respiratoris</returns>
         public string ConfeccionarNotaCursClinicVirusRespiratori(string pacientSap)
         {
             if (string.IsNullOrWhiteSpace(pacientSap))
             {
-                Logger.Warning("ConfeccionarNotaCursClinicVirusRespiratori: pacientSap Ès null o buit");
+                Logger.Warning("ConfeccionarNotaCursClinicVirusRespiratori: pacientSap √©s null o buit");
                 return string.Empty;
             }
 
             try
             {
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? Confeccionant nota curs clÌnic per Virus Respiratoris - pacient {pacientSap}");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Confeccionant nota curs cl√≠nic per Virus Respiratoris - pacient {pacientSap}");
 
-                // Obtenir els diagnÚstics actius de Virus Respiratori del pacient (filtrant per VR)
+                // Obtenir els diagn√≤stics actius de Virus Respiratori del pacient (filtrant per VR)
                 var diagnostics = ObtenirDiagnosticsActiusPacient(pacientSap, TipusMicroorganisme.VirusRespiratori);
 
                 if (diagnostics == null || diagnostics.Count == 0)
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? El pacient no tÈ diagnÚstics actius VR");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}‚ö†Ô∏è El pacient no t√© diagn√≤stics actius VR");
                     return string.Empty;
                 }
 
-                // Filtrar diagnÚstics que tenen nota especificada
-                // Un diagnÚstic VR requereix nota si:
-                // - NO tÈ mecanisme de resistËncia (els VR no en tenen)
-                // - El microorganisme tÈ nota_curs_clinic amb valor (1 o 2)
+                // Filtrar diagn√≤stics que tenen nota especificada
+                // Un diagn√≤stic VR requereix nota si:
+                // - NO t√© mecanisme de resist√®ncia (els VR no en tenen)
+                // - El microorganisme t√© nota_curs_clinic amb valor (1 o 2)
                 var diagnosticsAmbNota = diagnostics.Where(d =>
                 {
-                    // Els VR no tenen mecanisme, nomÈs comprovar si el microorganisme tÈ nota de curs clÌnic
+                    // Els VR no tenen mecanisme, nom√©s comprovar si el microorganisme t√© nota de curs cl√≠nic
                     return d.MicroorganismeNotaCursClinic.HasValue;
                 }).ToList();
 
                 if (diagnosticsAmbNota.Count == 0)
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? El pacient no tÈ diagnÚstics VR amb tipus de nota de curs clÏnic especificada");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}‚ö†Ô∏è El pacient no t√© diagn√≤stics VR amb tipus de nota de curs cl√¨nic especificada");
                     return string.Empty;
                 }
 
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Numero de diagnÚstics VR amb tipus de nota: {diagnosticsAmbNota.Count}");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Numero de diagn√≤stics VR amb tipus de nota: {diagnosticsAmbNota.Count}");
 
                 // Confeccionar la nota
                 var nota = new StringBuilder();
 
-                // Processar cada diagnÚstic VR amb nota i generar el text segons el tipus de nota
+                // Processar cada diagn√≤stic VR amb nota i generar el text segons el tipus de nota
                 foreach (var diagnostic in diagnosticsAmbNota)
                 {
                     // Tipus de mostra
@@ -605,139 +605,120 @@ namespace MultirIntegraModulab
                     int tipusNota = diagnostic.MicroorganismeNotaCursClinic.GetValueOrDefault();
 
 
-                    // Generar text especÌfic segons el tipus de nota utilitzant switch case
+                    // Generar text espec√≠fic segons el tipus de nota utilitzant switch case
                     switch (tipusNota)
                     {
                         case 1:
 
                             // Tipus 1: Covid-19 (SARS-CoV-2) 
-                            nota.AppendLine("TIPUS 1. MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI”");
+                            nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI√ì  (1)");
                             nota.AppendLine();
 
-                            nota.AppendLine("Cas confirmat immunocompetent asimptom‡tic o amb sÌmptomes lleus/moderats");
+                            nota.AppendLine("Cas confirmat immunocompetent asimptom√†tic o amb s√≠mptomes lleus/moderats");
                             nota.AppendLine("=========================================================================");
-                            nota.AppendLine($"Aquest pacient Ès un cas confirmat díinfecciÛ per {microorganisme} amb prova positiva del {dataPositiu}");
+                            nota.AppendLine($"Aquest pacient √©s un cas confirmat d‚Äôinfecci√≥ per {microorganisme} amb prova positiva del {dataPositiu}");
                             nota.AppendLine();
-                            nota.AppendLine($"Donat que es tracta d'un pacient immunocompetent amb sÌmptomes lleus/moderats es recomana:");
+                            nota.AppendLine($"Donat que es tracta d'un pacient immunocompetent amb s√≠mptomes lleus/moderats es recomana:");
                             nota.AppendLine();
-                            nota.AppendLine("- AplicaciÛ estricta de les precaucions d'aÔllament per gotes i extremar les precaucions est‡ndard, especialment la higiene de mans amb soluciÛ alcohÚlica.");
+                            nota.AppendLine("- Aplicaci√≥ estricta de les precaucions d'a√Øllament per gotes i extremar les precaucions est√†ndard, especialment la higiene de mans amb soluci√≥ alcoh√≤lica.");
+                            nota.AppendLine("- L'a√Øllament es mantindr√† mentre que el malalt romangui amb s√≠mptomes un m√≠nim de 5 dies.");
                             nota.AppendLine();
-                            nota.AppendLine("- L'aÔllament es mantindr‡ mentre que el malalt romangui amb sÌmptomes un mÌnim de 5 dies.");
+                            nota.AppendLine("Els criteris per finalitzar l‚Äôa√Øllament s√≥n:");
                             nota.AppendLine();
+                            nota.AppendLine("   1r) Afebril (<38¬∫C) en abs√®ncia de tractament antipir√®tic i amb milloria de s√≠mptomes >24 hores.");
+                            nota.AppendLine("   2n) Un Test d‚ÄôAntigen R√†pid (TAR) negatiu al 5√® dia.");
                             nota.AppendLine();
-                            nota.AppendLine("Els criteris per finalitzar líaÔllament sÛn:");
+                            nota.AppendLine("Si el TAR al 5√® dia encara √©s positiu, es mantindr√† l'a√Øllament fins al 7√® i es retiraran les mesures sense repetir el TAR.");
                             nota.AppendLine();
-                            nota.AppendLine("   1r) Afebril (<38∫C) en absËncia de tractament antipirËtic i amb milloria de sÌmptomes >24 hores.");
+                            nota.AppendLine("- Es permetr√† l'entrada d'un familiar fent √∫s de mascareta quir√∫rgica i pr√®via i posterior higiene de mans.");
+                            nota.AppendLine("- Si el pacient √©s donat d‚Äôalta a domicili abans de finalitzar el per√≠ode d‚Äôa√Øllament, no ser√† necessari indicar a√Øllament domiciliari. Es donaran recomanacions generals.");
                             nota.AppendLine();
-                            nota.AppendLine("   2n) Un Test díAntigen R‡pid (TAR) negatiu al 5Ë dia.");
-                            nota.AppendLine();
-                            nota.AppendLine("Si el TAR al 5Ë dia encara Ès positiu, es mantindr‡ l'aÔllament fins al 7Ë i es retiraran les mesures sense repetir el TAR.");
-                            nota.AppendLine();
-                            nota.AppendLine("- Es permetr‡ l'entrada d'un familiar fent ˙s de mascareta quir˙rgica i prËvia i posterior higiene de mans.");
-                            nota.AppendLine();
-                            nota.AppendLine("- Si el pacient Ès donat díalta a domicili abans de finalitzar el perÌode díaÔllament, no ser‡ necessari indicar aÔllament domiciliari. Es donaran recomanacions generals.");
-                            nota.AppendLine();
-                            nota.AppendLine("Consulteu el protocol ´Vigil‡ncia, prevenciÛ i control de la infecciÛ respiratÚria aguda greu per virus respiratorisª disponible a la intranet.");
+                            nota.AppendLine("Consulteu el protocol ¬´Vigil√†ncia, prevenci√≥ i control de la infecci√≥ respirat√≤ria aguda greu per virus respiratoris¬ª disponible a la intranet.");
                             nota.AppendLine();
                             nota.AppendLine();
-                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensiÛ 2606 o al cercapersones 4383.");
+                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensi√≥ 2606 o al cercapersones 4383.");
 
 
-                            nota.AppendLine("Cas confirmat immunodeprimit asimptom‡tic o amb sÌmptomes lleus/moderats");
+                            nota.AppendLine("Cas confirmat immunodeprimit asimptom√†tic o amb s√≠mptomes lleus/moderats");
                             nota.AppendLine("========================================================================");
-                            nota.AppendLine($"Aquest pacient Ès un cas confirmat díinfecciÛ per {microorganisme} amb prova positiva del {dataPositiu}");
+                            nota.AppendLine($"Aquest pacient √©s un cas confirmat d‚Äôinfecci√≥ per {microorganisme} amb prova positiva del {dataPositiu}");
                             nota.AppendLine();
-                            nota.AppendLine($"Donat que es tracta d'un pacient amb alt grau díimmunosupressiÛ perÚ asimptom‡tic o amb sÌmptomes lleus/moderats, es recomana:");
+                            nota.AppendLine($"Donat que es tracta d'un pacient amb alt grau d‚Äôimmunosupressi√≥ per√≤ asimptom√†tic o amb s√≠mptomes lleus/moderats, es recomana:");
                             nota.AppendLine();
-                            nota.AppendLine("- AplicaciÛ estricta de les precaucions d'aÔllament per gotes i extremar les precaucions est‡ndard, especialment la higiene de mans amb soluciÛ alcohÚlica.");
+                            nota.AppendLine("- Aplicaci√≥ estricta de les precaucions d'a√Øllament per gotes i extremar les precaucions est√†ndard, especialment la higiene de mans amb soluci√≥ alcoh√≤lica.");
+                            nota.AppendLine("- Mantenir l‚Äôa√Øllament un m√≠nim de 7 dies.");
                             nota.AppendLine();
-                            nota.AppendLine("- Mantenir líaÔllament un mÌnim de 7 dies.");
+                            nota.AppendLine("Els criteris per finalitzar l‚Äôa√Øllament s√≥n:");
                             nota.AppendLine();
+                            nota.AppendLine("   1r) Afebril (<38¬∫C) en abs√®ncia de tractament antipir√®tic i amb milloria de s√≠mptomes >24 hores.");
+                            nota.AppendLine("   2n) Un Test d‚ÄôAntigen R√†pid (TAR) negatiu al 7√® dia.");
                             nota.AppendLine();
-                            nota.AppendLine("Els criteris per finalitzar líaÔllament sÛn:");
+                            nota.AppendLine("Si el TAR al dia 7 √©s positiu, es mantindr√† l'a√Øllament fins el dia 10 i es repetir√† el TAR.");
+                            nota.AppendLine("Si el TAR al dia 10 √©s positiu, es mantindr√† l'a√Øllament fins el dia 14 i es repetir√† el TAR.");
+                            nota.AppendLine("Si el TAR al dia 14 √©s positiu, es mantindr√† l'a√Øllament fins el dia 21 i es valorar√† el cas de forma conjunta pels serveis de Medicina Preventiva, Malalties Infeccioses i els metges responsables del pacient.");
                             nota.AppendLine();
-                            nota.AppendLine("   1r) Afebril (<38∫C) en absËncia de tractament antipirËtic i amb milloria de sÌmptomes >24 hores.");
+                            nota.AppendLine("- Es permetr√† l'entrada d'un familiar fent √∫s de mascareta quir√∫rgica i pr√®via i posterior higiene de mans.");
+                            nota.AppendLine("- Si el pacient √©s donat d‚Äôalta a domicili abans de finalitzar el per√≠ode d‚Äôa√Øllament, no ser√† necessari indicar a√Øllament domiciliari. Es donaran recomanacions generals.");
                             nota.AppendLine();
-                            nota.AppendLine("   2n) Un Test díAntigen R‡pid (TAR) negatiu al 7Ë dia.");
-                            nota.AppendLine();
-                            nota.AppendLine("Si el TAR al dia 7 Ès positiu, es mantindr‡ l'aÔllament fins el dia 10 i es repetir‡ el TAR.");
-                            nota.AppendLine();
-                            nota.AppendLine("Si el TAR al dia 10 Ès positiu, es mantindr‡ l'aÔllament fins el dia 14 i es repetir‡ el TAR.");
-                            nota.AppendLine();
-                            nota.AppendLine("Si el TAR al dia 14 Ès positiu, es mantindr‡ l'aÔllament fins el dia 21 i es valorar‡ el cas de forma conjunta pels serveis de Medicina Preventiva, Malalties Infeccioses i els metges responsables del pacient.");
-                            nota.AppendLine();
-                            nota.AppendLine("- Es permetr‡ l'entrada d'un familiar fent ˙s de mascareta quir˙rgica i prËvia i posterior higiene de mans.");
-                            nota.AppendLine();
-                            nota.AppendLine("- Si el pacient Ès donat díalta a domicili abans de finalitzar el perÌode díaÔllament, no ser‡ necessari indicar aÔllament domiciliari. Es donaran recomanacions generals.");
-                            nota.AppendLine();
-                            nota.AppendLine("Consulteu el protocol ´Vigil‡ncia, prevenciÛ i control de la infecciÛ respiratÚria aguda greu per virus respiratorisª disponible a la intranet.");
+                            nota.AppendLine("Consulteu el protocol ¬´Vigil√†ncia, prevenci√≥ i control de la infecci√≥ respirat√≤ria aguda greu per virus respiratoris¬ª disponible a la intranet.");
                             nota.AppendLine();
                             nota.AppendLine();
-                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensiÛ 2606 o al cercapersones 4383.");
+                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensi√≥ 2606 o al cercapersones 4383.");
 
 
-                            nota.AppendLine("Cas confirmat immunocompetent/immunodeprimit amb sÌmptomes greus");
+                            nota.AppendLine("Cas confirmat immunocompetent/immunodeprimit amb s√≠mptomes greus");
                             nota.AppendLine("================================================================");
-                            nota.AppendLine($"Aquest pacient Ès un cas confirmat díinfecciÛ per {microorganisme} amb prova positiva del {dataPositiu}");
+                            nota.AppendLine($"Aquest pacient √©s un cas confirmat d‚Äôinfecci√≥ per {microorganisme} amb prova positiva del {dataPositiu}");
                             nota.AppendLine();
-                            nota.AppendLine($"DonatDonat que es tracta d'un pacient immunocompetent o amb alt grau díimmunosupressiÛ i amb sÌmptomes greus, es recomana:");
+                            nota.AppendLine($"DonatDonat que es tracta d'un pacient immunocompetent o amb alt grau d‚Äôimmunosupressi√≥ i amb s√≠mptomes greus, es recomana:");
                             nota.AppendLine();
-                            nota.AppendLine("- AplicaciÛ estricta de les precaucions d'aÔllament per gotes i extremar les precaucions est‡ndard, especialment la higiene de mans amb soluciÛ alcohÚlica.");
+                            nota.AppendLine("- Aplicaci√≥ estricta de les precaucions d'a√Øllament per gotes i extremar les precaucions est√†ndard, especialment la higiene de mans amb soluci√≥ alcoh√≤lica.");
+                            nota.AppendLine("- Mantenir l‚Äôa√Øllament un m√≠nim de 14 dies.");
                             nota.AppendLine();
-                            nota.AppendLine("- Mantenir líaÔllament un mÌnim de 14 dies.");
+                            nota.AppendLine("Els criteris per finalitzar l‚Äôa√Øllament s√≥n:");
                             nota.AppendLine();
+                            nota.AppendLine("   1r) Afebril (<38¬∫C) en abs√®ncia de tractament antipir√®tic i amb milloria de s√≠mptomes >24 hores.");
+                            nota.AppendLine("   2n) Un Test d‚ÄôAntigen R√†pid (TAR) negatiu al 14√® dia.");
                             nota.AppendLine();
-                            nota.AppendLine("Els criteris per finalitzar líaÔllament sÛn:");
+                            nota.AppendLine("Si el TAR al dia 14 √©s positiu, es mantindr√† l'a√Øllament fins el dia 21 i es repetir√† novament el TAR.");
+                            nota.AppendLine("Si el TAR al dia 21 √©s positiu, es mantindr√† l'a√Øllament fins el dia 28 i es valorar√† el cas de forma conjunta pels serveis de Medicina Preventiva, Malalties Infeccioses i els metges responsables del pacient.");
                             nota.AppendLine();
-                            nota.AppendLine("   1r) Afebril (<38∫C) en absËncia de tractament antipirËtic i amb milloria de sÌmptomes >24 hores.");
+                            nota.AppendLine("- Es permetr√† l'entrada d'un familiar fent √∫s de mascareta quir√∫rgica i pr√®via i posterior higiene de mans.");
+                            nota.AppendLine("- Si el pacient √©s donat d‚Äôalta a domicili abans de finalitzar el per√≠ode d‚Äôa√Øllament, no ser√† necessari indicar a√Øllament domiciliari. Es donaran recomanacions generals.");
                             nota.AppendLine();
-                            nota.AppendLine("   2n) Un Test díAntigen R‡pid (TAR) negatiu al 14Ë dia.");
-                            nota.AppendLine();
-                            nota.AppendLine("Si el TAR al dia 14 Ès positiu, es mantindr‡ l'aÔllament fins el dia 21 i es repetir‡ novament el TAR.");
-                            nota.AppendLine();
-                            nota.AppendLine("Si el TAR al dia 21 Ès positiu, es mantindr‡ l'aÔllament fins el dia 28 i es valorar‡ el cas de forma conjunta pels serveis de Medicina Preventiva, Malalties Infeccioses i els metges responsables del pacient.");
-                            nota.AppendLine();
-                            nota.AppendLine("- Es permetr‡ l'entrada d'un familiar fent ˙s de mascareta quir˙rgica i prËvia i posterior higiene de mans.");
-                            nota.AppendLine();
-                            nota.AppendLine("- Si el pacient Ès donat díalta a domicili abans de finalitzar el perÌode díaÔllament, no ser‡ necessari indicar aÔllament domiciliari. Es donaran recomanacions generals.");
-                            nota.AppendLine();
-                            nota.AppendLine("Consulteu el protocol ´Vigil‡ncia, prevenciÛ i control de la infecciÛ respiratÚria aguda greu per virus respiratorisª disponible a la intranet.");
+                            nota.AppendLine("Consulteu el protocol ¬´Vigil√†ncia, prevenci√≥ i control de la infecci√≥ respirat√≤ria aguda greu per virus respiratoris¬ª disponible a la intranet.");
                             nota.AppendLine();
                             nota.AppendLine();
-                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensiÛ 2606 o al cercapersones 4383.");
+                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensi√≥ 2606 o al cercapersones 4383.");
 
                             break;
 
                         case 2:
 
                             // Tipus 2: Grip (virus Influenza) 
-                            nota.AppendLine("TIPUS 2. MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI”");
+                            nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI√ì (2)");
                             nota.AppendLine();
-                            nota.AppendLine($"El Servei de Medicina Preventiva i Salut P˙blica informa que el cultiu");
-                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} Ès positiu per {microorganisme}");
+                            nota.AppendLine($"El Servei de Medicina Preventiva i Salut P√∫blica informa que el cultiu");
+                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} √©s positiu per {microorganisme}");
                             nota.AppendLine();
-                            nota.AppendLine($"per la qual cosa s'han de seguir les seg¸ents precaucions per a reduir el risc de transmissiÛ per gotes:");
+                            nota.AppendLine($"per la qual cosa s'han de seguir les seg√ºents precaucions per a reduir el risc de transmissi√≥ per gotes:");
                             nota.AppendLine();
-                            nota.AppendLine("- Higiene de mans dels professionals amb productes de base alcohÚlica ABANS i DESPR…S del contacte amb líusuari o el seu entorn.");
-                            nota.AppendLine();
-                            nota.AppendLine("- ⁄s de mascareta quir˙rgica (i mascareta FFP3 quan hi hagi generaciÛ d'aerosols).");
-                            nota.AppendLine();
-                            nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higiËniques i de control de la infecciÛ.");
+                            nota.AppendLine("- Higiene de mans dels professionals amb productes de base alcoh√≤lica ABANS i DESPR√âS del contacte amb l‚Äôusuari o el seu entorn.");
+                            nota.AppendLine("- √ös de mascareta quir√∫rgica (i mascareta FFP3 quan hi hagi generaci√≥ d'aerosols).");
+                            nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higi√®niques i de control de la infecci√≥.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunocompetent:");
                             nota.AppendLine();
-                            nota.AppendLine("- Pot compartir habitaciÛ amb altres usuaris infectats pel mateix virus.");
-                            nota.AppendLine();
-                            nota.AppendLine("- Retirar les precaucions de gotes quan desaparegui la clÌnica de grip o hagin transcorregut 5 dies des del seu inici.");
+                            nota.AppendLine("- Pot compartir habitaci√≥ amb altres usuaris infectats pel mateix virus.");
+                            nota.AppendLine("- Retirar les precaucions de gotes quan desaparegui la cl√≠nica de grip o hagin transcorregut 5 dies des del seu inici.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunodeprimit:");
                             nota.AppendLine();
-                            nota.AppendLine("- Preferentment, es recomana habitaciÛ dí˙s individual.");
-                            nota.AppendLine();
+                            nota.AppendLine("- Preferentment, es recomana habitaci√≥ d‚Äô√∫s individual.");
                             nota.AppendLine("- Retirar les precaucions de gotes quan hagin transcorregut 7 dies des del seu inici.");
                             nota.AppendLine();
                             nota.AppendLine();
-                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensiÛ 2606 o al cercapersones 4383.");
+                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensi√≥ 2606 o al cercapersones 4383.");
 
 
                             break;
@@ -745,151 +726,126 @@ namespace MultirIntegraModulab
                         case 3:
 
                             // Tipus 3: VRS (virus respiratori sincicial)  
-                            nota.AppendLine("TIPUS 3. MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI”");
+                            nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI√ì (3)");
                             nota.AppendLine();
-                            nota.AppendLine($"El Servei de Medicina Preventiva i Salut P˙blica informa que el cultiu");
-                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} Ès positiu per {microorganisme}");
+                            nota.AppendLine($"El Servei de Medicina Preventiva i Salut P√∫blica informa que el cultiu");
+                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} √©s positiu per {microorganisme}");
                             nota.AppendLine();
-                            nota.AppendLine($"per la qual cosa s'han de seguir les seg¸ents precaucions per a reduir el risc de transmissiÛ per contacte i gotes, nomÈs en cas d'adult immunocompromËs i de pacient pedi‡tric:");
+                            nota.AppendLine($"per la qual cosa s'han de seguir les seg√ºents precaucions per a reduir el risc de transmissi√≥ per contacte i gotes, nom√©s en cas d'adult immunocomprom√®s i de pacient pedi√†tric:");
                             nota.AppendLine();
-                            nota.AppendLine("- Extremar les precaucions est‡ndard, especialment la higiene de mans amb productes de base alcohÚlica ABANS i DESPR…S del contacte amb líusuari o el seu entorn.");
-                            nota.AppendLine();
-                            nota.AppendLine("- ⁄s de mascareta quir˙rgica (i mascareta FFP3 quan hi hagi generaciÛ d'aerosols).");
-                            nota.AppendLine();
-                            nota.AppendLine("- ⁄s de guants si es preveu contacte amb líusuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPR…S del seu ˙s.");
-                            nota.AppendLine();
-                            nota.AppendLine("- ⁄s de bata d'un sol ˙s si es preveu la realitzaciÛ de cures, exploracions o contacte prÚxim a líusuari (i bata impermeable quan hi hagi risc d'esquitxades).");
-                            nota.AppendLine();
-                            nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higiËniques i de control de la infecciÛ. Evitar visitants pedi‡trics.");
-                            nota.AppendLine();
+                            nota.AppendLine("- Extremar les precaucions est√†ndard, especialment la higiene de mans amb productes de base alcoh√≤lica ABANS i DESPR√âS del contacte amb l‚Äôusuari o el seu entorn.");
+                            nota.AppendLine("- √ös de mascareta quir√∫rgica (i mascareta FFP3 quan hi hagi generaci√≥ d'aerosols).");
+                            nota.AppendLine("- √ös de guants si es preveu contacte amb l‚Äôusuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPR√âS del seu √∫s.");
+                            nota.AppendLine("- √ös de bata d'un sol √∫s si es preveu la realitzaci√≥ de cures, exploracions o contacte pr√≤xim a l‚Äôusuari (i bata impermeable quan hi hagi risc d'esquitxades).");
+                            nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higi√®niques i de control de la infecci√≥. Evitar visitants pedi√†trics.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunocompetent:");
                             nota.AppendLine();
-                            nota.AppendLine("- Pot compartir habitaciÛ amb altres usuaris infectats pel mateix virus.");
-                            nota.AppendLine();
-                            nota.AppendLine("- Retirar les precaucions de contacte i gotes quan desaparegui la clÌnica respiratÚria.");
+                            nota.AppendLine("- Pot compartir habitaci√≥ amb altres usuaris infectats pel mateix virus.");
+                            nota.AppendLine("- Retirar les precaucions de contacte i gotes quan desaparegui la cl√≠nica respirat√≤ria.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunodeprimit:");
                             nota.AppendLine();
-                            nota.AppendLine("- Preferentment, es recomana habitaciÛ dí˙s individual.");
+                            nota.AppendLine("- Preferentment, es recomana habitaci√≥ d‚Äô√∫s individual.");
+                            nota.AppendLine("- Mantenir les precaucions de contacte i gotes fins a una setmana despr√©s de la desaparici√≥ de la cl√≠nica respirat√≤ria.");
                             nota.AppendLine();
-                            nota.AppendLine("- Mantenir les precaucions de contacte i gotes fins a una setmana desprÈs de la desapariciÛ de la clÌnica respiratÚria.");
                             nota.AppendLine();
-                            nota.AppendLine();
-                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensiÛ 2606 o al cercapersones 4383.");
+                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensi√≥ 2606 o al cercapersones 4383.");
                             break;
 
 
                         case 4:
 
                             // Tipus 4: Adenovirus
-                            nota.AppendLine("TIPUS 4. MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI”");
+                            nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI√ì (4)");
                             nota.AppendLine();
-                            nota.AppendLine($"El Servei de Medicina Preventiva i Salut P˙blica informa que el cultiu");
-                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} Ès positiu per {microorganisme}");
+                            nota.AppendLine($"El Servei de Medicina Preventiva i Salut P√∫blica informa que el cultiu");
+                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} √©s positiu per {microorganisme}");
                             nota.AppendLine();
-                            nota.AppendLine($"per la qual cosa s'han de seguir les seg¸ents precaucions per a reduir el risc de transmissiÛ per contacte i gotes, nomÈs en cas d'adult immunocompromËs i de pacient pedi‡tric:");
+                            nota.AppendLine($"per la qual cosa s'han de seguir les seg√ºents precaucions per a reduir el risc de transmissi√≥ per contacte i gotes, nom√©s en cas d'adult immunocomprom√®s i de pacient pedi√†tric:");
                             nota.AppendLine();
-                            nota.AppendLine("- Extremar les precaucions est‡ndard, especialment la higiene de mans amb productes de base alcohÚlica ABANS i DESPR…S del contacte amb líusuari o el seu entorn.");
-                            nota.AppendLine();
-                            nota.AppendLine("- ⁄s de mascareta quir˙rgica (i mascareta FFP3 quan hi hagi generaciÛ d'aerosols).");
-                            nota.AppendLine();
-                            nota.AppendLine("- ⁄s de guants si es preveu contacte amb líusuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPR…S del seu ˙s.");
-                            nota.AppendLine();
-                            nota.AppendLine("- ⁄s de bata d'un sol ˙s si es preveu la realitzaciÛ de cures, exploracions o contacte prÚxim a líusuari (i bata impermeable quan hi hagi risc d'esquitxades).");
-                            nota.AppendLine();
-                            nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higiËniques i de control de la infecciÛ. Evitar visitants pedi‡trics.");
-                            nota.AppendLine();
+                            nota.AppendLine("- Extremar les precaucions est√†ndard, especialment la higiene de mans amb productes de base alcoh√≤lica ABANS i DESPR√âS del contacte amb l‚Äôusuari o el seu entorn.");
+                            nota.AppendLine("- √ös de mascareta quir√∫rgica (i mascareta FFP3 quan hi hagi generaci√≥ d'aerosols).");
+                            nota.AppendLine("- √ös de guants si es preveu contacte amb l‚Äôusuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPR√âS del seu √∫s.");
+                            nota.AppendLine("- √ös de bata d'un sol √∫s si es preveu la realitzaci√≥ de cures, exploracions o contacte pr√≤xim a l‚Äôusuari (i bata impermeable quan hi hagi risc d'esquitxades).");
+                            nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higi√®niques i de control de la infecci√≥. Evitar visitants pedi√†trics.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunocompetent:");
                             nota.AppendLine();
-                            nota.AppendLine("- Pot compartir habitaciÛ amb altres usuaris infectats pel mateix virus.");
-                            nota.AppendLine();
-                            nota.AppendLine("- Retirar les precaucions de contacte i gotes quan desaparegui la clÌnica respiratÚria.");
+                            nota.AppendLine("- Pot compartir habitaci√≥ amb altres usuaris infectats pel mateix virus.");
+                            nota.AppendLine("- Retirar les precaucions de contacte i gotes quan desaparegui la cl√≠nica respirat√≤ria.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunodeprimit:");
                             nota.AppendLine();
-                            nota.AppendLine("- Preferentment, es recomana habitaciÛ dí˙s individual.");
+                            nota.AppendLine("- Preferentment, es recomana habitaci√≥ d‚Äô√∫s individual.");
+                            nota.AppendLine("- Mantenir les precaucions de contacte i gotes fins a una setmana despr√©s de la desaparici√≥ de la cl√≠nica respirat√≤ria.");
                             nota.AppendLine();
-                            nota.AppendLine("- Mantenir les precaucions de contacte i gotes fins a una setmana desprÈs de la desapariciÛ de la clÌnica respiratÚria.");
                             nota.AppendLine();
-                            nota.AppendLine();
-                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensiÛ 2606 o al cercapersones 4383.");
+                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensi√≥ 2606 o al cercapersones 4383.");
                             break;
 
                         case 5:
 
                             // Tipus 5: Metapneumovirus 
-                            nota.AppendLine("TIPUS 5. MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI”");
+                            nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI√ì (5)");
                             nota.AppendLine();
-                            nota.AppendLine($"El Servei de Medicina Preventiva i Salut P˙blica informa que el cultiu");
-                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} Ès positiu per {microorganisme}");
+                            nota.AppendLine($"El Servei de Medicina Preventiva i Salut P√∫blica informa que el cultiu");
+                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} √©s positiu per {microorganisme}");
                             nota.AppendLine();
-                            nota.AppendLine($"per la qual cosa s'han de seguir les seg¸ents precaucions per a reduir el risc de transmissiÛ per contacte i gotes, nomÈs en cas d'adult immunocompromËs i de pacient pedi‡tric:");
+                            nota.AppendLine($"per la qual cosa s'han de seguir les seg√ºents precaucions per a reduir el risc de transmissi√≥ per contacte i gotes, nom√©s en cas d'adult immunocomprom√®s i de pacient pedi√†tric:");
                             nota.AppendLine();
-                            nota.AppendLine("- Extremar les precaucions est‡ndard, especialment la higiene de mans amb productes de base alcohÚlica ABANS i DESPR…S del contacte amb líusuari o el seu entorn.");
+                            nota.AppendLine("- Extremar les precaucions est√†ndard, especialment la higiene de mans amb productes de base alcoh√≤lica ABANS i DESPR√âS del contacte amb l‚Äôusuari o el seu entorn.");
+                            nota.AppendLine("- √ös de mascareta quir√∫rgica (i mascareta FFP3 quan hi hagi generaci√≥ d'aerosols).");
+                            nota.AppendLine("- √ös de guants si es preveu contacte amb l‚Äôusuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPR√âS del seu √∫s.");
+                            nota.AppendLine("- √ös de bata d'un sol √∫s si es preveu la realitzaci√≥ de cures, exploracions o contacte pr√≤xim a l‚Äôusuari (i bata impermeable quan hi hagi risc d'esquitxades).");
                             nota.AppendLine();
-                            nota.AppendLine("- ⁄s de mascareta quir˙rgica (i mascareta FFP3 quan hi hagi generaciÛ d'aerosols).");
-                            nota.AppendLine();
-                            nota.AppendLine("- ⁄s de guants si es preveu contacte amb líusuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPR…S del seu ˙s.");
-                            nota.AppendLine();
-                            nota.AppendLine("- ⁄s de bata d'un sol ˙s si es preveu la realitzaciÛ de cures, exploracions o contacte prÚxim a líusuari (i bata impermeable quan hi hagi risc d'esquitxades).");
-                            nota.AppendLine();
-                            nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higiËniques i de control de la infecciÛ. Evitar visitants pedi‡trics.");
-                            nota.AppendLine();
+                            nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higi√®niques i de control de la infecci√≥. Evitar visitants pedi√†trics.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunocompetent:");
                             nota.AppendLine();
-                            nota.AppendLine("- Pot compartir habitaciÛ amb altres usuaris infectats pel mateix virus.");
-                            nota.AppendLine();
-                            nota.AppendLine("- Retirar les precaucions de contacte i gotes quan desaparegui la clÌnica respiratÚria.");
+                            nota.AppendLine("- Pot compartir habitaci√≥ amb altres usuaris infectats pel mateix virus.");
+                            nota.AppendLine("- Retirar les precaucions de contacte i gotes quan desaparegui la cl√≠nica respirat√≤ria.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunodeprimit:");
                             nota.AppendLine();
-                            nota.AppendLine("- Preferentment, es recomana habitaciÛ dí˙s individual.");
+                            nota.AppendLine("- Preferentment, es recomana habitaci√≥ d‚Äô√∫s individual.");
+                            nota.AppendLine("- Mantenir les precaucions de contacte i gotes fins a una setmana despr√©s de la desaparici√≥ de la cl√≠nica respirat√≤ria.");
                             nota.AppendLine();
-                            nota.AppendLine("- Mantenir les precaucions de contacte i gotes fins a una setmana desprÈs de la desapariciÛ de la clÌnica respiratÚria.");
                             nota.AppendLine();
-                            nota.AppendLine();
-                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensiÛ 2606 o al cercapersones 4383.");
+                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensi√≥ 2606 o al cercapersones 4383.");
                             break;
 
 
                         case 6:
 
                             // Tipus 6: Altres virus respiratoris  
-                            nota.AppendLine("TIPUS 6. MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI”");
+                            nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCI√ì (6)");
                             nota.AppendLine();
-                            nota.AppendLine($"El Servei de Medicina Preventiva i Salut P˙blica informa que el cultiu");
-                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} Ès positiu per {microorganisme}");
+                            nota.AppendLine($"El Servei de Medicina Preventiva i Salut P√∫blica informa que el cultiu");
+                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} √©s positiu per {microorganisme}");
                             nota.AppendLine();
-                            nota.AppendLine($"per la qual cosa s'han de seguir les seg¸ents precaucions per a reduir el risc de transmissiÛ per gotes, nomÈs en cas d'adult immunocompromËs i de pacient pedi‡tric:");
+                            nota.AppendLine($"per la qual cosa s'han de seguir les seg√ºents precaucions per a reduir el risc de transmissi√≥ per gotes, nom√©s en cas d'adult immunocomprom√®s i de pacient pedi√†tric:");
                             nota.AppendLine();
-                            nota.AppendLine("- Extremar les precaucions est‡ndard, especialment la higiene de mans amb productes de base alcohÚlica ABANS i DESPR…S del contacte amb líusuari o el seu entorn.");
-                            nota.AppendLine();
-                            nota.AppendLine("- ⁄s de mascareta quir˙rgica (i mascareta FFP3 quan hi hagi generaciÛ d'aerosols).");
-                            nota.AppendLine();
-                            nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higiËniques i de control de la infecciÛ. Evitar visitants pedi‡trics.");
-                            nota.AppendLine();
+                            nota.AppendLine("- Extremar les precaucions est√†ndard, especialment la higiene de mans amb productes de base alcoh√≤lica ABANS i DESPR√âS del contacte amb l‚Äôusuari o el seu entorn.");
+                            nota.AppendLine("- √ös de mascareta quir√∫rgica (i mascareta FFP3 quan hi hagi generaci√≥ d'aerosols).");
+                            nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higi√®niques i de control de la infecci√≥. Evitar visitants pedi√†trics.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunocompetent:");
                             nota.AppendLine();
-                            nota.AppendLine("- Pot compartir habitaciÛ amb altres pacients amb infecciÛ respiratÚria que no estiguin immunodeprimits. Mantenir separaciÛ mÌnima díun metre.");
-                            nota.AppendLine();
-                            nota.AppendLine("- Retirar les precaucions de gotes quan desaparegui la clÌnica respiratÚria.");
+                            nota.AppendLine("- Pot compartir habitaci√≥ amb altres pacients amb infecci√≥ respirat√≤ria que no estiguin immunodeprimits. Mantenir separaci√≥ m√≠nima d‚Äôun metre.");
+                            nota.AppendLine("- Retirar les precaucions de gotes quan desaparegui la cl√≠nica respirat√≤ria.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunodeprimit:");
                             nota.AppendLine();
-                            nota.AppendLine("- Preferentment, es recomana habitaciÛ dí˙s individual.");
+                            nota.AppendLine("- Preferentment, es recomana habitaci√≥ d‚Äô√∫s individual.");
+                            nota.AppendLine("- Retirar les precaucions de gotes fins a una setmana despr√©s de la desaparici√≥ de la cl√≠nica respirat√≤ria.");
                             nota.AppendLine();
-                            nota.AppendLine("- Retirar les precaucions de gotes fins a una setmana desprÈs de la desapariciÛ de la clÌnica respiratÚria.");
                             nota.AppendLine();
-                            nota.AppendLine();
-                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensiÛ 2606 o al cercapersones 4383.");
+                            nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensi√≥ 2606 o al cercapersones 4383.");
                             break;
 
                         default:
-                            // Valor no esperat, registrar advertËncia
+                            // Valor no esperat, registrar advert√®ncia
                             Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Valor de nota_curs_clinic no esperat per VR: {tipusNota}");
                             break;
                     }
@@ -900,19 +856,19 @@ namespace MultirIntegraModulab
 
                 string notaFinal = nota.ToString().TrimEnd();
 
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}? Nota VR confeccionada: {diagnosticsAmbNota.Count} diagnÚstic(s) amb nota especificada");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}‚úîÔ∏è Nota VR confeccionada: {diagnosticsAmbNota.Count} diagn√≤stic(s) amb nota especificada");
 
                 return notaFinal;
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error confeccionant nota VR curs clÌnic per pacient {pacientSap}: {ex.Message}", ex);
+                Logger.Error($"Error confeccionant nota VR curs cl√≠nic per pacient {pacientSap}: {ex.Message}", ex);
                 return string.Empty;
             }
         }
 
         /// <summary>
-        /// Insereix una nota al curs clÌnic d'un pacient
+        /// Insereix una nota al curs cl√≠nic d'un pacient
         /// </summary>
         /// <param name="npat">Identificador del pacient</param>
         /// <param name="nota">Contingut de la nota</param>
@@ -922,27 +878,27 @@ namespace MultirIntegraModulab
         {
             if (string.IsNullOrWhiteSpace(npat))
             {
-                Logger.Warning("InserirNotaCursClinic: npat Ès null o buit");
+                Logger.Warning("InserirNotaCursClinic: npat √©s null o buit");
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(nota))
             {
-                Logger.Warning("InserirNotaCursClinic: nota Ès null o buida");
+                Logger.Warning("InserirNotaCursClinic: nota √©s null o buida");
                 return false;
             }
 
             // Validar tipus
             if (tipus != "M" && tipus != "R")
             {
-                Logger.Warning($"InserirNotaCursClinic: tipus '{tipus}' no v‡lid. S'utilitzar‡ 'M' per defecte");
+                Logger.Warning($"InserirNotaCursClinic: tipus '{tipus}' no v√†lid. S'utilitzar√† 'M' per defecte");
                 tipus = "M";
             }
 
             try
             {
                 string tipusText = tipus == "M" ? "MMR" : "VR";
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? Inserint nota curs clÌnic ({tipusText}) per pacient {npat}");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? Inserint nota curs cl√≠nic ({tipusText}) per pacient {npat}");
 
                 using (var conn = new MySqlConnection(_connectionString))
                 {
@@ -964,12 +920,12 @@ namespace MultirIntegraModulab
 
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}? Nota curs clÌnic ({tipusText}) inserida correctament ({rowsAffected} registre)");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}‚úÖ Nota curs cl√≠nic ({tipusText}) inserida correctament ({rowsAffected} registre)");
                             return true;
                         }
                         else
                         {
-                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? No s'ha inserit cap nota curs clÌnic");
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}‚ö†Ô∏è No s'ha inserit cap nota curs cl√≠nic");
                             return false;
                         }
                     }
@@ -977,7 +933,7 @@ namespace MultirIntegraModulab
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error inserint nota curs clÌnic per pacient {npat}: {ex.Message}", ex);
+                Logger.Error($"Error inserint nota curs cl√≠nic per pacient {npat}: {ex.Message}", ex);
                 return false;
             }
         }
