@@ -579,31 +579,44 @@ namespace MultirIntegraModulab
                     return string.Empty;
                 }
 
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Numero de diagnòstics VR amb tipus de nota: {diagnosticsAmbNota.Count}");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Nombre de diagnòstics VR amb tipus de nota: {diagnosticsAmbNota.Count}");
+
+                // Agrupar diagnòstics per tipus de nota
+                var diagnosticsPerTipus = diagnosticsAmbNota
+                    .GroupBy(d => d.MicroorganismeNotaCursClinic.Value)
+                    .OrderBy(g => g.Key)
+                    .ToList();
+
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Nombre de tipus de nota diferents: {diagnosticsPerTipus.Count}");
 
                 // Confeccionar la nota
                 var nota = new StringBuilder();
 
-                // Processar cada diagnòstic VR amb nota i generar el text segons el tipus de nota
-                foreach (var diagnostic in diagnosticsAmbNota)
+                // Processar cada tipus de nota
+                foreach (var grupTipusNota in diagnosticsPerTipus)
                 {
-                    // Tipus de mostra
-                    string tipusMostra = !string.IsNullOrWhiteSpace(diagnostic.DescripcioTipusMostra)
-                        ? diagnostic.DescripcioTipusMostra
-                        : diagnostic.TipusMostra ?? "N/D";
+                    int tipusNota = grupTipusNota.Key;
+                    var diagnosticsGrup = grupTipusNota.ToList();
 
-                    // Microorganisme (Virus Respiratori)
-                    string microorganisme = diagnostic.Microorganisme ?? "N/D";
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Processant {diagnosticsGrup.Count} diagnòstic(s) amb el tipus de nota {tipusNota}");
 
-                    // Data del darrer positiu
-                    string dataPositiu = diagnostic.DataDarrerPositiu.HasValue
-                        ? diagnostic.DataDarrerPositiu.Value.ToString("dd/MM/yyyy")
-                        : "N/D";
+                    // Generar el llistat de mostres comú per tots els tipus
+                    var llistatMostres = new StringBuilder();
+                    foreach (var diagnostic in diagnosticsGrup)
+                    {
+                        string tipusMostra = !string.IsNullOrWhiteSpace(diagnostic.DescripcioTipusMostra)
+                            ? diagnostic.DescripcioTipusMostra
+                            : diagnostic.TipusMostra ?? "N/D";
 
-                    
-                    // Obtenir el valor de nota_curs_clinic del microorganisme
-                    int tipusNota = diagnostic.MicroorganismeNotaCursClinic.GetValueOrDefault();
+                        string microorganisme = diagnostic.Microorganisme ?? "N/D";
 
+                        string dataPositiu = diagnostic.DataDarrerPositiu.HasValue
+                            ? diagnostic.DataDarrerPositiu.Value.ToString("dd/MM/yyyy")
+                            : "N/D";
+
+                        llistatMostres.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} és positiu per {microorganisme}");
+                        llistatMostres.AppendLine();
+                    }
 
                     // Generar text específic segons el tipus de nota utilitzant switch case
                     switch (tipusNota)
@@ -614,77 +627,78 @@ namespace MultirIntegraModulab
                             nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ  (1)");
                             nota.AppendLine();
 
+                            nota.Append(llistatMostres);
+                            nota.AppendLine();
+
                             nota.AppendLine("Cas confirmat immunocompetent asimptomàtic o amb símptomes lleus/moderats");
                             nota.AppendLine("=========================================================================");
-                            nota.AppendLine($"Aquest pacient és un cas confirmat d’infecció per {microorganisme} amb prova positiva del {dataPositiu}");
+                            nota.AppendLine($"Aquest pacient és un cas confirmat d'infecció per {diagnosticsGrup[0].Microorganisme ?? "N/D"} amb prova positiva del {(diagnosticsGrup[0].DataDarrerPositiu.HasValue ? diagnosticsGrup[0].DataDarrerPositiu.Value.ToString("dd/MM/yyyy") : "N/D")}");
                             nota.AppendLine();
                             nota.AppendLine($"Donat que es tracta d'un pacient immunocompetent amb símptomes lleus/moderats es recomana:");
                             nota.AppendLine();
                             nota.AppendLine("- Aplicació estricta de les precaucions d'aïllament per gotes i extremar les precaucions estàndard, especialment la higiene de mans amb solució alcohòlica.");
                             nota.AppendLine("- L'aïllament es mantindrà mentre que el malalt romangui amb símptomes un mínim de 5 dies.");
                             nota.AppendLine();
-                            nota.AppendLine("Els criteris per finalitzar l’aïllament són:");
+                            nota.AppendLine("Els criteris per finalitzar l'aïllament són:");
                             nota.AppendLine();
                             nota.AppendLine("   1r) Afebril (<38ºC) en absència de tractament antipirètic i amb milloria de símptomes >24 hores.");
-                            nota.AppendLine("   2n) Un Test d’Antigen Ràpid (TAR) negatiu al 5è dia.");
+                            nota.AppendLine("   2n) Un Test d'Antigen Ràpid (TAR) negatiu al 5è dia.");
                             nota.AppendLine();
                             nota.AppendLine("Si el TAR al 5è dia encara és positiu, es mantindrà l'aïllament fins al 7è i es retiraran les mesures sense repetir el TAR.");
                             nota.AppendLine();
                             nota.AppendLine("- Es permetrà l'entrada d'un familiar fent ús de mascareta quirúrgica i prèvia i posterior higiene de mans.");
-                            nota.AppendLine("- Si el pacient és donat d’alta a domicili abans de finalitzar el període d’aïllament, no serà necessari indicar aïllament domiciliari. Es donaran recomanacions generals.");
+                            nota.AppendLine("- Si el pacient és donat d'alta a domicili abans de finalitzar el període d'aïllament, no serà necessari indicar aïllament domiciliari. Es donaran recomanacions generals.");
                             nota.AppendLine();
                             nota.AppendLine("Consulteu el protocol «Vigilància, prevenció i control de la infecció respiratòria aguda greu per virus respiratoris» disponible a la intranet.");
                             nota.AppendLine();
                             nota.AppendLine();
                             nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensió 2606 o al cercapersones 4383.");
 
-
                             nota.AppendLine("Cas confirmat immunodeprimit asimptomàtic o amb símptomes lleus/moderats");
                             nota.AppendLine("========================================================================");
-                            nota.AppendLine($"Aquest pacient és un cas confirmat d’infecció per {microorganisme} amb prova positiva del {dataPositiu}");
+                            nota.AppendLine($"Aquest pacient és un cas confirmat d'infecció per {diagnosticsGrup[0].Microorganisme ?? "N/D"} amb prova positiva del {(diagnosticsGrup[0].DataDarrerPositiu.HasValue ? diagnosticsGrup[0].DataDarrerPositiu.Value.ToString("dd/MM/yyyy") : "N/D")}");
                             nota.AppendLine();
-                            nota.AppendLine($"Donat que es tracta d'un pacient amb alt grau d’immunosupressió però asimptomàtic o amb símptomes lleus/moderats, es recomana:");
+                            nota.AppendLine($"Donat que es tracta d'un pacient amb alt grau d'immunosupressió però asimptomàtic o amb símptomes lleus/moderats, es recomana:");
                             nota.AppendLine();
                             nota.AppendLine("- Aplicació estricta de les precaucions d'aïllament per gotes i extremar les precaucions estàndard, especialment la higiene de mans amb solució alcohòlica.");
-                            nota.AppendLine("- Mantenir l’aïllament un mínim de 7 dies.");
+                            nota.AppendLine("- Mantenir l'aïllament un mínim de 7 dies.");
                             nota.AppendLine();
-                            nota.AppendLine("Els criteris per finalitzar l’aïllament són:");
+                            nota.AppendLine("Els criteris per finalitzar l'aïllament són:");
                             nota.AppendLine();
                             nota.AppendLine("   1r) Afebril (<38ºC) en absència de tractament antipirètic i amb milloria de símptomes >24 hores.");
-                            nota.AppendLine("   2n) Un Test d’Antigen Ràpid (TAR) negatiu al 7è dia.");
+                            nota.AppendLine("   2n) Un Test d'Antigen Ràpid (TAR) negatiu al 7è dia.");
                             nota.AppendLine();
                             nota.AppendLine("Si el TAR al dia 7 és positiu, es mantindrà l'aïllament fins el dia 10 i es repetirà el TAR.");
                             nota.AppendLine("Si el TAR al dia 10 és positiu, es mantindrà l'aïllament fins el dia 14 i es repetirà el TAR.");
                             nota.AppendLine("Si el TAR al dia 14 és positiu, es mantindrà l'aïllament fins el dia 21 i es valorarà el cas de forma conjunta pels serveis de Medicina Preventiva, Malalties Infeccioses i els metges responsables del pacient.");
                             nota.AppendLine();
                             nota.AppendLine("- Es permetrà l'entrada d'un familiar fent ús de mascareta quirúrgica i prèvia i posterior higiene de mans.");
-                            nota.AppendLine("- Si el pacient és donat d’alta a domicili abans de finalitzar el període d’aïllament, no serà necessari indicar aïllament domiciliari. Es donaran recomanacions generals.");
+                            nota.AppendLine("- Si el pacient és donat d'alta a domicili abans de finalitzar el període d'aïllament, no serà necessari indicar aïllament domiciliari. Es donaran recomanacions generals.");
                             nota.AppendLine();
                             nota.AppendLine("Consulteu el protocol «Vigilància, prevenció i control de la infecció respiratòria aguda greu per virus respiratoris» disponible a la intranet.");
                             nota.AppendLine();
                             nota.AppendLine();
                             nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensió 2606 o al cercapersones 4383.");
 
-
                             nota.AppendLine("Cas confirmat immunocompetent/immunodeprimit amb símptomes greus");
                             nota.AppendLine("================================================================");
-                            nota.AppendLine($"Aquest pacient és un cas confirmat d’infecció per {microorganisme} amb prova positiva del {dataPositiu}");
+                            nota.AppendLine($"Aquest pacient és un cas confirmat d'infecció per {diagnosticsGrup[0].Microorganisme ?? "N/D"} amb prova positiva del {(diagnosticsGrup[0].DataDarrerPositiu.HasValue ? diagnosticsGrup[0].DataDarrerPositiu.Value.ToString("dd/MM/yyyy") : "N/D")}");
                             nota.AppendLine();
-                            nota.AppendLine($"DonatDonat que es tracta d'un pacient immunocompetent o amb alt grau d’immunosupressió i amb símptomes greus, es recomana:");
+                            nota.AppendLine($"Donat que es tracta d'un pacient immunocompetent o amb alt grau d'immunosupressió i amb símptomes greus, es recomana:");
                             nota.AppendLine();
                             nota.AppendLine("- Aplicació estricta de les precaucions d'aïllament per gotes i extremar les precaucions estàndard, especialment la higiene de mans amb solució alcohòlica.");
-                            nota.AppendLine("- Mantenir l’aïllament un mínim de 14 dies.");
+                            nota.AppendLine("- Mantenir l'aïllament un mínim de 14 dies.");
                             nota.AppendLine();
-                            nota.AppendLine("Els criteris per finalitzar l’aïllament són:");
+                            nota.AppendLine("Els criteris per finalitzar l'aïllament són:");
                             nota.AppendLine();
                             nota.AppendLine("   1r) Afebril (<38ºC) en absència de tractament antipirètic i amb milloria de símptomes >24 hores.");
-                            nota.AppendLine("   2n) Un Test d’Antigen Ràpid (TAR) negatiu al 14è dia.");
+                            nota.AppendLine("   2n) Un Test d'Antigen Ràpid (TAR) negatiu al 14è dia.");
                             nota.AppendLine();
                             nota.AppendLine("Si el TAR al dia 14 és positiu, es mantindrà l'aïllament fins el dia 21 i es repetirà novament el TAR.");
                             nota.AppendLine("Si el TAR al dia 21 és positiu, es mantindrà l'aïllament fins el dia 28 i es valorarà el cas de forma conjunta pels serveis de Medicina Preventiva, Malalties Infeccioses i els metges responsables del pacient.");
                             nota.AppendLine();
                             nota.AppendLine("- Es permetrà l'entrada d'un familiar fent ús de mascareta quirúrgica i prèvia i posterior higiene de mans.");
-                            nota.AppendLine("- Si el pacient és donat d’alta a domicili abans de finalitzar el període d’aïllament, no serà necessari indicar aïllament domiciliari. Es donaran recomanacions generals.");
+                            nota.AppendLine("- Si el pacient és donat d'alta a domicili abans de finalitzar el període d'aïllament, no serà necessari indicar aïllament domiciliari. Es donaran recomanacions generals.");
                             nota.AppendLine();
                             nota.AppendLine("Consulteu el protocol «Vigilància, prevenció i control de la infecció respiratòria aguda greu per virus respiratoris» disponible a la intranet.");
                             nota.AppendLine();
@@ -699,11 +713,13 @@ namespace MultirIntegraModulab
                             nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ (2)");
                             nota.AppendLine();
                             nota.AppendLine($"El Servei de Medicina Preventiva i Salut Pública informa que el cultiu");
-                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} és positiu per {microorganisme}");
+                            
+                            nota.Append(llistatMostres);
                             nota.AppendLine();
+                            
                             nota.AppendLine($"per la qual cosa s'han de seguir les següents precaucions per a reduir el risc de transmissió per gotes:");
                             nota.AppendLine();
-                            nota.AppendLine("- Higiene de mans dels professionals amb productes de base alcohòlica ABANS i DESPRÉS del contacte amb l’usuari o el seu entorn.");
+                            nota.AppendLine("- Higiene de mans dels professionals amb productes de base alcohòlica ABANS i DESPRÉS del contacte amb l'usuari o el seu entorn.");
                             nota.AppendLine("- Ús de mascareta quirúrgica (i mascareta FFP3 quan hi hagi generació d'aerosols).");
                             nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higièniques i de control de la infecció.");
                             nota.AppendLine();
@@ -714,12 +730,11 @@ namespace MultirIntegraModulab
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunodeprimit:");
                             nota.AppendLine();
-                            nota.AppendLine("- Preferentment, es recomana habitació d’ús individual.");
+                            nota.AppendLine("- Preferentment, es recomana habitació d'ús individual.");
                             nota.AppendLine("- Retirar les precaucions de gotes quan hagin transcorregut 7 dies des del seu inici.");
                             nota.AppendLine();
                             nota.AppendLine();
                             nota.AppendLine("En cas de dubtes o consultes podeu contactar amb el servei a l'extensió 2606 o al cercapersones 4383.");
-
 
                             break;
 
@@ -729,14 +744,16 @@ namespace MultirIntegraModulab
                             nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ (3)");
                             nota.AppendLine();
                             nota.AppendLine($"El Servei de Medicina Preventiva i Salut Pública informa que el cultiu");
-                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} és positiu per {microorganisme}");
+                            
+                            nota.Append(llistatMostres);
                             nota.AppendLine();
+                            
                             nota.AppendLine($"per la qual cosa s'han de seguir les següents precaucions per a reduir el risc de transmissió per contacte i gotes, només en cas d'adult immunocompromès i de pacient pediàtric:");
                             nota.AppendLine();
-                            nota.AppendLine("- Extremar les precaucions estàndard, especialment la higiene de mans amb productes de base alcohòlica ABANS i DESPRÉS del contacte amb l’usuari o el seu entorn.");
+                            nota.AppendLine("- Extremar les precaucions estàndard, especialment la higiene de mans amb productes de base alcohòlica ABANS i DESPRÉS del contacte amb l'usuari o el seu entorn.");
                             nota.AppendLine("- Ús de mascareta quirúrgica (i mascareta FFP3 quan hi hagi generació d'aerosols).");
-                            nota.AppendLine("- Ús de guants si es preveu contacte amb l’usuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPRÉS del seu ús.");
-                            nota.AppendLine("- Ús de bata d'un sol ús si es preveu la realització de cures, exploracions o contacte pròxim a l’usuari (i bata impermeable quan hi hagi risc d'esquitxades).");
+                            nota.AppendLine("- Ús de guants si es preveu contacte amb l'usuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPRÉS del seu ús.");
+                            nota.AppendLine("- Ús de bata d'un sol ús si es preveu la realització de cures, exploracions o contacte pròxim a l'usuari (i bata impermeable quan hi hagi risc d'esquitxades).");
                             nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higièniques i de control de la infecció. Evitar visitants pediàtrics.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunocompetent:");
@@ -746,7 +763,7 @@ namespace MultirIntegraModulab
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunodeprimit:");
                             nota.AppendLine();
-                            nota.AppendLine("- Preferentment, es recomana habitació d’ús individual.");
+                            nota.AppendLine("- Preferentment, es recomana habitació d'ús individual.");
                             nota.AppendLine("- Mantenir les precaucions de contacte i gotes fins a una setmana després de la desaparició de la clínica respiratòria.");
                             nota.AppendLine();
                             nota.AppendLine();
@@ -760,14 +777,16 @@ namespace MultirIntegraModulab
                             nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ (4)");
                             nota.AppendLine();
                             nota.AppendLine($"El Servei de Medicina Preventiva i Salut Pública informa que el cultiu");
-                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} és positiu per {microorganisme}");
+                            
+                            nota.Append(llistatMostres);
                             nota.AppendLine();
+                            
                             nota.AppendLine($"per la qual cosa s'han de seguir les següents precaucions per a reduir el risc de transmissió per contacte i gotes, només en cas d'adult immunocompromès i de pacient pediàtric:");
                             nota.AppendLine();
-                            nota.AppendLine("- Extremar les precaucions estàndard, especialment la higiene de mans amb productes de base alcohòlica ABANS i DESPRÉS del contacte amb l’usuari o el seu entorn.");
+                            nota.AppendLine("- Extremar les precaucions estàndard, especialment la higiene de mans amb productes de base alcohòlica ABANS i DESPRÉS del contacte amb l'usuari o el seu entorn.");
                             nota.AppendLine("- Ús de mascareta quirúrgica (i mascareta FFP3 quan hi hagi generació d'aerosols).");
-                            nota.AppendLine("- Ús de guants si es preveu contacte amb l’usuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPRÉS del seu ús.");
-                            nota.AppendLine("- Ús de bata d'un sol ús si es preveu la realització de cures, exploracions o contacte pròxim a l’usuari (i bata impermeable quan hi hagi risc d'esquitxades).");
+                            nota.AppendLine("- Ús de guants si es preveu contacte amb l'usuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPRÉS del seu ús.");
+                            nota.AppendLine("- Ús de bata d'un sol ús si es preveu la realització de cures, exploracions o contacte pròxim a l'usuari (i bata impermeable quan hi hagi risc d'esquitxades).");
                             nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higièniques i de control de la infecció. Evitar visitants pediàtrics.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunocompetent:");
@@ -777,7 +796,7 @@ namespace MultirIntegraModulab
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunodeprimit:");
                             nota.AppendLine();
-                            nota.AppendLine("- Preferentment, es recomana habitació d’ús individual.");
+                            nota.AppendLine("- Preferentment, es recomana habitació d'ús individual.");
                             nota.AppendLine("- Mantenir les precaucions de contacte i gotes fins a una setmana després de la desaparició de la clínica respiratòria.");
                             nota.AppendLine();
                             nota.AppendLine();
@@ -790,14 +809,16 @@ namespace MultirIntegraModulab
                             nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ (5)");
                             nota.AppendLine();
                             nota.AppendLine($"El Servei de Medicina Preventiva i Salut Pública informa que el cultiu");
-                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} és positiu per {microorganisme}");
+                            
+                            nota.Append(llistatMostres);
                             nota.AppendLine();
+                            
                             nota.AppendLine($"per la qual cosa s'han de seguir les següents precaucions per a reduir el risc de transmissió per contacte i gotes, només en cas d'adult immunocompromès i de pacient pediàtric:");
                             nota.AppendLine();
-                            nota.AppendLine("- Extremar les precaucions estàndard, especialment la higiene de mans amb productes de base alcohòlica ABANS i DESPRÉS del contacte amb l’usuari o el seu entorn.");
+                            nota.AppendLine("- Extremar les precaucions estàndard, especialment la higiene de mans amb productes de base alcohòlica ABANS i DESPRÉS del contacte amb l'usuari o el seu entorn.");
                             nota.AppendLine("- Ús de mascareta quirúrgica (i mascareta FFP3 quan hi hagi generació d'aerosols).");
-                            nota.AppendLine("- Ús de guants si es preveu contacte amb l’usuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPRÉS del seu ús.");
-                            nota.AppendLine("- Ús de bata d'un sol ús si es preveu la realització de cures, exploracions o contacte pròxim a l’usuari (i bata impermeable quan hi hagi risc d'esquitxades).");
+                            nota.AppendLine("- Ús de guants si es preveu contacte amb l'usuari o els seus fluids corporals. Fer sempre higiene de mans ABANS i DESPRÉS del seu ús.");
+                            nota.AppendLine("- Ús de bata d'un sol ús si es preveu la realització de cures, exploracions o contacte pròxim a l'usuari (i bata impermeable quan hi hagi risc d'esquitxades).");
                             nota.AppendLine();
                             nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higièniques i de control de la infecció. Evitar visitants pediàtrics.");
                             nota.AppendLine();
@@ -808,7 +829,7 @@ namespace MultirIntegraModulab
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunodeprimit:");
                             nota.AppendLine();
-                            nota.AppendLine("- Preferentment, es recomana habitació d’ús individual.");
+                            nota.AppendLine("- Preferentment, es recomana habitació d'ús individual.");
                             nota.AppendLine("- Mantenir les precaucions de contacte i gotes fins a una setmana després de la desaparició de la clínica respiratòria.");
                             nota.AppendLine();
                             nota.AppendLine();
@@ -822,22 +843,24 @@ namespace MultirIntegraModulab
                             nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ (6)");
                             nota.AppendLine();
                             nota.AppendLine($"El Servei de Medicina Preventiva i Salut Pública informa que el cultiu");
-                            nota.AppendLine($"    - {tipusMostra} cursat el dia {dataPositiu} és positiu per {microorganisme}");
+                            
+                            nota.Append(llistatMostres);
                             nota.AppendLine();
+                            
                             nota.AppendLine($"per la qual cosa s'han de seguir les següents precaucions per a reduir el risc de transmissió per gotes, només en cas d'adult immunocompromès i de pacient pediàtric:");
                             nota.AppendLine();
-                            nota.AppendLine("- Extremar les precaucions estàndard, especialment la higiene de mans amb productes de base alcohòlica ABANS i DESPRÉS del contacte amb l’usuari o el seu entorn.");
+                            nota.AppendLine("- Extremar les precaucions estàndard, especialment la higiene de mans amb productes de base alcohòlica ABANS i DESPRÉS del contacte amb l'usuari o el seu entorn.");
                             nota.AppendLine("- Ús de mascareta quirúrgica (i mascareta FFP3 quan hi hagi generació d'aerosols).");
                             nota.AppendLine("- Limitar el nombre de visites i supervisar el seu correcte compliment en les mesures higièniques i de control de la infecció. Evitar visitants pediàtrics.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunocompetent:");
                             nota.AppendLine();
-                            nota.AppendLine("- Pot compartir habitació amb altres pacients amb infecció respiratòria que no estiguin immunodeprimits. Mantenir separació mínima d’un metre.");
+                            nota.AppendLine("- Pot compartir habitació amb altres pacients amb infecció respiratòria que no estiguin immunodeprimits. Mantenir separació mínima d'un metre.");
                             nota.AppendLine("- Retirar les precaucions de gotes quan desaparegui la clínica respiratòria.");
                             nota.AppendLine();
                             nota.AppendLine("Pacient immunodeprimit:");
                             nota.AppendLine();
-                            nota.AppendLine("- Preferentment, es recomana habitació d’ús individual.");
+                            nota.AppendLine("- Preferentment, es recomana habitació d'ús individual.");
                             nota.AppendLine("- Retirar les precaucions de gotes fins a una setmana després de la desaparició de la clínica respiratòria.");
                             nota.AppendLine();
                             nota.AppendLine();
@@ -850,9 +873,9 @@ namespace MultirIntegraModulab
                             break;
                     }
 
+                    // Afegir separació entre diferents tipus de nota
                     nota.AppendLine();
                 }
-
 
                 string notaFinal = nota.ToString().TrimEnd();
 
@@ -941,3 +964,4 @@ namespace MultirIntegraModulab
         #endregion
     }
 }
+
