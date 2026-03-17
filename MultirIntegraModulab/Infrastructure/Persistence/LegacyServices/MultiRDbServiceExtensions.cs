@@ -1780,15 +1780,21 @@ namespace MultirIntegraModulab
                 var mecanismes = new List<string>();
 
                 // Recollir tots els mecanismes no nuls del resultat
-                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia1Id))
+                // NORMALITZAR: tractar "NOCOD" com a buit per evitar falsos positius en detecció de canvis
+                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia1Id) && 
+                    !string.Equals(resultat.MecanismeResistencia1Id, "NOCOD", StringComparison.OrdinalIgnoreCase))
                     mecanismes.Add(resultat.MecanismeResistencia1Id.Trim());
-                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia2Id))
+                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia2Id) && 
+                    !string.Equals(resultat.MecanismeResistencia2Id, "NOCOD", StringComparison.OrdinalIgnoreCase))
                     mecanismes.Add(resultat.MecanismeResistencia2Id.Trim());
-                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia3Id))
+                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia3Id) && 
+                    !string.Equals(resultat.MecanismeResistencia3Id, "NOCOD", StringComparison.OrdinalIgnoreCase))
                     mecanismes.Add(resultat.MecanismeResistencia3Id.Trim());
-                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia4Id))
+                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia4Id) && 
+                    !string.Equals(resultat.MecanismeResistencia4Id, "NOCOD", StringComparison.OrdinalIgnoreCase))
                     mecanismes.Add(resultat.MecanismeResistencia4Id.Trim());
-                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia5Id))
+                if (!string.IsNullOrWhiteSpace(resultat.MecanismeResistencia5Id) && 
+                    !string.Equals(resultat.MecanismeResistencia5Id, "NOCOD", StringComparison.OrdinalIgnoreCase))
                     mecanismes.Add(resultat.MecanismeResistencia5Id.Trim());
 
                 // FILTRE: només considerem combinacions POSITIVES
@@ -1837,8 +1843,8 @@ namespace MultirIntegraModulab
                 }
                 else
                 {
-                    // Si no té mecanismes, crear una combinació només amb el microorganisme
-                    combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganismeCodi, "NOCOD"));
+                    // Si no té mecanismes, crear una combinació només amb el microorganisme (sense NOCOD)
+                    combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganismeCodi, ""));
                 }
             }
 
@@ -2134,8 +2140,6 @@ namespace MultirIntegraModulab
                             AND pd.mecanisme != @mecanisme";
                     }
 
-// HOLACARACOLA
-
                     sql += @"
                         ORDER BY pd.id";
 
@@ -2354,7 +2358,7 @@ namespace MultirIntegraModulab
                     // Afegir condició per filtrar per microorganisme si s'ha proporcionat
                     if (!string.IsNullOrWhiteSpace(microorganisme))
                     {
-                    sql += @"
+                        sql += @"
                             AND pd.microorganisme != @microorganisme";
                     }
 
