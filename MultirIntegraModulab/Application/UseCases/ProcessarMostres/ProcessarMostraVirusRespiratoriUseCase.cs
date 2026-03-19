@@ -185,8 +185,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     resultat.ResultatsProcessats++;
                 }
 
-                // FASE 3: GENERAR NOTA CURS CLÍNIC (si s'han creat diagnòstics)
-                if (resultat.DiagnosticsCreats > 0)
+                // FASE 3: GENERAR NOTA CURS CLÍNIC (si s'han creat o ja existien diagnòstics)
+                if (resultat.DiagnosticsCreats > 0 || resultat.DiagnosticsExistents > 0)
                 {
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Procedint a crear nota VR del curs clínic...");
                     

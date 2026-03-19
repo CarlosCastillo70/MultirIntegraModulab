@@ -1641,7 +1641,7 @@ namespace MultirIntegraModulab
 
         /// <summary>
         /// Obté les combinacions de microorganisme + mecanismes d'una mostra existent a la BD
-        /// NOMÉS obtenim diagnòstics positius: amb mecanisme de resistència
+        /// NOMÉS obtenim diagnòstics positius: amb mecanisme de resistència ó bé microorganismes especials
         /// </summary>
         public List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMicroorganismeMecanisme(string etiquetaId)
         {

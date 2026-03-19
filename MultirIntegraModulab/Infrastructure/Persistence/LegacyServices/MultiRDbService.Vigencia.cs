@@ -624,9 +624,10 @@ namespace MultirIntegraModulab
                         case 1:
 
                             // Tipus 1: Covid-19 (SARS-CoV-2) 
-                            nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ  (1)");
-                            nota.AppendLine();
+                            nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ (1)");
+                            nota.AppendLine("---------------------------------------------------------");
 
+                            nota.AppendLine();
                             nota.Append(llistatMostres);
                             nota.AppendLine();
 
@@ -711,9 +712,11 @@ namespace MultirIntegraModulab
 
                             // Tipus 2: Grip (virus Influenza) 
                             nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ (2)");
+                            nota.AppendLine("---------------------------------------------------------");
                             nota.AppendLine();
                             nota.AppendLine($"El Servei de Medicina Preventiva i Salut Pública informa que el cultiu");
                             
+                            nota.AppendLine();
                             nota.Append(llistatMostres);
                             nota.AppendLine();
                             
@@ -742,9 +745,11 @@ namespace MultirIntegraModulab
 
                             // Tipus 3: VRS (virus respiratori sincicial)  
                             nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ (3)");
+                            nota.AppendLine("---------------------------------------------------------");
                             nota.AppendLine();
                             nota.AppendLine($"El Servei de Medicina Preventiva i Salut Pública informa que el cultiu");
-                            
+
+                            nota.AppendLine();
                             nota.Append(llistatMostres);
                             nota.AppendLine();
                             
@@ -775,9 +780,11 @@ namespace MultirIntegraModulab
 
                             // Tipus 4: Adenovirus
                             nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ (4)");
+                            nota.AppendLine("---------------------------------------------------------");
                             nota.AppendLine();
                             nota.AppendLine($"El Servei de Medicina Preventiva i Salut Pública informa que el cultiu");
-                            
+
+                            nota.AppendLine();
                             nota.Append(llistatMostres);
                             nota.AppendLine();
                             
@@ -807,9 +814,11 @@ namespace MultirIntegraModulab
 
                             // Tipus 5: Metapneumovirus 
                             nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ (5)");
+                            nota.AppendLine("---------------------------------------------------------");
                             nota.AppendLine();
                             nota.AppendLine($"El Servei de Medicina Preventiva i Salut Pública informa que el cultiu");
-                            
+
+                            nota.AppendLine();
                             nota.Append(llistatMostres);
                             nota.AppendLine();
                             
@@ -841,9 +850,11 @@ namespace MultirIntegraModulab
 
                             // Tipus 6: Altres virus respiratoris  
                             nota.AppendLine("MEDICINA PREVENTIVA - EQUIP DE CONTROL DE LA INFECCIÓ (6)");
+                            nota.AppendLine("---------------------------------------------------------");
                             nota.AppendLine();
                             nota.AppendLine($"El Servei de Medicina Preventiva i Salut Pública informa que el cultiu");
-                            
+
+                            nota.AppendLine();
                             nota.Append(llistatMostres);
                             nota.AppendLine();
                             
