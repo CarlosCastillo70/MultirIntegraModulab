@@ -45,8 +45,9 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
         }
 
         /// <summary>
-        /// Obté els diagnòstics vigents que poden haver caducat
-        /// Només retorna diagnòstics amb vigent = 'S' i que tinguin configuració de dies de vigència
+        /// Obté els diagnòstics vigents per revisar
+        /// IMPORTANT: Només processa diagnòstics de MULTIRESISTENTS (tipus='M')
+        /// Els virus respiratoris (tipus='R') segueixen uns altres criteris i es tractaran més endavant
         /// </summary>
         public List<DiagnosticPerRevisar> ObtenirDiagnosticsVigentsPerRevisar()
         {
@@ -58,29 +59,29 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
                 {
                     conn.Open();
 
-                    // Query per obtenir diagnòstics vigents amb la data de l'última mostra
-                    // i els dies de vigència configurats per al tipus de mostra
+                    // Query per obtenir diagnòstics vigents amb informació de vigència, èxitus i darrer positiu
+                    // FILTRE: Només microorganismes multiresistents (tipus='M')
                     string sql = @"
-                        SELECT DISTINCT
-                            pd.id,
+                        SELECT pd.id,
                             pd.npat,
                             pd.microorganisme,
                             pd.mecanisme,
-                            MAX(pdm.data_mostra) AS data_ultima_mostra,
-                            tm.dies_vigencia_positiu AS dies_vigencia,
-                            tm.descripcio AS tipus_mostra
+                            m.dies_vigencia,
+                            p.dt_exitus,
+                            (SELECT MAX(pdm.data_mostra)
+                             FROM pacients_diagnostics_mostra pdm
+                             INNER JOIN mostra_microorganisme mm ON pdm.id = mm.pacient_diagnostic_mostra_id
+                             WHERE mm.pacient_diagnostic_id = pd.id
+                               AND pdm.valoracio = '2'
+                               AND pdm.dt_delete IS NULL) AS data_darrer_positiu,
+                            mec.vigencia_inactiu
                         FROM pacients_diagnostics pd
-                            INNER JOIN mostra_microorganisme mm ON pd.id = mm.pacient_diagnostic_id
-                            INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id
-                            INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi
+                        INNER JOIN microorganismes m ON pd.microorganisme = m.codi
+                        LEFT JOIN pacients p ON pd.npat = p.npat
+                        LEFT JOIN mecanismes mec ON pd.mecanisme = mec.codi AND mec.dt_delete IS NULL
                         WHERE pd.vigent = 'S'
                             AND pd.dt_delete IS NULL
-                            AND pdm.dt_delete IS NULL
-                            AND pdm.valoracio = '2'
-                            AND tm.dies_vigencia_positiu IS NOT NULL
-                            AND tm.dt_delete IS NULL
-                        GROUP BY pd.id, pd.npat, pd.microorganisme, pd.mecanisme, 
-                                 tm.dies_vigencia_positiu, tm.descripcio
+                            AND m.tipus = 'M'
                         ORDER BY pd.id";
 
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -95,9 +96,19 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
                                     PacientSap = reader["npat"]?.ToString(),
                                     Microorganisme = reader["microorganisme"]?.ToString(),
                                     Mecanisme = reader["mecanisme"]?.ToString(),
-                                    DataUltimaMostra = reader["data_ultima_mostra"] as DateTime?,
-                                    DiesVigencia = reader["dies_vigencia"] as int?,
-                                    TipusMostra = reader["tipus_mostra"]?.ToString()
+                                    DataUltimaMostra = null,
+                                    DiesVigencia = reader.IsDBNull(reader.GetOrdinal("dies_vigencia"))
+                                        ? (int?)null
+                                        : reader.GetInt32("dies_vigencia"),
+                                    DataExitus = reader.IsDBNull(reader.GetOrdinal("dt_exitus"))
+                                        ? (DateTime?)null
+                                        : reader.GetDateTime("dt_exitus"),
+                                    DataDarrergPositiu = reader.IsDBNull(reader.GetOrdinal("data_darrer_positiu"))
+                                        ? (DateTime?)null
+                                        : reader.GetDateTime("data_darrer_positiu"),
+                                    VigenciaInactiu = reader.IsDBNull(reader.GetOrdinal("vigencia_inactiu"))
+                                        ? (int?)null
+                                        : reader.GetInt32("vigencia_inactiu")
                                 });
                             }
                         }

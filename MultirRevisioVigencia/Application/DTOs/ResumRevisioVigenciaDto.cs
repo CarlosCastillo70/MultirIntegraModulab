@@ -11,6 +11,8 @@ namespace MultirRevisioVigencia.Application.DTOs
         public DateTime DataRevisio { get; set; }
         public int TotalRevisats { get; set; }
         public int MarcatsNoVigents { get; set; }
+        public int MarcatsPerExitus { get; set; }
+        public int MarcatsPerVigencia { get; set; }
         public int Errors { get; set; }
         public List<DiagnosticMarcat> DiagnosticsMarcats { get; set; }
 

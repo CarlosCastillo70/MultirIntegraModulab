@@ -135,7 +135,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// </summary>
         private async Task ProcessarPacientAsync(Mostra mostra, ResultatProcessamentPositiu resultat)
         {
-            _logger.Info($"🔎 Comprovant/creant pacient: {mostra.PacientSap}");
+            _logger.Info($"🔎 Comprovant / creant pacient: {mostra.PacientSap}");
 
             // Validació bàsica: comprovar que existeix identificador de pacient
             if (string.IsNullOrWhiteSpace(mostra.PacientSap))

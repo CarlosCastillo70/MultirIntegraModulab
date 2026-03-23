@@ -13,6 +13,8 @@ namespace MultirRevisioVigencia.Application.DTOs
         public string Mecanisme { get; set; }
         public DateTime? DataUltimaMostra { get; set; }
         public int? DiesVigencia { get; set; }
-        public string TipusMostra { get; set; }
+        public DateTime? DataExitus { get; set; }
+        public DateTime? DataDarrergPositiu { get; set; }
+        public int? VigenciaInactiu { get; set; }
     }
 }

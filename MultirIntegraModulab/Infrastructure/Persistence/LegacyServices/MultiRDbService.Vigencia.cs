@@ -309,7 +309,7 @@ namespace MultirIntegraModulab
 
             try
             {
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? Confeccionant nota curs clínic per pacient {pacientSap}");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Confeccionant nota curs clínic per pacient {pacientSap}");
 
                 // Obtenir els diagnòstics actius del pacient (filtrant per Multiresistents)
                 var diagnostics = ObtenirDiagnosticsActiusPacient(pacientSap, TipusMicroorganisme.Multiresistent);
@@ -430,7 +430,7 @@ namespace MultirIntegraModulab
 
                 string notaFinal = nota.ToString().TrimEnd();
 
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}? Nota confeccionada: {diagnosticsAmbNota.Count} diagnòstic(s) amb nota especificada");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Nota confeccionada: {diagnosticsAmbNota.Count} diagnòstic(s) amb nota especificada");
 
                 return notaFinal;
             }
@@ -477,7 +477,7 @@ namespace MultirIntegraModulab
 
                 if (inserit)
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}? Nota afegida correctament al curs clínic del pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Nota afegida correctament al curs clínic del pacient {pacientSap}");
                 }
 
                 return inserit;
@@ -932,7 +932,7 @@ namespace MultirIntegraModulab
             try
             {
                 string tipusText = tipus == "M" ? "MMR" : "VR";
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}?? Inserint nota curs clínic ({tipusText}) per pacient {npat}");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Inserint nota curs clínic ({tipusText}) per pacient {npat}");
 
                 using (var conn = new MySqlConnection(_connectionString))
                 {

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using MultirRevisioVigencia.Application.DTOs;
 using MultirRevisioVigencia.Domain.Interfaces;
 
@@ -21,8 +23,10 @@ namespace MultirRevisioVigencia.Application.UseCases
         /// <summary>
         /// Executa la revisió de vigència de diagnòstics
         /// </summary>
+        /// <param name="pacientsAfiltrar">Llista opcional de NPATs de pacients per filtrar. Si està buida o null, processa tots</param>
+        /// <param name="limitDiagnostics">Límit de diagnòstics a processar (0 = il·limitat)</param>
         /// <returns>Resum de la revisió executada</returns>
-        public ResumRevisioVigenciaDto Executar()
+        public ResumRevisioVigenciaDto Executar(List<string> pacientsAfiltrar = null, int limitDiagnostics = 0)
         {
             var resum = new ResumRevisioVigenciaDto
             {
@@ -31,12 +35,47 @@ namespace MultirRevisioVigencia.Application.UseCases
 
             try
             {
-                _logger.Info("🔍 Iniciant revisió de vigència de diagnòstics...");
+                _logger.Info("🔍 Iniciant revisió de vigència de diagnòstics MR ...");
+                
+                // Informar si s'està aplicant un filtre de pacients
+                if (pacientsAfiltrar != null && pacientsAfiltrar.Any())
+                {
+                    _logger.Info($"🔍 FILTRE ACTIU: Processant només {pacientsAfiltrar.Count} pacient(s) específic(s)");
+                    _logger.Info($"    Pacients: {string.Join(", ", pacientsAfiltrar)}");
+                }
+                
+                // Informar si s'està aplicant un límit de diagnòstics
+                if (limitDiagnostics > 0)
+                {
+                    _logger.Info($"🔍 LÍMIT ACTIU: Processant màxim {limitDiagnostics} diagnòstic(s)");
+                }
+                
                 _logger.Info("");
 
                 // 1. Obtenir diagnòstics vigents que poden haver caducat
                 _logger.Info("📋 Obtenint diagnòstics vigents per revisar...");
                 var diagnosticsPerRevisar = _repository.ObtenirDiagnosticsVigentsPerRevisar();
+                
+                // Aplicar filtre de pacients si està informat
+                if (pacientsAfiltrar != null && pacientsAfiltrar.Any())
+                {
+                    int totalOriginal = diagnosticsPerRevisar.Count;
+                    diagnosticsPerRevisar = diagnosticsPerRevisar
+                        .Where(d => pacientsAfiltrar.Contains(d.PacientSap, StringComparer.OrdinalIgnoreCase))
+                        .ToList();
+                    
+                    _logger.Info($"   Diagnòstics totals: {totalOriginal}");
+                    _logger.Info($"   Diagnòstics després del filtre: {diagnosticsPerRevisar.Count}");
+                }
+                
+                // Aplicar límit de diagnòstics si està informat
+                if (limitDiagnostics > 0 && diagnosticsPerRevisar.Count > limitDiagnostics)
+                {
+                    int totalOriginal = diagnosticsPerRevisar.Count;
+                    diagnosticsPerRevisar = diagnosticsPerRevisar.Take(limitDiagnostics).ToList();
+                    _logger.Info($"   Diagnòstics limitats: de {totalOriginal} a {diagnosticsPerRevisar.Count}");
+                }
+                
                 resum.TotalRevisats = diagnosticsPerRevisar.Count;
 
                 _logger.Info($"   Trobats {diagnosticsPerRevisar.Count} diagnòstic(s) vigent(s) per revisar");
@@ -53,25 +92,58 @@ namespace MultirRevisioVigencia.Application.UseCases
                 {
                     try
                     {
-                        _logger.Info($"🔎 Revisant diagnòstic ID {diagnostic.Id} - Pacient: {diagnostic.PacientSap}");
+                        _logger.Info($"▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄");
+                        _logger.Info($"Processant diagnòstic ID {diagnostic.Id} - Pacient: {diagnostic.PacientSap}");
                         _logger.Info($"   Microorganisme: {diagnostic.Microorganisme}");
                         _logger.Info($"   Mecanisme: {diagnostic.Mecanisme}");
+                        _logger.Info($"▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀");
 
-                        // Comprovar si ha superat la vigència
-                        if (HaSuperatVigencia(diagnostic))
+                        string motiu = null;
+                        bool hauDeMarcarNoVigent = false;
+                        bool esPerExitus = false;
+
+                        // COMPROVACIÓ 1: Pacient èxitus
+                        if (EsPacientExitus(diagnostic))
+                        {
+                            _logger.Info($"   ☠️ Pacient èxitus (data: {diagnostic.DataExitus:dd/MM/yyyy})");
+                            hauDeMarcarNoVigent = true;
+                            esPerExitus = true;
+                            motiu = "E";
+                        }
+                        // COMPROVACIÓ 2: Ha superat la vigència
+                        else if (HaSuperatVigencia(diagnostic))
                         {
                             _logger.Info($"   ⚠️ Diagnòstic ha superat la vigència");
+                            hauDeMarcarNoVigent = true;
+                            motiu = "V";
+                        }
+                        else
+                        {
+                            _logger.Info($"   ✓ Diagnòstic encara vigent");
+                        }
 
-                            // Marcar com a no vigent
+                        // Marcar com a no vigent si cal
+                        if (hauDeMarcarNoVigent)
+                        {
                             bool marcat = _repository.MarcarDiagnosticNoVigent(
                                 diagnostic.Id,
-                                "SISTEMA_AUTO",
-                                $"Caducat automàticament per superar {diagnostic.DiesVigencia} dies"
+                                "MULTIR",
+                                motiu
                             );
 
                             if (marcat)
                             {
                                 resum.MarcatsNoVigents++;
+                                
+                                if (esPerExitus)
+                                {
+                                    resum.MarcatsPerExitus++;
+                                }
+                                else
+                                {
+                                    resum.MarcatsPerVigencia++;
+                                }
+                                
                                 resum.DiagnosticsMarcats.Add(new DiagnosticMarcat
                                 {
                                     DiagnosticId = diagnostic.Id,
@@ -80,7 +152,7 @@ namespace MultirRevisioVigencia.Application.UseCases
                                     Mecanisme = diagnostic.Mecanisme,
                                     DataUltimaMostra = diagnostic.DataUltimaMostra,
                                     DiesVigencia = diagnostic.DiesVigencia,
-                                    Motiu = $"Superat {diagnostic.DiesVigencia} dies de vigència"
+                                    Motiu = motiu
                                 });
 
                                 _logger.Info($"   ✅ Diagnòstic marcat com a no vigent correctament");
@@ -90,10 +162,6 @@ namespace MultirRevisioVigencia.Application.UseCases
                                 resum.Errors++;
                                 _logger.Error($"   ❌ Error marcant diagnòstic com a no vigent");
                             }
-                        }
-                        else
-                        {
-                            _logger.Info($"   ✓ Diagnòstic encara vigent");
                         }
 
                         _logger.Info("");
@@ -121,18 +189,56 @@ namespace MultirRevisioVigencia.Application.UseCases
         /// </summary>
         private bool HaSuperatVigencia(DiagnosticPerRevisar diagnostic)
         {
-            if (!diagnostic.DataUltimaMostra.HasValue || !diagnostic.DiesVigencia.HasValue)
+            // Només es comprova la vigència si el diagnòstic té mecanisme de resistència
+            if (string.IsNullOrWhiteSpace(diagnostic.Mecanisme))
             {
+                _logger.Info($"   ℹ️ Diagnòstic sense mecanisme de resistència - no s'aplica vigència per inactivitat");
                 return false;
             }
 
-            // Calcular els dies transcorreguts des de l'última mostra
-            var diesTranscorreguts = (DateTime.Now.Date - diagnostic.DataUltimaMostra.Value.Date).Days;
+            // Comprovar si té vigencia_inactiu configurat
+            if (!diagnostic.VigenciaInactiu.HasValue || diagnostic.VigenciaInactiu.Value == 0)
+            {
+                _logger.Info($"   ℹ️ Mecanisme '{diagnostic.Mecanisme}' sense vigència d'inactivitat configurada");
+                return false;
+            }
 
-            _logger.Info($"   Dies transcorreguts: {diesTranscorreguts}, Dies vigència configurats: {diagnostic.DiesVigencia}");
+            // Comprovar si existeix darrer positiu
+            if (!diagnostic.DataDarrergPositiu.HasValue)
+            {
+                _logger.Info($"   ℹ️ No hi ha darrer positiu registrat");
+                return false;
+            }
 
-            // Si han passat més dies dels configurats, ha caducat
-            return diesTranscorreguts > diagnostic.DiesVigencia.Value;
+            // Calcular la data límit (data darrer positiu + vigència inactiu)
+            DateTime dataLimit = diagnostic.DataDarrergPositiu.Value.Date.AddDays(diagnostic.VigenciaInactiu.Value);
+            DateTime avui = DateTime.Now.Date;
+
+            int diesTranscorreguts = (avui - diagnostic.DataDarrergPositiu.Value.Date).Days;
+
+            _logger.Info($"   Data darrer positiu: {diagnostic.DataDarrergPositiu.Value:dd/MM/yyyy}");
+            _logger.Info($"   Vigència inactiu configurada: {diagnostic.VigenciaInactiu} dies");
+            _logger.Info($"   Data límit: {dataLimit:dd/MM/yyyy}");
+            _logger.Info($"   Dies transcorreguts: {diesTranscorreguts}");
+
+            // Si la data d'avui és posterior a la data límit, ha superat la vigència
+            bool haSuperatVigencia = avui > dataLimit;
+
+            if (haSuperatVigencia)
+            {
+                _logger.Info($"   ⚠️ Ha superat la vigència ({diesTranscorreguts} dies > {diagnostic.VigenciaInactiu} dies)");
+            }
+
+            return haSuperatVigencia;
+        }
+
+        /// <summary>
+        /// Comprova si un pacient està marcat com a èxitus
+        /// </summary>
+        private bool EsPacientExitus(DiagnosticPerRevisar diagnostic)
+        {
+            // Un pacient es considera èxitus si la data d'èxitus és válida i no és a la futura
+            return diagnostic.DataExitus.HasValue && diagnostic.DataExitus.Value <= DateTime.Now;
         }
     }
 }

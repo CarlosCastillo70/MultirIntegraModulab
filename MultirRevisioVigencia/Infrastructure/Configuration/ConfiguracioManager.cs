@@ -42,6 +42,15 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
                     // Logging
                     RutaFitxerLog = ConfigurationManager.AppSettings["RutaFitxerLog"] ?? "Logs\\RevisioVigencia_{0:yyyyMMdd}.log",
 
+                    // Filtratge
+                    PacientsAProcessar = ConfigurationManager.AppSettings["PacientsAProcessar"]?
+                        .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(p => p.Trim())
+                        .Where(p => !string.IsNullOrWhiteSpace(p))
+                        .ToList() ?? new List<string>(),
+
+                    LimitDiagnosticsAProcessar = int.TryParse(ConfigurationManager.AppSettings["LimitDiagnosticsAProcessar"], out int limit) ? limit : 0,
+
                     // Email
                     SmtpServer = ConfigurationManager.AppSettings["SmtpServer"],
                     SmtpPort = int.TryParse(ConfigurationManager.AppSettings["SmtpPort"], out int port) ? port : 25,
@@ -52,7 +61,10 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
                     EmailsDestinataris = ConfigurationManager.AppSettings["EmailsDestinataris"]?
                         .Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
                         .Select(e => e.Trim())
-                        .ToList() ?? new List<string>()
+                        .ToList() ?? new List<string>(),
+
+                    // Nova propietat
+                    NovaPropietat = ConfigurationManager.AppSettings["NovaPropietat"]
                 };
 
                 // Format del fitxer de log amb la data
@@ -76,6 +88,14 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
                 Console.WriteLine($"   - Base de dades: {ExtreureDatabaseDeConnectionString(connectionString)}");
                 Console.WriteLine($"   - Servidor SMTP: {config.SmtpServer}:{config.SmtpPort}");
                 Console.WriteLine($"   - Destinataris: {config.EmailsDestinataris.Count}");
+                if (config.PacientsAProcessar != null && config.PacientsAProcessar.Any())
+                {
+                    Console.WriteLine($"   - FILTRE PACIENTS: {config.PacientsAProcessar.Count} pacient(s) específic(s)");
+                }
+                if (config.LimitDiagnosticsAProcessar > 0)
+                {
+                    Console.WriteLine($"   - LÍMIT: {config.LimitDiagnosticsAProcessar} diagnòstic(s) màxim");
+                }
                 Console.WriteLine();
 
                 return config;
@@ -120,6 +140,8 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
         public bool EsProducció { get; set; }
         public string ConnectionStringMySQL { get; set; }
         public string RutaFitxerLog { get; set; }
+        public List<string> PacientsAProcessar { get; set; }
+        public int LimitDiagnosticsAProcessar { get; set; }
         public string SmtpServer { get; set; }
         public int SmtpPort { get; set; }
         public string SmtpUsuari { get; set; }
@@ -127,5 +149,6 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
         public bool UsarSSL { get; set; }
         public string EmailFrom { get; set; }
         public List<string> EmailsDestinataris { get; set; }
+        public string NovaPropietat { get; set; } // Nova propietat afegida
     }
 }

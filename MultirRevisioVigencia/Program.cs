@@ -24,6 +24,7 @@ namespace MultirRevisioVigencia
             {
                 Console.WriteLine("=======================================================");
                 Console.WriteLine("  MULTIR - REVISIÓ DE VIGÈNCIA DE DIAGNÒSTICS");
+                Console.WriteLine("  (Només Multiresistents)");
                 Console.WriteLine("=======================================================");
                 Console.WriteLine($"Inici: {dataInici:dd/MM/yyyy HH:mm:ss}");
                 Console.WriteLine();
@@ -40,6 +41,7 @@ namespace MultirRevisioVigencia
                 logger = new FileLoggerService(configuracio.RutaFitxerLog);
                 logger.Info("=======================================================");
                 logger.Info("  MULTIR - REVISIÓ DE VIGÈNCIA DE DIAGNÒSTICS");
+                logger.Info("  (Només Multiresistents)");
                 logger.Info("=======================================================");
                 logger.Info($"Inici: {dataInici:dd/MM/yyyy HH:mm:ss}");
                 logger.Info($"Entorn: {(configuracio.EsProducció ? "PRODUCCIÓ" : "PREPRODUCCIÓ")}");
@@ -68,11 +70,10 @@ namespace MultirRevisioVigencia
                 }
 
                 logger.Info("✅ Connexió amb MySQL establerta correctament");
-                logger.Info("");
 
                 // 6. Executar revisió de vigència
                 var useCase = new RevisarVigenciaDiagnosticsUseCase(dbService, logger);
-                var resum = useCase.Executar();
+                var resum = useCase.Executar(configuracio.PacientsAProcessar, configuracio.LimitDiagnosticsAProcessar);
 
                 // 7. Mostrar resum
                 DateTime dataFi = DateTime.Now;
@@ -84,6 +85,8 @@ namespace MultirRevisioVigencia
                 Console.WriteLine("=======================================================");
                 Console.WriteLine($"Total diagnòstics revisats:      {resum.TotalRevisats}");
                 Console.WriteLine($"Diagnòstics marcats no vigents:  {resum.MarcatsNoVigents}");
+                Console.WriteLine($"  - Per èxitus del pacient:      {resum.MarcatsPerExitus}");
+                Console.WriteLine($"  - Per superar vigència:        {resum.MarcatsPerVigencia}");
                 Console.WriteLine($"Diagnòstics amb error:           {resum.Errors}");
                 Console.WriteLine($"Durada:                          {durada.TotalSeconds:F2} segons");
                 Console.WriteLine("=======================================================");
@@ -94,6 +97,8 @@ namespace MultirRevisioVigencia
                 logger.Info("=======================================================");
                 logger.Info($"Total diagnòstics revisats:      {resum.TotalRevisats}");
                 logger.Info($"Diagnòstics marcats no vigents:  {resum.MarcatsNoVigents}");
+                logger.Info($"  - Per èxitus del pacient:      {resum.MarcatsPerExitus}");
+                logger.Info($"  - Per superar vigència:        {resum.MarcatsPerVigencia}");
                 logger.Info($"Diagnòstics amb error:           {resum.Errors}");
                 logger.Info($"Durada:                          {durada.TotalSeconds:F2} segons");
                 logger.Info("=======================================================");
