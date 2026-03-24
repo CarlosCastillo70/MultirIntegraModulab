@@ -94,7 +94,7 @@ namespace MultirRevisioVigencia.Application.UseCases
                     {
                         _logger.Info($"_______________________________________________________________________________");
                         _logger.Info($"Processant diagnòstic ID {diagnostic.Id} - Pacient: {diagnostic.PacientSap}");
-                        _logger.Info($"   Microorganisme: {diagnostic.Microorganisme}");
+                        _logger.Info($"   Microorganisme: {diagnostic.Microorganisme} (Tipus: {diagnostic.TipusMicroorganisme})");
                         _logger.Info($"   Mecanisme: {diagnostic.Mecanisme}");
                         
                         string motiu = null;

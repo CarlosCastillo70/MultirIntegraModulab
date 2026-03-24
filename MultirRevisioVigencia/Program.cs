@@ -24,7 +24,6 @@ namespace MultirRevisioVigencia
             {
                 Console.WriteLine("=======================================================");
                 Console.WriteLine("  MULTIR - REVISIÓ DE VIGÈNCIA DE DIAGNÒSTICS");
-                Console.WriteLine("  (Només Multiresistents)");
                 Console.WriteLine("=======================================================");
                 Console.WriteLine($"Inici: {dataInici:dd/MM/yyyy HH:mm:ss}");
                 Console.WriteLine();
@@ -41,7 +40,6 @@ namespace MultirRevisioVigencia
                 logger = new FileLoggerService(configuracio.RutaFitxerLog);
                 logger.Info("=======================================================");
                 logger.Info("  MULTIR - REVISIÓ DE VIGÈNCIA DE DIAGNÒSTICS");
-                logger.Info("  (Només Multiresistents)");
                 logger.Info("=======================================================");
                 logger.Info($"Inici: {dataInici:dd/MM/yyyy HH:mm:ss}");
                 logger.Info($"Entorn: {(configuracio.EsProducció ? "PRODUCCIÓ" : "PREPRODUCCIÓ")}");

@@ -11,6 +11,7 @@ namespace MultirRevisioVigencia.Application.DTOs
         public string PacientSap { get; set; }
         public string Microorganisme { get; set; }
         public string Mecanisme { get; set; }
+        public string TipusMicroorganisme { get; set; }
         public DateTime? DataUltimaMostra { get; set; }
         public int? DiesVigencia { get; set; }
         public DateTime? DataExitus { get; set; }

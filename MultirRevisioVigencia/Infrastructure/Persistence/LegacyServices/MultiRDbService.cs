@@ -46,8 +46,7 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
 
         /// <summary>
         /// Obté els diagnòstics vigents per revisar
-        /// IMPORTANT: Només processa diagnòstics de MULTIRESISTENTS (tipus='M')
-        /// Els virus respiratoris (tipus='R') segueixen uns altres criteris i es tractaran més endavant
+        /// Recupera TOTS els diagnòstics vigents (multiresistents i virus respiratoris)
         /// </summary>
         public List<DiagnosticPerRevisar> ObtenirDiagnosticsVigentsPerRevisar()
         {
@@ -59,8 +58,7 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
                 {
                     conn.Open();
 
-                    // Query per obtenir diagnòstics vigents amb informació de vigència, èxitus i darrer positiu
-                    // FILTRE: Només microorganismes multiresistents (tipus='M')
+                    // Query per obtenir TOTS els diagnòstics vigents amb informació de vigència, èxitus i darrer positiu
                     // Si no hi ha mostres registrades, s'utilitza data_diagnostic com a data del darrer positiu
                     string sql = @"
                         SELECT pd.id,
@@ -69,6 +67,7 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
                             pd.mecanisme,
                             pd.data_diagnostic,
                             m.dies_vigencia,
+                            m.tipus AS tipus_microorganisme,
                             p.dt_exitus,
                             (SELECT MAX(pdm.data_mostra)
                              FROM pacients_diagnostics_mostra pdm
@@ -83,7 +82,6 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
                         LEFT JOIN mecanismes mec ON pd.mecanisme = mec.codi AND mec.dt_delete IS NULL
                         WHERE pd.vigent = 'S'
                             AND pd.dt_delete IS NULL
-                            AND m.tipus = 'M'
                         ORDER BY pd.id";
 
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -117,6 +115,7 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
                                     PacientSap = reader["npat"]?.ToString(),
                                     Microorganisme = reader["microorganisme"]?.ToString(),
                                     Mecanisme = reader["mecanisme"]?.ToString(),
+                                    TipusMicroorganisme = reader["tipus_microorganisme"]?.ToString(),
                                     DataUltimaMostra = null,
                                     DiesVigencia = reader.IsDBNull(reader.GetOrdinal("dies_vigencia"))
                                         ? (int?)null
