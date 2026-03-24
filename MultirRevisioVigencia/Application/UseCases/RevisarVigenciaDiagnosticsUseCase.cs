@@ -114,8 +114,10 @@ namespace MultirRevisioVigencia.Application.UseCases
                             _logger.Info($"   ✓ Pacient NO és èxitus");
                         }
 
-                        // COMPROVACIÓ 2: Ha superat la vigència (MultiResistent)
-                        if (!hauDeMarcarNoVigent && HaSuperatVigencia(diagnostic))
+                        // COMPROVACIÓ 2: Ha superat la vigència (només per Multiresistents)
+                        if (!hauDeMarcarNoVigent && 
+                            diagnostic.TipusMicroorganisme == "M" && 
+                            HaSuperatVigencia(diagnostic))
                         {
                             _logger.Info($"   ⚠️ Diagnòstic ha superat la vigència");
                             hauDeMarcarNoVigent = true;
@@ -124,7 +126,14 @@ namespace MultirRevisioVigencia.Application.UseCases
                         
                         if (!hauDeMarcarNoVigent)
                         {
-                            _logger.Info($"   ✅ Diagnòstic encara vigent");
+                            if (diagnostic.TipusMicroorganisme == "R")
+                            {
+                                _logger.Info($"   ✓ Diagnòstic de Virus Respiratori vigent (no s'aplica vigència temporal)");
+                            }
+                            else
+                            {
+                                _logger.Info($"   ✅ Diagnòstic encara vigent");
+                            }
                         }
 
                         // Marcar com a no vigent si cal
