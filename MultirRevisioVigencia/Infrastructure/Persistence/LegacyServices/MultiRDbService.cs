@@ -61,11 +61,13 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
 
                     // Query per obtenir diagnòstics vigents amb informació de vigència, èxitus i darrer positiu
                     // FILTRE: Només microorganismes multiresistents (tipus='M')
+                    // Si no hi ha mostres registrades, s'utilitza data_diagnostic com a data del darrer positiu
                     string sql = @"
                         SELECT pd.id,
                             pd.npat,
                             pd.microorganisme,
                             pd.mecanisme,
+                            pd.data_diagnostic,
                             m.dies_vigencia,
                             p.dt_exitus,
                             (SELECT MAX(pdm.data_mostra)
@@ -90,6 +92,25 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
                         {
                             while (reader.Read())
                             {
+                                DateTime? dataDarrergPositiu = reader.IsDBNull(reader.GetOrdinal("data_darrer_positiu"))
+                                    ? (DateTime?)null
+                                    : reader.GetDateTime("data_darrer_positiu");
+                                
+                                bool esDeDataDiagnostic = false;
+                                
+                                // Si no hi ha darrer positiu a les mostres, utilitzar data_diagnostic
+                                if (!dataDarrergPositiu.HasValue)
+                                {
+                                    dataDarrergPositiu = reader.IsDBNull(reader.GetOrdinal("data_diagnostic"))
+                                        ? (DateTime?)null
+                                        : reader.GetDateTime("data_diagnostic");
+                                    
+                                    if (dataDarrergPositiu.HasValue)
+                                    {
+                                        esDeDataDiagnostic = true;
+                                    }
+                                }
+
                                 diagnostics.Add(new DiagnosticPerRevisar
                                 {
                                     Id = reader.GetInt32("id"),
@@ -103,12 +124,11 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
                                     DataExitus = reader.IsDBNull(reader.GetOrdinal("dt_exitus"))
                                         ? (DateTime?)null
                                         : reader.GetDateTime("dt_exitus"),
-                                    DataDarrergPositiu = reader.IsDBNull(reader.GetOrdinal("data_darrer_positiu"))
-                                        ? (DateTime?)null
-                                        : reader.GetDateTime("data_darrer_positiu"),
+                                    DataDarrergPositiu = dataDarrergPositiu,
                                     VigenciaInactiu = reader.IsDBNull(reader.GetOrdinal("vigencia_inactiu"))
                                         ? (int?)null
-                                        : reader.GetInt32("vigencia_inactiu")
+                                        : reader.GetInt32("vigencia_inactiu"),
+                                    DataDarrergPositiuEsDeDataDiagnostic = esDeDataDiagnostic
                                 });
                             }
                         }
