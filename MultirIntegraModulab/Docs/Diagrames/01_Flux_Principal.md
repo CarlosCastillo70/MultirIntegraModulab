@@ -1,10 +1,4 @@
-# ?? DIAGRAMES DE FLUX - FORMAT MERMAID
-
-Aquest document conté diagrames de flux en format Mermaid que poden ser visualitzats a GitHub, en editors compatibles o utilitzant https://mermaid.live/
-
----
-
-## ?? Diagrama 1: Flux Principal Complet (ACTUALITZAT amb VR)
+# ?? Diagrama 1: Flux Principal Complet (ACTUALITZAT amb VR)
 
 ```mermaid
 flowchart TD
@@ -94,13 +88,16 @@ flowchart TD
     style ProcessNeg fill:#cce5ff
 ```
 
-**NOTA IMPORTANT**: Aquest és només el Diagrama 1. El fitxer complet amb tots els 12 diagrames seria massa llarg per crear d'un cop.
+## Descripció
 
-Si vols que continuï afegint els altres 11 diagrames, si us plau confirma-ho i els aniré afegint progressivament.
+Aquest és el diagrama principal que mostra el flux complet de processament de mostres, incloent:
 
-Alternativament, pots:
-1. Obrir el fitxer actual amb un editor que suporti UTF-8 (com Notepad++, VS Code)
-2. Canviar la codificació a "UTF-8 sense BOM"
-3. Guardar el fitxer
-
-O puc continuar creant el fitxer complet si ho prefereixes. Vols que continuï? ??
+- **Validació inicial** de mostres
+- **Determinació del tipus** d'incorporació (Nova, Repetida, Validada, Revalidada, Antiga)
+- **Comprovació de microorganismes** i mecanismes de resistència
+- **Bifurcació segons tipus** de microorganisme:
+  - **MMR** (Microorganismes amb Mecanismes de Resistència)
+  - **VR** (Virus Respiratoris)
+  - **MIXT** (Combinació de MMR + VR)
+- **Processament específic** per cada tipus amb les seves validacions
+- **Auditoria final** amb codis específics (OK, NPWS, CNI, NMRCM, TPNIVR, CNIVR)
