@@ -119,7 +119,45 @@ flowchart TD
 
 ---
 
-## 🦠 Diagrama 3: Comprovació Microorganismes
+## 🔀 Diagrama 3: Flux Mostra Mixta MMR + VR (ACTUALITZAT)
+
+```mermaid
+flowchart TD
+    Start([📥 ResultatMostra Mixta]) --> GetMR{Té Mecanisme<br/>Resistència?}
+    
+    GetMR -->|NO| CheckVR{Té Validació?<br/>Data > última mostra + 30 dies?}
+    GetMR -->|SÍ| CheckMM[🔄 Reutilitzar últim MMR]
+    
+    CheckVR -->|SÍ| CreateVR[💾 Crear Registre de Validació]
+    CheckVR -->|NO| IgnoreVR[🔍 Ignorar Validació]
+    
+    CreateMR --> CreateMM[💾 Crear/Actualitzar<br/>mostra_microorganisme]
+    
+    CheckMM --> HasMech{Té<br/>Mecanismes?}
+    
+    HasMech -->|SÍ| CreateMech[💾 CREATE<br/>micro_mecanisme_mostra<br/>per cada mecanisme 1-5]
+    HasMech -->|NO| CheckTypes
+    
+    CreateMech --> CheckTypes{Tipus Mostra/Prova<br/>existeixen?}
+    
+    CheckTypes -->|NO| CreateTypes[💾 CREATE<br/>tipusmostra_m<br/>tipusprova_m]
+    CheckTypes -->|SÍ| UpdateDates
+    
+    CreateTypes --> UpdateDates[📅 Actualitzar Dates Pacient<br/>última inclusió<br/>última mostra positiva]
+    
+    UpdateDates --> End([✅ Fi - Mostra Mixta Processada])
+    
+    style Start fill:#e1f5e1
+    style End fill:#e1f5e1
+    style CreateVR fill:#c8e6c9
+    style IgnoreVR fill:#fff3cd
+    style CreateMech fill:#c8e6c9
+    style CreateTypes fill:#c8e6c9
+```
+
+---
+
+## 🦠 Diagrama 5: Comprovar Microorganismes (sense canvis)
 
 ```mermaid
 flowchart TD
@@ -154,7 +192,7 @@ flowchart TD
 
 ---
 
-## 🛡️ Diagrama 4: Comprovació Mecanismes
+## 🛡️ Diagrama 6: Comprovació Mecanismes (ACTUALITZAT)
 
 ```mermaid
 flowchart TD
@@ -188,7 +226,7 @@ flowchart TD
 
 ---
 
-## ⚡ Diagrama 5: Processar Mostra Positiva
+## ⚡ Diagrama 7: Processar Mostra Positiva
 
 ```mermaid
 flowchart TD
@@ -238,7 +276,7 @@ flowchart TD
 
 ---
 
-## 🔍 Diagrama 6: Processar Mostra Negativa (Comprovacions)
+## 🔍 Diagrama 8: Processar Mostra Negativa (Comprovacions) - sense canvis
 
 ```mermaid
 flowchart TD
@@ -286,7 +324,7 @@ flowchart TD
 
 ---
 
-## 🎯 Diagrama 7: Determinar Tipus Incorporació
+## 🎯 Diagrama 8: Determinar Tipus Incorporació
 
 ```mermaid
 flowchart TD
@@ -305,329 +343,53 @@ flowchart TD
     SameDates -->|NO| CheckValidation{Canvi en<br/>Validació?}
     
     CheckValidation -->|Abans NO, ara SÍ| Validada[✅ VALIDADA<br/>Primera validació]
-    CheckValidation -->|Abans SÍ, ara NO| Desvalidada[⬇️ DESVALIDADA<br/>S'ha desvalidat]
-    CheckValidation -->|Ambdues SÍ, dates diferents| Revalidada[🔄 REVALIDADA<br/>Revalidació]
-    CheckValidation -->|DataResultat anterior| Antiga[🕐 ANTIGA<br/>Data anterior a última]
-    CheckValidation -->|DataResultat diferent| Canviada[🔄 CANVIADA<br/>Resultat modificat]
+    CheckValidation -->|Abans SÍ, ara NO| Desvalidada[⬇️ DESVALIDA<br/>Segona validació]
+    CheckValidation -->|Igual| Antiga[🕐 Antiga - Sense Canvis]
     
-    Nova & Repetida & Validada & Desvalidada & Revalidada & Antiga & Canviada --> Result([✅ Tipus Determinat])
+    Nova --> InsertNova[💾 INSERTAR<br/>composicio_mostra]
+    
+    InsertNova --> End([✅ Fi - Tipus Determinat i Nova Insertada])
     
     style Start fill:#e1f5e1
-    style Result fill:#e1f5e1
+    style End fill:#e1f5e1
     style Nova fill:#c8e6c9
     style Repetida fill:#fff3cd
-    style Validada fill:#bbdefb
-    style Revalidada fill:#b39ddb
-    style Desvalidada fill:#ffccbc
-    style Antiga fill:#d7ccc8
-    style Canviada fill:#ffcc80
+    style Validada fill:#c8e6c9
+    style Desvalidada fill:#ffcdd2
+    style Antiga fill:#e3f2fd
 ```
 
 ---
 
-## 📊 Diagrama 8: Flux de Dades entre Sistemes
-
-```mermaid
-graph LR
-    subgraph Oracle["☁️ ORACLE (Modulab)"]
-        M[Mostres]
-        R[Resultats]
-        P[Pacients]
-    end
-    
-    subgraph App["⚙️ MultirIntegraModulab"]
-        V[Validació]
-        C[Classificació]
-        T[Tipus Incorporació]
-        CM[Compr. Microorganismes]
-        CR[Compr. Mecanismes]
-        PP[Proc. Positiva]
-        PN[Proc. Negativa]
-    end
-    
-    subgraph MySQL["🗄️ MYSQL (MultiR)"]
-        PD[pacients_diagnostics]
-        PDM[pacients_diagnostics_mostra]
-        MM[mostra_microorganisme]
-        MR[mecanisme_resistencia]
-        MO[microorganisme]
-        ME[micro_especial]
-        MMM[micro_mecanisme_mostra]
-        A[auditoria_integracio_modulab]
-    end
-    
-    subgraph WS["🌐 WebService"]
-        WP[Dades Pacient]
-    end
-    
-    M --> V
-    R --> V
-    P --> V
-    
-    V --> C
-    C --> T
-    T --> CM
-    CM --> ME
-    CM --> MO
-    CM --> CR
-    CR --> MR
-    CR --> PP
-    CR --> PN
-    
-    WP -.->|Opcional| PP
-    
-    PP --> PD
-    PP --> PDM
-    PP --> MM
-    PP --> MMM
-    PP --> A
-    
-    PN --> PD
-    PN --> PDM
-    PN --> MM
-    PN --> A
-    
-    style Oracle fill:#e8f5e9
-    style MySQL fill:#e3f2fd
-    style App fill:#fff3e0
-    style WS fill:#f3e5f5
-```
-
----
-
-## 🔄 Diagrama 9: Cicle de Vida d'una Mostra
-
-```mermaid
-stateDiagram-v2
-    [*] --> Oracle: Resultat nou a Modulab
-    
-    Oracle --> Lectura: Query amb filtre dates
-    
-    Lectura --> Validacio: Col·lecció mostres
-    
-    Validacio --> Classificacio: Mostra vàlida
-    Validacio --> [*]: Mostra no vàlida
-    
-    Classificacio --> Positiva: 1+ resultats positius
-    Classificacio --> Negativa: 0 resultats positius
-    Classificacio --> Mixta: Positius i Negatius
-    
-    Positiva --> ComprovacionsPos: Check microorg + mec
-    Negativa --> ComprovacionsNeg: Check comprov. 1 i 2
-    Mixta --> ComprovacionsPos
-    
-    ComprovacionsPos --> CombinacioProhibida: CNI detectada
-    ComprovacionsPos --> ProcessarPos: OK
-    
-    ComprovacionsNeg --> Incorporar: Té positius
-    ComprovacionsNeg --> NoIncorporar: No té positius
-    
-    CombinacioProhibida --> AuditoriaCNI
-    ProcessarPos --> MySQL_Positiu
-    Incorporar --> MySQL_Negatiu
-    NoIncorporar --> AuditoriaNMRCM
-    
-    MySQL_Positiu --> AuditoriaOK
-    MySQL_Negatiu --> AuditoriaOK
-    
-    AuditoriaCNI --> [*]: Mostra rebutjada
-    AuditoriaOK --> [*]: Mostra processada
-    AuditoriaNMRCM --> [*]: Negatiu no incorporat
-    
-    note right of Oracle
-        Sistema origen
-        Resultats microbiològics
-    end note
-    
-    note right of MySQL_Positiu
-        Registres creats:
-        - pacients_diagnostics
-        - pacients_diagnostics_mostra
-        - mostra_microorganisme
-        - micro_mecanisme_mostra
-    end note
-    
-    note right of AuditoriaNMRCM
-        Negatiu sense
-        positius vigents
-        del pacient
-    end note
-```
-
----
-
-## 📈 Diagrama 10: Model de Dades Simplificat
-
-```mermaid
-erDiagram
-    PACIENTS_DIAGNOSTICS ||--o{ PACIENTS_DIAGNOSTICS_MOSTRA : "té"
-    PACIENTS_DIAGNOSTICS_MOSTRA ||--|| MOSTRA_MICROORGANISME : "genera"
-    MOSTRA_MICROORGANISME ||--o{ MICRO_MECANISME_MOSTRA : "té"
-    
-    MICROORGANISME ||--o{ MOSTRA_MICROORGANISME : "és"
-    MICROORGANISME ||--o| MICRO_ESPECIAL : "pot ser"
-    
-    MECANISME_RESISTENCIA ||--o{ MICRO_MECANISME_MOSTRA : "és"
-    MICROORGANISME ||--o{ MICRO_MECANISME_NOINCOPORAR : "té"
-    MECANISME_RESISTENCIA ||--o{ MICRO_MECANISME_NOINCOPORAR : "forma"
-    
-    TIPUSMOSTRA_M ||--o{ PACIENTS_DIAGNOSTICS_MOSTRA : "classifica"
-    TIPUSMOSTRA_M ||--o{ TIPUSMOSTRA_EQUIVALENTS : "pot tenir"
-    
-    TIPUSPROVA_M ||--o{ MOSTRA_MICROORGANISME : "identifica"
-    
-    MOSTRA_MICROORGANISME ||--|| AUDITORIA_INTEGRACIO_MODULAB : "registra"
-    
-    PACIENTS_DIAGNOSTICS {
-        int id PK
-        string npat
-        datetime data_entrada
-        datetime data_modificacio
-    }
-    
-    PACIENTS_DIAGNOSTICS_MOSTRA {
-        int id PK
-        string npat FK
-        datetime data_mostra
-        string tipus_mostra_m
-        string etiqueta
-        char valoracio
-        char vigent
-    }
-    
-    MOSTRA_MICROORGANISME {
-        int id PK
-        string npat
-        string etiqueta UK
-        datetime data_mostra
-        datetime data_resultat
-        datetime data_validacio
-        string microorganisme FK
-        int id_prova FK
-    }
-    
-    MICRO_MECANISME_MOSTRA {
-        int id PK
-        string npat
-        string etiqueta
-        datetime data_mostra
-        string microorganisme FK
-        string mecanisme_resistencia FK
-    }
-    
-    MICROORGANISME {
-        int id PK
-        string descripcio UK
-        tinyint especial
-    }
-    
-    MICRO_ESPECIAL {
-        int id PK
-        string microorganisme UK
-    }
-    
-    MECANISME_RESISTENCIA {
-        int id PK
-        string codi UK
-        string descripcio
-    }
-    
-    MICRO_MECANISME_NOINCOPORAR {
-        int id PK
-        string microorganisme FK
-        string mecanisme_resistencia FK
-    }
-    
-    TIPUSMOSTRA_M {
-        int id PK
-        string descripcio UK
-        int comportament
-        int dies_vigencia_positiu
-    }
-    
-    TIPUSPROVA_M {
-        int id PK
-        string descripcio UK
-    }
-    
-    AUDITORIA_INTEGRACIO_MODULAB {
-        int id PK
-        string etiqueta
-        string npat
-        string codi_retorn
-        datetime data_integracio
-    }
-```
-
----
-
-## 🎯 Llegenda de Colors i Símbols
-
-### Colors dels Nodes
-
-- 🟢 **Verd clar** (#e1f5e1): Inici/Fi de flux
-- 🟢 **Verd** (#c8e6c9): Acció exitosa, incorporació
-- 🔵 **Blau** (#e3f2fd): Comprovacions, queries
-- 🟡 **Groc** (#fff3cd): Warnings, situacions especials
-- 🟠 **Taronja** (#ffe4b3): Microorganismes especials
-- 🔴 **Vermell clar** (#ffcdd2): Errors, rebutjos
-- ⚪ **Gris** (#f5f5f5): Processos neutrals
-
-### Símbols Utilitzats
-
-- 🏁 Inici de procés
-- ✅ Validació/Comprovació OK
-- ❌ Error/Rebuig
-- 🔎 Cerca/Query
-- 💾 Crear/Actualitzar BD
-- 📝 Auditoria
-- 🧪 Classificació
-- 🦠 Microorganismes
-- 🛡️ Mecanismes
-- ⚡ Positiu
-- 🔵 Negatiu
-- 🌐 WebService
-- 📊 Resultat/Estadística
-- 🔄 Actualització/Revalidació
-- ⚠️ Warning
-
----
-
-## 📝 Notes d'Ús
-
-### Visualitzar Diagrames
-
-1. **GitHub**: Els diagrames Mermaid es renderitzen automàticament
-2. **VS Code**: Instal·lar extensió "Markdown Preview Mermaid Support"
-3. **Online**: Copiar codi a https://mermaid.live/
-4. **Exportar**: Des de mermaid.live es pot exportar a PNG, SVG, PDF
-
-### Modificar Diagrames
-
-Els diagrames són text pla i es poden editar fàcilment:
+## 🎯 Diagrama 9: Determinar Tipus Incorporació (sense canvis)
 
 ```mermaid
 flowchart TD
-    A[Inici] --> B{Decisió}
-    B -->|Opció 1| C[Acció 1]
-    B -->|Opció 2| D[Acció 2]
-```
-
-### Sintaxi Bàsica
-
-- `flowchart TD`: Diagrama de flux de dalt a baix (Top-Down)
-- `flowchart LR`: Diagrama de flux d'esquerra a dreta (Left-Right)
-- `-->`: Fletxa simple
-- `-.->`: Fletxa puntejada
-- `==>`: Fletxa gruixuda
-- `[ ]`: Node rectangular
-- `{ }`: Node de decisió (rombe)
-- `(( ))`: Node circular
-- `[( )]`: Node cilíndric (BD)
-
----
-
-**Documentació creada**: Gener 2025  
-**Versió**: 1.0  
-**Format**: Mermaid.js  
-**Compatibilitat**: GitHub, GitLab, VS Code, Mermaid Live Editor
+    Start([🎯 Determinar Tipus]) --> GetDatesOracle[📅 Obtenir Dates Oracle<br/>DataResultat màx<br/>DataValidacio màx]
+    
+    GetDatesOracle --> QueryMySQL[🔍 Consultar MySQL<br/>mostra_microorganisme<br/>per etiqueta]
+    
+    QueryMySQL --> ExistsMySQL{Existeix a<br/>MySQL?}
+    
+    ExistsMySQL -->|NO| Nova[🆕 NOVA<br/>No existeix a destí]
+    ExistsMySQL -->|SÍ| CompareDates[📊 Comparar Dates]
+    
+    CompareDates --> SameDates{Dates<br/>Iguals?}
+    
+    SameDates -->|SÍ| Repetida[🔁 REPETIDA<br/>Mateix resultat]
+    SameDates -->|NO| CheckValidation{Canvi en<br/>Validació?}
+    
+    CheckValidation -->|Abans NO, ara SÍ| Validada[✅ VALIDADA<br/>Primera validació]
+    CheckValidation -->|Abans SÍ, ara NO| Desvalidada[⬇️ DESVALIDA<br/>Segona validació]
+    CheckValidation -->|Igual| Antiga[🕐 Antiga - Sense Canvis]
+    
+    Nova --> InsertNova[💾 INSERTAR<br/>composicio_mostra]
+    
+    InsertNova --> End([✅ Fi - Tipus Determinat i Nova Insertada])
+    
+    style Start fill:#e1f5e1
+    style End fill:#e1f5e1
+    style Nova fill:#c8e6c9
+    style Repetida fill:#fff3cd
+    style Validada fill:#c8e6c9
+    style Desvalida
