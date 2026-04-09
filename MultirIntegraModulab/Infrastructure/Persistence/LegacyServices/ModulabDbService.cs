@@ -239,6 +239,7 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
                   REPLACE (S.SERVEI_DESCRIPCIO,'''','´') AS SERVEI_DESCRIPCIO,
                   REPLACE (PR.PROVA_DESCRIPCIO,'''','´') AS PROVA_DESCRIPCIO,
                   REPLACE (MOS.MOSTRA_DESCRIPCIO,'''','´') AS MOSTRA_DESCRIPCIO,
+                  REPLACE (DETALL.SHORTDESCRIPTION1,'''','´') AS SHORTDESCRIPTION1,
                   DETALL.DATA_RESULTAT,
                   DETALL.DATA_VALIDACIO 
                 FROM
@@ -332,6 +333,7 @@ RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
                 registre.AillamentDescripcio = reader["AILLAMENT_DESCRIPCIO"]?.ToString()?.Trim();
                 registre.ProvaDescripcio = reader["PROVA_DESCRIPCIO"]?.ToString()?.Trim();
                 registre.MostraDescripcio = reader["MOSTRA_DESCRIPCIO"]?.ToString()?.Trim();
+                registre.ShortDescription1 = reader["SHORTDESCRIPTION1"]?.ToString()?.Trim();
 
                 // Determinar si el microorganisme és especial
                 if (mysqlService != null && !string.IsNullOrWhiteSpace(registre.AillamentDescripcio))
@@ -611,6 +613,7 @@ RESUM DE LA CÀRREGA PER RANG DE DATES ({dataInici:dd/MM/yyyy} - {dataFi:dd/MM/y
                   REPLACE (S.SERVEI_DESCRIPCIO,'''','´') AS SERVEI_DESCRIPCIO,
                   REPLACE (PR.PROVA_DESCRIPCIO,'''','´') AS PROVA_DESCRIPCIO,
                   REPLACE (MOS.MOSTRA_DESCRIPCIO,'''','´') AS MOSTRA_DESCRIPCIO,
+                  REPLACE (DETALL.SHORTDESCRIPTION1,'''','´') AS SHORTDESCRIPTION1,
                   DETALL.DATA_RESULTAT,
                   DETALL.DATA_VALIDACIO 
                 FROM
@@ -645,13 +648,13 @@ RESUM DE LA CÀRREGA PER RANG DE DATES ({dataInici:dd/MM/yyyy} - {dataFi:dd/MM/y
                   AND  ( CONT.ORIGEN(+) = DETALL.ORIGEN AND  CONT.CONTENIDOR_ID(+) = DETALL.CONTENIDOR_ID )
                   AND  ( MOS.ORIGEN(+) = CONT.ORIGEN AND  MOS.MOSTRA_ID(+) = CONT.MOSTRA_ID )
                   AND  (
-                         ( PA.TIPUS is null )
-                         AND
-                         PET.ORIGEN  =  'DT'
-                         AND
-                         DETALL.TIPUS = 'A'
-                         AND
-                         (DETALL.DATA_VALIDACIO >= :dataInici AND DETALL.DATA_VALIDACIO <= :dataFi)
+	       ( PA.TIPUS is null )
+		   AND
+	       PET.ORIGEN  =  'DT'
+		   AND
+	       DETALL.TIPUS = 'A'
+		   AND
+		   (DETALL.DATA_VALIDACIO >= :dataInici AND DETALL.DATA_VALIDACIO <= :dataFi)
                          OR
                          (DETALL.DATA_RESULTAT >= :dataInici AND DETALL.DATA_RESULTAT <= :dataFi)
                         )

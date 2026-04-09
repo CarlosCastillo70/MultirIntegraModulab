@@ -204,6 +204,7 @@ namespace MultirIntegraModulab
                   REPLACE (S.SERVEI_DESCRIPCIO,'''','´') AS SERVEI_DESCRIPCIO,
                   REPLACE (PR.PROVA_DESCRIPCIO,'''','´') AS PROVA_DESCRIPCIO,
                   REPLACE (MOS.MOSTRA_DESCRIPCIO,'''','´') AS MOSTRA_DESCRIPCIO,
+                  REPLACE (DETALL.SHORTDESCRIPTION1,'''','´') AS SHORTDESCRIPTION1,
                   DETALL.DATA_RESULTAT,
                   DETALL.DATA_VALIDACIO 
                 FROM

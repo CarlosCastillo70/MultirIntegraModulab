@@ -118,6 +118,11 @@ namespace MultirIntegraModulab.Domain.Entities
         public string MostraDescripcio { get; set; }
 
         /// <summary>
+        /// Descripció curta adicional del detall de la prova (SHORTDESCRIPTION1)
+        /// </summary>
+        public string ShortDescription1 { get; set; }
+
+        /// <summary>
         /// Data del resultat de la prova
         /// </summary>
         public DateTime DataResultat { get; set; }
