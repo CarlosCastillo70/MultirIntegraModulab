@@ -1,6 +1,7 @@
-using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Application.Helpers;
+using MultirIntegraModulab.Domain.Entities;
 using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI.Common;
 using System;
 
 namespace MultirIntegraModulab
@@ -164,6 +165,78 @@ namespace MultirIntegraModulab
             catch (Exception ex)
             {
                 Logger.Error($"Error comprovant incorporació VR per tipus prova: {codiProva}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Comprova si un tipus de prova és MDO (Malaltia de Declaració Obligatòria)
+        /// </summary>
+        /// <param name="codiProva">Codi de la prova (PROVA_DESCRIPCIO de Modulab)</param>
+        /// <param name="shortDescription1">Valor de SHORTDESCRIPTION1 del resultat ('P' = Positiu)</param>
+        /// <returns>True si és MDO (incorpora_mdo = 1 i resultat positiu, o incorpora_mdo = 2), False en cas contrari</returns>
+        public bool TipusProvaEsMDO(string codiProva, string shortDescription1)
+        {
+            if (string.IsNullOrWhiteSpace(codiProva))
+            {
+                Logger.Warning("Intentant comprovar tipus prova MDO amb codi null o buit");
+                return false;
+            }
+
+            string sql = @"
+                SELECT incorpora_mdo 
+                FROM tipusprova 
+                WHERE UPPER(codi) = UPPER(@codiProva) 
+                  AND actiu = 1";
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@codiProva", codiProva);
+
+                        object result = cmd.ExecuteScalar();
+
+                        if (result != null && result != DBNull.Value)
+                        {
+                            int incorporaMdo = Convert.ToInt32(result);
+                            
+                            // incorpora_mdo = 0 -> NO és MDO
+                            if (incorporaMdo == 0)
+                            {
+                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)} Tipus prova: '{codiProva}' Incorpora_mdo: '0 - NO és MDO'");
+                                return false;
+                            }
+
+                            // incorpora_mdo = 1 -> És MDO només si el resultat és positiu
+                            if (incorporaMdo == 1)
+                            {
+                                bool esPositiu = !string.IsNullOrWhiteSpace(shortDescription1) &&
+                                                 shortDescription1.Trim().ToUpper() == "P";
+
+                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)} Tipus prova: '{codiProva}' Incorpora_mdo: '1 - Incorpora si resultat {shortDescription1} és positiu'");
+                                return esPositiu;
+                            }
+
+                            // incorpora_mdo = 2 -> SEMPRE és MDO (independentment del resultat)
+                            if (incorporaMdo == 2)
+                            {
+                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)} Tipus prova: '{codiProva}' Incorpora_mdo: '2 - Incorpora sempre'. Resultat: {shortDescription1}");
+                                return true;
+                            }
+
+                        }
+
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error comprovant MDO per tipus prova: {codiProva}", ex);
                 return false;
             }
         }

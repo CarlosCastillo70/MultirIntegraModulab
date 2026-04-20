@@ -27,6 +27,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         private readonly IPacientWebService _pacientWebService;
         private readonly ILoggerService _logger;
         private readonly IConfigurationService _configurationService;
+        private readonly Infrastructure.ExternalServices.Email.EmailService _emailService;
         
         // Use Cases de validació i classificació
         private readonly ValidarMostraUseCase _validarMostraUseCase;
@@ -50,7 +51,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             IPacientWebService pacientWebService,
             ILoggerService logger,
             IConfigurationService configurationService,
-            ValidarMostraUseCase validarMostraUseCase)
+            ValidarMostraUseCase validarMostraUseCase,
+            Infrastructure.ExternalServices.Email.EmailService emailService = null)
         {
             _modulabRepository = modulabRepository ?? throw new ArgumentNullException(nameof(modulabRepository));
             _multiRRepository = multiRRepository ?? throw new ArgumentNullException(nameof(multiRRepository));
@@ -58,6 +60,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _configurationService = configurationService ?? throw new ArgumentNullException(nameof(configurationService));
             _validarMostraUseCase = validarMostraUseCase ?? throw new ArgumentNullException(nameof(validarMostraUseCase));
+            _emailService = emailService; // Pot ser null si no està configurat
             
             // Inicialitzar Use Cases de validació
             _classificarMostraUseCase = new ClassificarMostraUseCase(_multiRRepository, _logger);
@@ -193,10 +196,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
 
-                    // Detectar si es tracta d´una MDO (Malaltia de declaració obligatoria)
+                    // FASE 6: Detectar si és MDO (Malaltia de Declaració Obligatòria)
+                    bool esMDO = DetectarMostraMDO(mostra);
 
 
-                    // FASE 6: DETERMINAR TIPUS DE MICROORGANISME (MR vs VR vs MIXT)
+                    // FASE 7: DETERMINAR TIPUS DE MICROORGANISME (MR vs VR vs MIXT)
                     var tipusMicroorganisme = DeterminarTipusMicroorganismeMostra(mostra);
 
                     if (tipusMicroorganisme == TipusMicroorganisme.VirusRespiratori)
@@ -250,7 +254,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         
                         _logger.Info($"🧬 FLUX MULTIRESISTENT activat");
                     
-                        // FASE 7: Classificar mostra (un sol positiu, múltiples negatius, mixta, ...)
+                        // FASE 8: Classificar mostra (un sol positiu, múltiples negatius, mixta, ...)
                         _logger.Info($"📋 Classificant mostra...");
                         var classificacio = _classificarMostraUseCase.Executar(mostra);
                         
@@ -275,7 +279,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                             }
                         }
 
-                        // FASE 8: Processar segons el tipus de mostra
+                        // FASE 9: Processar segons el tipus de mostra
                         await ProcessarPerTipusMostraAsync(mostra, classificacio, resum);
                     }
 
@@ -1090,6 +1094,110 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}MULTIRESISTENT detectat");
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}La mostra es processarà com a MULTIRESISTENT");
                 return TipusMicroorganisme.Multiresistent;
+            }
+        }
+
+        /// <summary>
+        /// Detecta si una mostra és MDO (Malaltia de Declaració Obligatòria)
+        /// Una mostra és MDO si algun dels seus resultats té un tipus de prova MDO
+        /// </summary>
+        /// <param name="mostra">Mostra a comprovar</param>
+        /// <returns>True si la mostra conté algun resultat MDO, False en cas contrari</returns>
+        private bool DetectarMostraMDO(Mostra mostra)
+        {
+            if (mostra == null || mostra.Resultats == null || !mostra.Resultats.Any())
+            {
+                return false;
+            }
+
+            _logger.Info($"🔎 Comprovant si la mostra és MDO (Malaltia de Declaració Obligatòria)...");
+
+            bool esMDO = false;
+            int comptadorMDO = 0;
+
+            foreach (var resultat in mostra.Resultats)
+            {
+                // Comprovar si el tipus de prova és MDO
+                if (!string.IsNullOrWhiteSpace(resultat.ProvaDescripcio))
+                {
+                    bool resultatEsMDO = _multiRRepository.TipusProvaEsMDO(
+                        resultat.ProvaDescripcio, 
+                        resultat.ShortDescription1);
+
+                    if (resultatEsMDO)
+                    {
+                        comptadorMDO++;
+                        esMDO = true;
+
+                        string estatResultat = !string.IsNullOrWhiteSpace(resultat.ShortDescription1) && 
+                                              resultat.ShortDescription1.Trim().ToUpper() == "P" 
+                                              ? "POSITIU" 
+                                              : "NEGATIU/ALTRES";
+
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🚨 MDO detectat!");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}   Tipus prova: {resultat.ProvaDescripcio}");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}   Microorganisme: {resultat.AillamentDescripcio ?? "(cap)"}");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}   Estat resultat: {estatResultat}");
+                    }
+                }
+            }
+
+            if (esMDO)
+            {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✅ MOSTRA MDO confirmada - {comptadorMDO} resultat(s) MDO detectat(s)");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Aquesta mostra requereix gestió especial per MDO");
+
+                // Enviar email d'alerta de MDO si està configurat
+                EnviarEmailAlertaMDO(mostra);
+            }
+            else
+            {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}ℹ️ La mostra NO és MDO - processament normal");
+            }
+
+            return esMDO;
+        }
+
+        /// <summary>
+        /// Envia un email d'alerta quan es detecta una mostra MDO
+        /// </summary>
+        /// <param name="mostra">Mostra MDO detectada</param>
+        private void EnviarEmailAlertaMDO(Mostra mostra)
+        {
+            try
+            {
+                // Comprovar si el servei d'email està disponible
+                if (_emailService == null)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}ℹ️ Servei d'email no configurat - no s'envia alerta MDO");
+                    return;
+                }
+
+                // Obtenir destinataris d'emails de MDO des de parametres_aplicacio
+                var emailsMDO = _multiRRepository.ObtenirParametresPerCategoria("EMAIL_MDO");
+
+                if (emailsMDO == null || !emailsMDO.Any())
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ No hi ha destinataris configurats per emails MDO a parametres_aplicacio (EMAIL_MDO)");
+                    return;
+                }
+
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}📧 Enviant email d'alerta MDO a {emailsMDO.Count} destinatari(s)...");
+
+                bool emailEnviat = _emailService.EnviarEmailMDO(mostra, emailsMDO);
+
+                if (emailEnviat)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✅ Email d'alerta MDO enviat correctament a: {string.Join(", ", emailsMDO)}");
+                }
+                else
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ No s'ha pogut enviar l'email d'alerta MDO");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ Error enviant email d'alerta MDO: {ex.Message}", ex);
             }
         }
     }

@@ -849,6 +849,7 @@ namespace MultirIntegraModulab
                         servei_descripcio, 
                         prova_descripcio, 
                         mostra_descripcio, 
+                        shortdescription1, 
                         dt_create, 
                         data_resultat, 
                         data_validacio, 
@@ -867,6 +868,7 @@ namespace MultirIntegraModulab
                         @servei_descripcio, 
                         @prova_descripcio, 
                         @mostra_descripcio, 
+                        @shortdescription1, 
                         NOW(), 
                         @data_resultat, 
                         @data_validacio, 
@@ -895,6 +897,7 @@ namespace MultirIntegraModulab
                     cmd.Parameters.AddWithValue("@servei_descripcio", resultatUtilitzar.ServeiDescripcio ?? "");
                     cmd.Parameters.AddWithValue("@prova_descripcio", resultatUtilitzar.ProvaDescripcio ?? "");
                     cmd.Parameters.AddWithValue("@mostra_descripcio", resultatUtilitzar.MostraDescripcio ?? "");
+                    cmd.Parameters.AddWithValue("@shortdescription1", resultatUtilitzar.ShortDescription1 ?? "");
 
                     cmd.Parameters.AddWithValue("@data_resultat",
                         resultatUtilitzar.DataResultat != default(DateTime) ? (object)resultatUtilitzar.DataResultat : DBNull.Value);

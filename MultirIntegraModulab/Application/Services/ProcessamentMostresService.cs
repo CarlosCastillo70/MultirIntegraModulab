@@ -33,7 +33,8 @@ namespace MultirIntegraModulab.Application.Services
             IMultiRRepository multiRRepository,
             IPacientWebService pacientWebService,
             ILoggerService logger,
-            IConfigurationService configurationService)
+            IConfigurationService configurationService,
+            Infrastructure.ExternalServices.Email.EmailService emailService = null)
         {
             _modulabRepository = modulabRepository ?? throw new ArgumentNullException(nameof(modulabRepository));
             _multiRRepository = multiRRepository ?? throw new ArgumentNullException(nameof(multiRRepository));
@@ -51,7 +52,8 @@ namespace MultirIntegraModulab.Application.Services
                 _pacientWebService,
                 _logger,
                 _configurationService,
-                _validarMostraUseCase);
+                _validarMostraUseCase,
+                emailService); // Passar el servei d'email
         }
 
         /// <summary>

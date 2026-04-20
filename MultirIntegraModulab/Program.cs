@@ -66,13 +66,42 @@ namespace MultirIntegraModulab
                     loggerService);
                 loggerService.Info("✅ Web service SAP de pacients configurat");
 
-                // 1.6 Configurar servei d'aplicació
+                // 1.6 Configurar servei d'email per MDO (utilitzant la mateixa configuració)
+                EmailService emailServiceMDO = null;
+                if (configService.EnviarEmailLog)
+                {
+                    try
+                    {
+                        emailServiceMDO = new EmailService(
+                            configService.SmtpServer,
+                            configService.SmtpPort,
+                            configService.SmtpUsuari,
+                            configService.SmtpPassword,
+                            configService.SmtpUsarSSL,
+                            configService.EmailFrom,
+                            configService.EmailsDestinataris,
+                            loggerService
+                        );
+                        loggerService.Info("✅ Servei d'email per MDO configurat");
+                    }
+                    catch (Exception exEmail)
+                    {
+                        loggerService.Warning($"⚠️ No s'ha pogut configurar el servei d'email per MDO: {exEmail.Message}");
+                    }
+                }
+                else
+                {
+                    loggerService.Info("ℹ️ Servei d'email desactivat - no s'enviaran alertes MDO");
+                }
+
+                // 1.7 Configurar servei d'aplicació
                 var processamentService = new ProcessamentMostresService(
                     modulabRepository,
                     multiRRepository,
                     pacientWebService,
                     loggerService,
-                    configService
+                    configService,
+                    emailServiceMDO  // Passar el servei d'email
                 );
 
                 // ===========================================================

@@ -342,6 +342,14 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>True si incorpora_virus_respiratori = 1, False en cas contrari o si no existeix</returns>
         bool TipusProvaPermitIncorporarVirusRespiratori(string codiProva);
 
+        /// <summary>
+        /// Comprova si un tipus de prova és MDO (Malaltia de Declaració Obligatòria)
+        /// </summary>
+        /// <param name="codiProva">Codi de la prova (PROVA_DESCRIPCIO de Modulab)</param>
+        /// <param name="shortDescription1">Valor de SHORTDESCRIPTION1 del resultat ('P' = Positiu)</param>
+        /// <returns>True si és MDO (incorpora_mdo = 1 i resultat positiu, o incorpora_mdo = 2), False en cas contrari</returns>
+        bool TipusProvaEsMDO(string codiProva, string shortDescription1);
+
         #region Paràmetres d'Aplicació
 
         /// <summary>

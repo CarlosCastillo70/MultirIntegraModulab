@@ -332,5 +332,143 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             sb.AppendLine("Aquest és un missatge automàtic del sistema MultiR");
             return sb.ToString();
         }
+
+        /// <summary>
+        /// Envia un email d'alerta de MDO (Malaltia de Declaració Obligatòria)
+        /// </summary>
+        /// <param name="mostra">Mostra MDO detectada</param>
+        /// <param name="emailsDestinatarisMDO">Llista d'emails destinataris per MDO</param>
+        /// <returns>True si s'ha enviat correctament</returns>
+        public bool EnviarEmailMDO(Domain.Entities.Mostra mostra, List<string> emailsDestinatarisMDO)
+        {
+            if (mostra == null)
+            {
+                Log("❌ Error: Mostra és null", "ERROR");
+                return false;
+            }
+
+            if (emailsDestinatarisMDO == null || !emailsDestinatarisMDO.Any())
+            {
+                Log("⚠️ No hi ha destinataris configurats per emails de MDO", "WARNING");
+                return false;
+            }
+
+            try
+            {
+                var dataDeteccio = DateTime.Now;
+                var subject = $"🚨 MDO DETECTADA - Mostra {mostra.EtiquetaId} - {dataDeteccio:dd/MM/yyyy HH:mm}";
+                var body = GenerarCosEmailMDO(mostra, dataDeteccio);
+
+                Log($"📧 Preparant enviament d'email MDO: mostra {mostra.EtiquetaId}");
+
+                using (var message = new MailMessage())
+                {
+                    // Configurar remitent
+                    message.From = new MailAddress(_emailFrom);
+                    
+                    // Afegir destinataris específics de MDO
+                    foreach (var destinatari in emailsDestinatarisMDO)
+                    {
+                        message.To.Add(new MailAddress(destinatari));
+                    }
+
+                    // Configurar contingut
+                    message.Subject = subject;
+                    message.Body = body;
+                    message.IsBodyHtml = false;
+                    message.BodyEncoding = Encoding.UTF8;
+                    message.SubjectEncoding = Encoding.UTF8;
+                    message.Priority = MailPriority.High; // Prioritat alta per MDO
+
+                    // Configurar client SMTP
+                    using (var smtpClient = new SmtpClient(_smtpServer, _smtpPort))
+                    {
+                        if (_utilitzarAutenticacio)
+                        {
+                            smtpClient.Credentials = new NetworkCredential(_smtpUsuari, _smtpPassword);
+                            Log($"🔐 Autenticació SMTP: {_smtpUsuari}");
+                        }
+                        else
+                        {
+                            smtpClient.UseDefaultCredentials = false;
+                            Log($"🔓 Connexió SMTP anònima");
+                        }
+
+                        smtpClient.EnableSsl = _usarSSL;
+                        smtpClient.Timeout = 30000;
+
+                        Log($"📤 Enviant email MDO a {emailsDestinatarisMDO.Count} destinatari(s) via {_smtpServer}:{_smtpPort}...");
+                        smtpClient.Send(message);
+                        
+                        Log($"✅ Email MDO enviat a: {string.Join(", ", emailsDestinatarisMDO)}");
+                        return true;
+                    }
+                }
+            }
+            catch (SmtpException ex)
+            {
+                Log($"❌ Error SMTP enviant email MDO: {ex.Message} (Codi: {ex.StatusCode})", "ERROR");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log($"❌ Error enviant email MDO: {ex.Message}", "ERROR");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Genera el cos de l'email d'alerta MDO
+        /// </summary>
+        private string GenerarCosEmailMDO(Domain.Entities.Mostra mostra, DateTime dataDeteccio)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("=================================================");
+            sb.AppendLine("  🚨 ALERTA MDO - MALALTIA DE DECLARACIÓ OBLIGATÒRIA");
+            sb.AppendLine("=================================================");
+            sb.AppendLine();
+            sb.AppendLine($"Data detecció: {dataDeteccio:dd/MM/yyyy HH:mm:ss}");
+            sb.AppendLine();
+            sb.AppendLine("INFORMACIÓ DE LA MOSTRA:");
+            sb.AppendLine("-------------------");
+            sb.AppendLine($"• Etiqueta:         {mostra.EtiquetaId}");
+            sb.AppendLine($"• Pacient SAP:      {mostra.PacientSap}");
+            sb.AppendLine($"• Data resultat:    {mostra.DataUltimResultat:dd/MM/yyyy HH:mm}");
+            sb.AppendLine($"• Nombre resultats: {mostra.NombreResultats}");
+            sb.AppendLine();
+
+            sb.AppendLine("RESULTATS MDO DETECTATS:");
+            sb.AppendLine("-------------------");
+            
+            int comptador = 1;
+            foreach (var resultat in mostra.Resultats)
+            {
+                sb.AppendLine($"\nResultat {comptador}:");
+                sb.AppendLine($"  • Tipus prova:       {resultat.ProvaDescripcio ?? "(no informat)"}");
+                sb.AppendLine($"  • Microorganisme:    {resultat.AillamentDescripcio ?? "(cap)"}");
+                sb.AppendLine($"  • Resultat:          {(!string.IsNullOrWhiteSpace(resultat.ShortDescription1) && resultat.ShortDescription1.Trim().ToUpper() == "P" ? "POSITIU ⚠️" : resultat.ShortDescription1 ?? "(no informat)")}");
+                sb.AppendLine($"  • Centre:            {resultat.CentreDescripcio ?? "(no informat)"}");
+                sb.AppendLine($"  • Servei:            {resultat.ServeiDescripcio ?? "(no informat)"}");
+                sb.AppendLine($"  • Metge:             {resultat.NomMetge ?? "(no informat)"}");
+                sb.AppendLine($"  • Data validació:    {(resultat.DataValidacio.HasValue ? resultat.DataValidacio.Value.ToString("dd/MM/yyyy HH:mm") : "No validat")}");
+                comptador++;
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("=================================================");
+            sb.AppendLine();
+            sb.AppendLine("⚠️ ATENCIÓ:");
+            sb.AppendLine("Aquesta mostra ha estat identificada com a MDO");
+            sb.AppendLine("(Malaltia de Declaració Obligatòria).");
+            sb.AppendLine("Cal seguir els protocols establerts per a la seva gestió.");
+            sb.AppendLine();
+            sb.AppendLine("=================================================");
+            sb.AppendLine();
+            sb.AppendLine("--");
+            sb.AppendLine("Aquest és un missatge automàtic del sistema MultiR");
+            sb.AppendLine("Prioritat: ALTA");
+            
+            return sb.ToString();
+        }
     }
 }

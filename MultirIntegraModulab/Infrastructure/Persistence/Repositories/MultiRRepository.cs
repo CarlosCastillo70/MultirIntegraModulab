@@ -212,6 +212,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool TipusProvaPermitIncorporarVirusRespiratori(string codiProva) =>
             _multiRDbService.TipusProvaPermitIncorporarVirusRespiratori(codiProva);
 
+        public bool TipusProvaEsMDO(string codiProva, string shortDescription1) =>
+            _multiRDbService.TipusProvaEsMDO(codiProva, shortDescription1);
+
         #region Paràmetres d'Aplicació
 
         public bool ExisteixParametre(string categoria, string valor) =>
