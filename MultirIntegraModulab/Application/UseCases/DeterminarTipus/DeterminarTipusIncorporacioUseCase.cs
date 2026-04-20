@@ -37,7 +37,7 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                 throw new ArgumentNullException(nameof(mostra));
             }
 
-            _logger.Info($"🔎 Determinant tipus incorporació per mostra {mostra.EtiquetaId}");
+            _logger.Info($"🔎 Determinant tipus incorporació de la mostra {mostra.EtiquetaId}");
 
             try
             {
@@ -47,7 +47,7 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
 
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}DataResultat = {dataResultatOracle:dd/MM/yyyy HH:mm}, DataValidacio = {dataValidacioOracle?.ToString("dd/MM/yyyy HH:mm") ?? "null"}");
 
-                // Classificar l'estat comparant amb una possible mostra de MultiR (MySQL)
+                // Classificar tipus incorporació comparant mostra amb una possible mostra de MultiR (MySQL)
                 var tipusEstat = _multiRRepository.ClassificarEstatResultat(
                     mostra.EtiquetaId, 
                     dataResultatOracle, 

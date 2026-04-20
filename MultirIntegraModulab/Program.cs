@@ -140,7 +140,7 @@ namespace MultirIntegraModulab
                     
                     int diesEnrere = configService.CarregaDiesEnrere_NombreDies;
                     
-                    loggerService.Info($"🔍 Mode: CÀRREGA PER DIES ENRERE (Prioritat Mitjana)");
+                    loggerService.Info($"🔍 Mode: CÀRREGA PER DIES ENRERE");
                     loggerService.Info($"📅 Carregant mostres dels últims {diesEnrere} dies");
                     Console.WriteLine($"\n🔍 Mode: CÀRREGA PER DIES ENRERE");
                     Console.WriteLine($"📅 Carregant mostres dels últims {diesEnrere} dies...");

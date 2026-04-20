@@ -59,7 +59,7 @@ namespace MultirIntegraModulab
         /// <returns>Col·lecció de resultats de mostres carregada</returns>
         public ColeccioMostres CarregarResultatsDeMostres(int diesEndarrera = 1, MultiRDbService mysqlService = null, int limitRegistres = 0)
         {
-            _logger.Info($"Iniciant càrrega de resultats de mostres: dies enrere={diesEndarrera}, límit={limitRegistres}");
+            _logger.Info($"Iniciant càrrega de resultats de mostres: dies enrere = {diesEndarrera}, límit en num. de registres (0 = sense límit) = {limitRegistres}");
             
             var coleccioResultats = new ColeccioMostres();
             int registresProcessats = 0;
@@ -71,7 +71,7 @@ namespace MultirIntegraModulab
             {
                 try
                 {
-                    _logger.Info("📋 Precarregant en caché els microorganismes especials des de MultiR...");
+                    _logger.Info("📋 Precarregant en caché els microorganismes especials des de MultiR ...");
                     Console.WriteLine("📋 Precarregant microorganismes especials...");
                     
                     mysqlService.CarregarMicroorganismesEspecials();
@@ -106,13 +106,13 @@ namespace MultirIntegraModulab
                     }
                     else
                     {
-                        _logger.Info($"🔎 Executant consulta Oracle sense límit de registres ({diesEndarrera} dies enrera)");
+                        _logger.Info($"🔎 Executant consulta a Oracle Modulab sense límit de registres ({diesEndarrera} dies enrera)");
                         Console.WriteLine("🔎 Recupero les dades de Modulab (pot trigar una estona)...");
                     }
 
                     using (var reader = cmd.ExecuteReader())
                     {
-                        _logger.Info("✅ Consulta Modulab (Oracle) executada correctament. Processant registres...");
+                        _logger.Info("✅ Consulta a Oracle Modulab executada correctament. Es continua endavant ...");
                         Console.WriteLine("✅ Dades recuperades. Continuo endavant");
 
                         while (reader.Read())
@@ -180,10 +180,11 @@ namespace MultirIntegraModulab
 
             // Mostrar i registrar resum del processament
             string resum = $@"
-RESUM DE LA INCORPORACIÓ DE LES DADES DE MODULAB:
+RESUM DE LES DADES DE MODULAB A INCORPORAR:
    - Resultats de mostra processats: {registresProcessats}
    - Resultats de mostra carregats correctament: {coleccioResultats.NombreTotalResultats}
    - Resultats de mostra amb error: {registresAmbError}
+   - Mostres a incorporar: {coleccioResultats.NombreTotalMostres}
    - Microorganismes especials trobats: {microorganismesEspecials}";
 
             if (limitRegistres > 0)
@@ -684,7 +685,7 @@ RESUM DE LA CÀRREGA PER RANG DE DATES ({dataInici:dd/MM/yyyy} - {dataFi:dd/MM/y
         {
             var errors = new List<string>();
 
-            // Validacions obligatòries
+            // Comprovació dades obligatòries (no continua)
             if (string.IsNullOrWhiteSpace(registre.EtiquetaId))
                 errors.Add("ETIQUETA_ID és null o buida");
 
@@ -694,7 +695,7 @@ RESUM DE LA CÀRREGA PER RANG DE DATES ({dataInici:dd/MM/yyyy} - {dataFi:dd/MM/y
             if (registre.DataResultat == default(DateTime))
                 errors.Add("DATA_RESULTAT no és vàlida");
 
-            // Validacions opcionals amb avisos
+            // Comprovació dades opcionals amb avisos
             if (string.IsNullOrWhiteSpace(registre.AillamentDescripcio))
             {
                 _logger.Warning($"Registre #{numeroRegistre} (ETIQUETA_ID={registre.EtiquetaId}): AILLAMENT_DESCRIPCIO és null o buida");

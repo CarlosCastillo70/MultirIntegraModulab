@@ -22,6 +22,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// </summary>
         public bool Executar(Mostra mostra)
         {
+            // Validacions generals de la mostra
+            
             // Validació 1: La mostra no pot ser null
             if (mostra == null)
             {
@@ -49,6 +51,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Validació fallida: mostra {mostra.EtiquetaId} sense resultats");
                 return false;
             }
+
+            // Validacions de resultats
 
             // Validació 5: Tots els resultats han de tenir DataResultat
             foreach (var resultat in mostra.Resultats)

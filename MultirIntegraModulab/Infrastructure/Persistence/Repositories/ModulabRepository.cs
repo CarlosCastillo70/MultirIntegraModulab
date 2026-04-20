@@ -36,7 +36,7 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
                 var resultat = await Task.Run(() => 
                     _modulabDbService.CarregarResultatsDeMostres(diesEndarrera, _multiRDbService, limitRegistres));
                 
-                _logger.Info($"Carregades {resultat.NombreTotalMostres} mostres de Modulab");
+                _logger.Info($"Mostres a carregar de Modulab {resultat.NombreTotalMostres}");
                 return resultat;
             }
             catch (Exception ex)

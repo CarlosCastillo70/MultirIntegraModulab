@@ -167,7 +167,7 @@ namespace MultirIntegraModulab
         /// <returns>True si és especial, False si no ho és, null si no es troba</returns>
         public bool? EsMicroorganismeEspecial(string microorganismeDescripcio)
         {
-            // Verificar si cal recarregar la caché
+            // Verificar si cal recarregar la caché de microorganismes especials
             if (CacheCaducada())
             {
                 CarregarMicroorganismesEspecials();

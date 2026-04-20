@@ -125,7 +125,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
             else
             {
-                _logger.Info($"📋 Processant totes les mostres: {totesLesMostres.Count} mostra(es)");
+                _logger.Info($"📋 Processant totes les mostres (filtratge per etiqueta no actiu) : {totesLesMostres.Count} mostra(es)");
             }
 
             foreach (var mostra in totesLesMostres)
@@ -191,6 +191,10 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         resum.MostresAmbError++;
                         continue;
                     }
+
+
+                    // Detectar si es tracta d´una MDO (Malaltia de declaració obligatoria)
+
 
                     // FASE 6: DETERMINAR TIPUS DE MICROORGANISME (MR vs VR vs MIXT)
                     var tipusMicroorganisme = DeterminarTipusMicroorganismeMostra(mostra);
