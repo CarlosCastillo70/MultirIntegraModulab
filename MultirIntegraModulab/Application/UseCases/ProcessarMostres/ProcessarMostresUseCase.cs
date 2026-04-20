@@ -1144,8 +1144,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             if (esMDO)
             {
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✅ MOSTRA MDO confirmada - {comptadorMDO} resultat(s) MDO detectat(s)");
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Aquesta mostra requereix gestió especial per MDO");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ MOSTRA MDO confirmada - {comptadorMDO} resultat(s) MDO detectat(s)");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Aquesta mostra requereix gestió especial per MDO");
 
                 // Enviar email d'alerta de MDO si està configurat
                 EnviarEmailAlertaMDO(mostra);
@@ -1174,11 +1174,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 }
 
                 // Obtenir destinataris d'emails de MDO des de parametres_aplicacio
-                var emailsMDO = _multiRRepository.ObtenirParametresPerCategoria("EMAIL_MDO");
+                // Buscar tots els registres amb clau 'EMAIL_MDO' i retornar els seus valors (les adreces d'email)
+                var emailsMDO = _multiRRepository.ObtenirValorsPerClau("EMAIL_MDO");
 
                 if (emailsMDO == null || !emailsMDO.Any())
                 {
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ No hi ha destinataris configurats per emails MDO a parametres_aplicacio (EMAIL_MDO)");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ No hi ha destinataris configurats per emails MDO a parametres_aplicacio (clau EMAIL_MDO)");
                     return;
                 }
 

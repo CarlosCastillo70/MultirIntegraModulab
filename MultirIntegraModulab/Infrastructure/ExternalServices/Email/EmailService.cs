@@ -363,8 +363,8 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
 
                 using (var message = new MailMessage())
                 {
-                    // Configurar remitent
-                    message.From = new MailAddress(_emailFrom);
+                    // Configurar remitent amb nom descriptiu
+                    message.From = new MailAddress(_emailFrom, "Sistema MultiR - Alertes MDO");
                     
                     // Afegir destinataris específics de MDO
                     foreach (var destinatari in emailsDestinatarisMDO)
@@ -425,7 +425,6 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             var sb = new StringBuilder();
             sb.AppendLine("=================================================");
             sb.AppendLine("  🚨 ALERTA MDO - MALALTIA DE DECLARACIÓ OBLIGATÒRIA");
-            sb.AppendLine("=================================================");
             sb.AppendLine();
             sb.AppendLine($"Data detecció: {dataDeteccio:dd/MM/yyyy HH:mm:ss}");
             sb.AppendLine();
@@ -458,8 +457,8 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             sb.AppendLine("=================================================");
             sb.AppendLine();
             sb.AppendLine("⚠️ ATENCIÓ:");
-            sb.AppendLine("Aquesta mostra ha estat identificada com a MDO");
-            sb.AppendLine("(Malaltia de Declaració Obligatòria).");
+            sb.AppendLine("Esteu rebent aquest email per que aquesta mostra ha estat identificada com a MDO (Malaltia de Declaració Obligatòria), i la vostra adreça està identificada per enviar aquestes notificacions.");
+            sb.AppendLine("");
             sb.AppendLine("Cal seguir els protocols establerts per a la seva gestió.");
             sb.AppendLine();
             sb.AppendLine("=================================================");

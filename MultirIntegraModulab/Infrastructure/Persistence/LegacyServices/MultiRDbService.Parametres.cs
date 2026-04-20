@@ -150,5 +150,64 @@ namespace MultirIntegraModulab
 
             return parametres;
         }
+
+        /// <summary>
+        /// Obté tots els valors dels paràmetres actius que tenen una clau específica
+        /// Útil per obtenir llistes de valors com emails, centres, etc.
+        /// </summary>
+        /// <param name="clau">Clau del paràmetre (ex: EMAIL_MDO)</param>
+        /// <returns>Llista de valors dels paràmetres actius amb aquesta clau</returns>
+        public List<string> ObtenirValorsPerClau(string clau)
+        {
+            var valors = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(clau))
+            {
+                Logger.Warning("Intentant obtenir valors amb clau buida");
+                return valors;
+            }
+
+            string sql = @"
+                SELECT valor 
+                FROM parametres_aplicacio 
+                WHERE clau = @clau
+                  AND actiu = 1
+                  AND dt_delete IS NULL
+                  AND valor IS NOT NULL
+                  AND valor != ''
+                ORDER BY valor";
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@clau", clau);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                string valor = reader.GetString("valor");
+                                if (!string.IsNullOrWhiteSpace(valor))
+                                {
+                                    valors.Add(valor.Trim());
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Logger.Info($"Carregats {valors.Count} valors per la clau '{clau}'");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error obtenint valors per clau {clau}", ex);
+            }
+
+            return valors;
+        }
     }
 }

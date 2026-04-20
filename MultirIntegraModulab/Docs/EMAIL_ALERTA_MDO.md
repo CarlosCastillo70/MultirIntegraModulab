@@ -97,10 +97,17 @@ private void EnviarEmailAlertaMDO(Mostra mostra)
 
 **Funcionalitat:**
 1. Comprova si el servei d'email està disponible
-2. Obté els destinataris des de `parametres_aplicacio` amb categoria `EMAIL_MDO`
+2. Obté els destinataris des de `parametres_aplicacio` amb clau `EMAIL_MDO` (les adreces estan al camp valor)
 3. Valida que hi hagi destinataris configurats
 4. Envia l'email utilitzant `_emailService.EnviarEmailMDO()`
 5. Registra el resultat al log (èxit o error)
+
+**Codi:**
+```csharp
+// Obtenir destinataris d'emails de MDO des de parametres_aplicacio
+// Buscar tots els registres amb clau 'EMAIL_MDO' i retornar els seus valors (les adreces d'email)
+var emailsMDO = _multiRRepository.ObtenirValorsPerClau("EMAIL_MDO");
+```
 
 **Logs generats:**
 ```
@@ -206,15 +213,15 @@ Per configurar els destinataris dels emails de MDO, cal afegir registres a la ta
 -- Exemple: Afegir destinataris per emails de MDO
 INSERT INTO parametres_aplicacio (categoria, clau, valor, dt_create, dt_update, actiu)
 VALUES 
-('EMAIL_MDO', 'mdo@hospital.cat', 'Email principal MDO', NOW(), NOW(), 1),
-('EMAIL_MDO', 'urgencies@hospital.cat', 'Email urgències', NOW(), NOW(), 1),
-('EMAIL_MDO', 'epidemiologia@hospital.cat', 'Email epidemiologia', NOW(), NOW(), 1);
+('CONFIG_GENERAL', 'EMAIL_MDO', 'mdo@hospital.cat', NOW(), NOW(), 1),
+('CONFIG_GENERAL', 'EMAIL_MDO', 'urgencies@hospital.cat', NOW(), NOW(), 1),
+('CONFIG_GENERAL', 'EMAIL_MDO', 'epidemiologia@hospital.cat', NOW(), NOW(), 1);
 ```
 
 **Estructura dels registres:**
-- **categoria**: `'EMAIL_MDO'` (identificador de la categoria)
-- **clau**: L'adreça de correu electrònic destinatària
-- **valor**: Descripció del destinatari (opcional)
+- **categoria**: `'CONFIG_GENERAL'` (categoria de configuració general)
+- **clau**: `'EMAIL_MDO'` (identificador del paràmetre)
+- **valor**: L'adreça de correu electrònic destinatària
 - **actiu**: `1` per emails actius, `0` per desactivar-los
 
 ---

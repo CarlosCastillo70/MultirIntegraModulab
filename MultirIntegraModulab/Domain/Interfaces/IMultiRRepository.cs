@@ -375,6 +375,14 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>Llista de claus dels paràmetres actius</returns>
         List<string> ObtenirParametresPerCategoria(string categoria);
 
+        /// <summary>
+        /// Obté tots els valors dels paràmetres actius que tenen una clau específica
+        /// Útil per obtenir llistes de valors com emails, centres, etc.
+        /// </summary>
+        /// <param name="clau">Clau del paràmetre (ex: EMAIL_MDO)</param>
+        /// <returns>Llista de valors dels paràmetres actius amb aquesta clau</returns>
+        List<string> ObtenirValorsPerClau(string clau);
+
         #endregion
 
         // Integració

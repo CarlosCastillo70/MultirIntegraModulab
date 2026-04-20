@@ -13,7 +13,7 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
     /// PARÀMETRES A BD (CONFIG_GENERAL):
     /// - DIES_VIGENCIA_POSITIUS_DEFAULT
     /// - EMAIL_FROM
-    /// - EMAIL_DESTINATARIS
+    /// - EMAIL_RESUM_CARREGA
     /// - HABILITAR_NOTIFICACIONS_EMAIL
     /// </summary>
     public class ConfigurationServiceHibrid : ConfigurationService
@@ -113,7 +113,7 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
         }
 
         /// <summary>
-        /// MIGRAT A BD: Emails destinataris per notificacions del sistema
+        /// MIGRAT A BD: Emails destinataris per notificacions de resum de càrrega
         /// Pot variar segons organització/departament
         /// Format a BD: emails separats per punt i coma (;)
         /// </summary>
@@ -127,10 +127,10 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
                     return base.EmailsDestinataris;
                 }
 
-                // Llegir de BD primer amb el paràmetre EMAIL_DESTINATARIS
+                // Llegir de BD primer amb el paràmetre EMAIL_RESUM_CARREGA
                 string valorBD = _parametresHelper.ObtenirString(
                     "CONFIG_GENERAL", 
-                    "EMAIL_DESTINATARIS", 
+                    "EMAIL_RESUM_CARREGA", 
                     null);
                 
                 if (!string.IsNullOrEmpty(valorBD))

@@ -226,6 +226,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public List<string> ObtenirParametresPerCategoria(string categoria) =>
             _multiRDbService.ObtenirParametresPerCategoria(categoria);
 
+        public List<string> ObtenirValorsPerClau(string clau) =>
+            _multiRDbService.ObtenirValorsPerClau(clau);
+
         #endregion
 
         // Integració

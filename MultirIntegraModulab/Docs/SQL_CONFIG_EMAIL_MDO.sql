@@ -20,14 +20,14 @@
 SELECT 
     id,
     categoria,
-    clau AS email,
-    valor AS descripcio,
+    clau,
+    valor AS email,
     actiu,
     dt_create,
     dt_update
 FROM parametres_aplicacio
-WHERE categoria = 'EMAIL_MDO'
-ORDER BY actiu DESC, clau;
+WHERE clau = 'EMAIL_MDO'
+ORDER BY actiu DESC, valor;
 
 -- ========================================================================
 -- 2. AFEGIR DESTINATARIS PER MDO
@@ -35,19 +35,19 @@ ORDER BY actiu DESC, clau;
 
 -- Exemple: Afegir el responsable de MDO
 INSERT INTO parametres_aplicacio (categoria, clau, valor, dt_create, dt_update, actiu)
-VALUES ('EMAIL_MDO', 'mdo@hospital.cat', 'Responsable MDO', NOW(), NOW(), 1);
+VALUES ('CONFIG_GENERAL', 'EMAIL_MDO', 'mdo@hospital.cat', NOW(), NOW(), 1);
 
 -- Exemple: Afegir el servei d'urgències
 INSERT INTO parametres_aplicacio (categoria, clau, valor, dt_create, dt_update, actiu)
-VALUES ('EMAIL_MDO', 'urgencies@hospital.cat', 'Servei Urgències', NOW(), NOW(), 1);
+VALUES ('CONFIG_GENERAL', 'EMAIL_MDO', 'urgencies@hospital.cat', NOW(), NOW(), 1);
 
 -- Exemple: Afegir el servei d'epidemiologia
 INSERT INTO parametres_aplicacio (categoria, clau, valor, dt_create, dt_update, actiu)
-VALUES ('EMAIL_MDO', 'epidemiologia@hospital.cat', 'Servei Epidemiologia', NOW(), NOW(), 1);
+VALUES ('CONFIG_GENERAL', 'EMAIL_MDO', 'epidemiologia@hospital.cat', NOW(), NOW(), 1);
 
 -- Exemple: Afegir un supervisor
 INSERT INTO parametres_aplicacio (categoria, clau, valor, dt_create, dt_update, actiu)
-VALUES ('EMAIL_MDO', 'supervisor.laboratori@hospital.cat', 'Supervisor Laboratori', NOW(), NOW(), 1);
+VALUES ('CONFIG_GENERAL', 'EMAIL_MDO', 'supervisor.laboratori@hospital.cat', NOW(), NOW(), 1);
 
 -- ========================================================================
 -- 3. MODIFICAR DESTINATARIS EXISTENTS
@@ -57,22 +57,22 @@ VALUES ('EMAIL_MDO', 'supervisor.laboratori@hospital.cat', 'Supervisor Laborator
 UPDATE parametres_aplicacio 
 SET actiu = 0, 
     dt_update = NOW()
-WHERE categoria = 'EMAIL_MDO' 
-  AND clau = 'antiguo@hospital.cat';
+WHERE clau = 'EMAIL_MDO' 
+  AND valor = 'antiguo@hospital.cat';
 
 -- Reactivar un destinatari
 UPDATE parametres_aplicacio 
 SET actiu = 1, 
     dt_update = NOW()
-WHERE categoria = 'EMAIL_MDO' 
-  AND clau = 'mdo@hospital.cat';
+WHERE clau = 'EMAIL_MDO' 
+  AND valor = 'mdo@hospital.cat';
 
--- Actualitzar la descripció d'un destinatari
+-- Actualitzar l'email d'un destinatari
 UPDATE parametres_aplicacio 
-SET valor = 'Nova descripció',
+SET valor = 'nou.email@hospital.cat',
     dt_update = NOW()
-WHERE categoria = 'EMAIL_MDO' 
-  AND clau = 'mdo@hospital.cat';
+WHERE clau = 'EMAIL_MDO' 
+  AND valor = 'antic.email@hospital.cat';
 
 -- ========================================================================
 -- 4. ESBORRAR DESTINATARIS
@@ -83,12 +83,12 @@ WHERE categoria = 'EMAIL_MDO'
 
 -- Esborrar un destinatari específic
 DELETE FROM parametres_aplicacio 
-WHERE categoria = 'EMAIL_MDO' 
-  AND clau = 'temporal@hospital.cat';
+WHERE clau = 'EMAIL_MDO' 
+  AND valor = 'temporal@hospital.cat';
 
 -- Esborrar TOTS els destinataris MDO inactius
 DELETE FROM parametres_aplicacio 
-WHERE categoria = 'EMAIL_MDO' 
+WHERE clau = 'EMAIL_MDO' 
   AND actiu = 0;
 
 -- ========================================================================
@@ -99,14 +99,14 @@ WHERE categoria = 'EMAIL_MDO'
 SELECT 
     COUNT(*) as total_destinataris_actius
 FROM parametres_aplicacio
-WHERE categoria = 'EMAIL_MDO'
+WHERE clau = 'EMAIL_MDO'
   AND actiu = 1;
 
 -- Llistar tots els destinataris amb detalls
 SELECT 
     id,
-    clau AS email,
-    valor AS descripcio,
+    categoria,
+    valor AS email,
     CASE 
         WHEN actiu = 1 THEN '? Actiu'
         ELSE '? Inactiu'
@@ -114,8 +114,8 @@ SELECT
     dt_create AS data_creacio,
     dt_update AS ultima_modificacio
 FROM parametres_aplicacio
-WHERE categoria = 'EMAIL_MDO'
-ORDER BY actiu DESC, clau;
+WHERE clau = 'EMAIL_MDO'
+ORDER BY actiu DESC, valor;
 
 -- Verificar si hi ha algun destinatari configurat
 SELECT 
@@ -124,7 +124,7 @@ SELECT
         ELSE '?? NO hi ha cap destinatari configurat - cal afegir-ne!'
     END AS estat_configuracio
 FROM parametres_aplicacio
-WHERE categoria = 'EMAIL_MDO'
+WHERE clau = 'EMAIL_MDO'
   AND actiu = 1;
 
 -- ========================================================================
@@ -133,18 +133,18 @@ WHERE categoria = 'EMAIL_MDO'
 
 -- DESENVOLUPAMENT: Afegir email de proves
 INSERT INTO parametres_aplicacio (categoria, clau, valor, dt_create, dt_update, actiu)
-VALUES ('EMAIL_MDO', 'desenvolupament@hospital.cat', 'Email proves desenvolupament', NOW(), NOW(), 1);
+VALUES ('CONFIG_GENERAL', 'EMAIL_MDO', 'desenvolupament@hospital.cat', NOW(), NOW(), 1);
 
 -- PREPRODUCCIÓ: Afegir email de preproducció
 INSERT INTO parametres_aplicacio (categoria, clau, valor, dt_create, dt_update, actiu)
-VALUES ('EMAIL_MDO', 'preproduccio@hospital.cat', 'Email proves preproducció', NOW(), NOW(), 1);
+VALUES ('CONFIG_GENERAL', 'EMAIL_MDO', 'preproduccio@hospital.cat', NOW(), NOW(), 1);
 
 -- PRODUCCIÓ: Afegir emails reals
 INSERT INTO parametres_aplicacio (categoria, clau, valor, dt_create, dt_update, actiu)
 VALUES 
-('EMAIL_MDO', 'mdo@hospital.cat', 'Responsable MDO - Producció', NOW(), NOW(), 1),
-('EMAIL_MDO', 'urgencies@hospital.cat', 'Urgències - Producció', NOW(), NOW(), 1),
-('EMAIL_MDO', 'epidemiologia@hospital.cat', 'Epidemiologia - Producció', NOW(), NOW(), 1);
+('CONFIG_GENERAL', 'EMAIL_MDO', 'mdo@hospital.cat', NOW(), NOW(), 1),
+('CONFIG_GENERAL', 'EMAIL_MDO', 'urgencies@hospital.cat', NOW(), NOW(), 1),
+('CONFIG_GENERAL', 'EMAIL_MDO', 'epidemiologia@hospital.cat', NOW(), NOW(), 1);
 
 -- ========================================================================
 -- 7. MIGRACIÓ ENTRE ENTORNS
@@ -154,8 +154,8 @@ VALUES
 UPDATE parametres_aplicacio 
 SET actiu = 0, 
     dt_update = NOW()
-WHERE categoria = 'EMAIL_MDO' 
-  AND clau LIKE '%desenvolupament%';
+WHERE clau = 'EMAIL_MDO' 
+  AND valor LIKE '%desenvolupament%';
 
 -- ========================================================================
 -- 8. AUDITORIA
@@ -187,18 +187,18 @@ LIMIT 20;
 -- Netejar destinataris duplicats (mantenir el més recent)
 DELETE p1 FROM parametres_aplicacio p1
 INNER JOIN parametres_aplicacio p2 
-WHERE p1.categoria = 'EMAIL_MDO'
-  AND p2.categoria = 'EMAIL_MDO'
-  AND p1.clau = p2.clau
+WHERE p1.clau = 'EMAIL_MDO'
+  AND p2.clau = 'EMAIL_MDO'
+  AND p1.valor = p2.valor
   AND p1.id < p2.id;
 
 -- Verificar que no hi hagi duplicats
 SELECT 
-    clau,
+    valor,
     COUNT(*) as vegades
 FROM parametres_aplicacio
-WHERE categoria = 'EMAIL_MDO'
-GROUP BY clau
+WHERE clau = 'EMAIL_MDO'
+GROUP BY valor
 HAVING COUNT(*) > 1;
 
 -- ========================================================================
@@ -209,10 +209,10 @@ HAVING COUNT(*) > 1;
 -- Executar només si cal desfer completament la configuració
 
 -- Esborrar tots els destinataris MDO
--- DELETE FROM parametres_aplicacio WHERE categoria = 'EMAIL_MDO';
+-- DELETE FROM parametres_aplicacio WHERE clau = 'EMAIL_MDO';
 
 -- Verificar que s'han esborrat
--- SELECT COUNT(*) FROM parametres_aplicacio WHERE categoria = 'EMAIL_MDO';
+-- SELECT COUNT(*) FROM parametres_aplicacio WHERE clau = 'EMAIL_MDO';
 
 -- ========================================================================
 -- NOTES IMPORTANTS
@@ -220,17 +220,16 @@ HAVING COUNT(*) > 1;
 
 /*
 1. CATEGORIA:
+   - Utilitzar 'CONFIG_GENERAL' (case-sensitive!)
+   
+2. CLAU:
    - SEMPRE utilitzar 'EMAIL_MDO' (case-sensitive!)
    
-2. CLAU (EMAIL):
+3. VALOR:
    - Ha de ser una adreça d'email vàlida
+   - Aquest és l'email destinatari que rebrà les alertes
    - Recomanat utilitzar emails corporatius
    - No utilitzar emails personals per seguretat
-   
-3. VALOR (DESCRIPCIÓ):
-   - Opcional però recomanat
-   - Ajuda a identificar el destinatari
-   - Exemple: "Responsable MDO", "Servei Urgències"
    
 4. ACTIU:
    - 1 = Actiu (rebrà emails)
@@ -258,17 +257,17 @@ HAVING COUNT(*) > 1;
 
 /*
 -- Pas 1: Esborrar configuració antiga (si existeix)
-DELETE FROM parametres_aplicacio WHERE categoria = 'EMAIL_MDO';
+DELETE FROM parametres_aplicacio WHERE clau = 'EMAIL_MDO';
 
 -- Pas 2: Afegir destinataris inicials
 INSERT INTO parametres_aplicacio (categoria, clau, valor, dt_create, dt_update, actiu)
 VALUES 
-('EMAIL_MDO', 'mdo@hospital.cat', 'Responsable MDO', NOW(), NOW(), 1),
-('EMAIL_MDO', 'urgencies@hospital.cat', 'Servei Urgències', NOW(), NOW(), 1),
-('EMAIL_MDO', 'epidemiologia@hospital.cat', 'Servei Epidemiologia', NOW(), NOW(), 1);
+('CONFIG_GENERAL', 'EMAIL_MDO', 'mdo@hospital.cat', NOW(), NOW(), 1),
+('CONFIG_GENERAL', 'EMAIL_MDO', 'urgencies@hospital.cat', NOW(), NOW(), 1),
+('CONFIG_GENERAL', 'EMAIL_MDO', 'epidemiologia@hospital.cat', NOW(), NOW(), 1);
 
 -- Pas 3: Verificar que s'han creat correctament
-SELECT * FROM parametres_aplicacio WHERE categoria = 'EMAIL_MDO';
+SELECT * FROM parametres_aplicacio WHERE clau = 'EMAIL_MDO';
 
 -- Pas 4: Provar l'enviament (executar la integració amb una mostra MDO de prova)
 */
