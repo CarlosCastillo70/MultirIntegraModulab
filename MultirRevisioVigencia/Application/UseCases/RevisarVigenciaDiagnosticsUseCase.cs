@@ -136,6 +136,10 @@ namespace MultirRevisioVigencia.Application.UseCases
                             }
                         }
 
+
+
+
+
                         // Marcar com a no vigent si cal
                         if (hauDeMarcarNoVigent)
                         {

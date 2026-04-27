@@ -120,8 +120,8 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
 
                 using (var message = new MailMessage())
                 {
-                    // Configurar remitent i destinataris
-                    message.From = new MailAddress(_emailFrom);
+                    // Configurar remitent amb nom descriptiu
+                    message.From = new MailAddress(_emailFrom, "Sistema MultiR - Integració Modulab");
                     
                     foreach (var destinatari in _emailsDestinataris)
                     {
