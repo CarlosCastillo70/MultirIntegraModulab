@@ -33,6 +33,9 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
                     return null;
                 }
 
+                // Obtenir suffix d'entorn per al nom del fitxer de log
+                string suffixEntorn = esProducció ? "pro" : "pre";
+
                 var config = new ConfiguracioApp
                 {
                     Entorn = entorn,
@@ -40,7 +43,7 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
                     ConnectionStringMySQL = connectionString,
 
                     // Logging
-                    RutaFitxerLog = ConfigurationManager.AppSettings["RutaFitxerLog"] ?? "Logs\\RevisioVigencia_{0:yyyyMMdd}.log",
+                    RutaFitxerLog = ConfigurationManager.AppSettings["RutaFitxerLog"] ?? "Logs\\revigio{0:yyyy-MM-dd_HH-mm-ss}_{1}.log",
 
                     // Filtratge
                     PacientsAProcessar = ConfigurationManager.AppSettings["PacientsAProcessar"]?
@@ -67,8 +70,12 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
                     NovaPropietat = ConfigurationManager.AppSettings["NovaPropietat"]
                 };
 
-                // Format del fitxer de log amb la data
-                if (config.RutaFitxerLog.Contains("{0"))
+                // Format del fitxer de log amb la data i entorn
+                if (config.RutaFitxerLog.Contains("{0") && config.RutaFitxerLog.Contains("{1"))
+                {
+                    config.RutaFitxerLog = string.Format(config.RutaFitxerLog, DateTime.Now, suffixEntorn);
+                }
+                else if (config.RutaFitxerLog.Contains("{0"))
                 {
                     config.RutaFitxerLog = string.Format(config.RutaFitxerLog, DateTime.Now);
                 }

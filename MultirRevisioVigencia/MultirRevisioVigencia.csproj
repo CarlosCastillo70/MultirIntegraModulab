@@ -108,6 +108,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Application\DTOs\MostraDiagnostic.cs" />
+    <Compile Include="Application\DTOs\MostraPositivaDiagnostic.cs" />
+    <Compile Include="Application\DTOs\ReglaTipusMostra.cs" />
+    <Compile Include="Application\Services\MostresNegativesService.cs" />
+    <Compile Include="Infrastructure\Logging\SerilogLoggerService.cs" />
+    <Compile Include="Infrastructure\Persistence\LegacyServices\MultiRDbService.MostresNegatives.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Application\UseCases\RevisarVigenciaDiagnosticsUseCase.cs" />
     <Compile Include="Application\DTOs\ResumRevisioVigenciaDto.cs" />
@@ -116,13 +122,24 @@
     <Compile Include="Domain\Interfaces\ILoggerService.cs" />
     <Compile Include="Infrastructure\Configuration\ConfiguracioManager.cs" />
     <Compile Include="Infrastructure\Persistence\LegacyServices\MultiRDbService.cs" />
-    <Compile Include="Infrastructure\Logging\FileLoggerService.cs" />
-    <Compile Include="Infrastructure\ExternalServices\Email\EmailService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Docs\COMPARACIO_IMPLEMENTACIO_SERILOG.md" />
+    <None Include="Docs\ELIMINACIO_CODI_OBSOLET.md" />
+    <None Include="Docs\ELIMINACIO_EMAILS_AUTOMATICS.md" />
+    <None Include="Docs\FIX_FILE_ACCESS_LOGGING.md" />
+    <None Include="Docs\MIGRACIO_SERILOG.md" />
+    <None Include="Docs\README_FIX_LOGGING.md" />
+    <None Include="Docs\README_MIGRACIO_SERILOG.md" />
+    <None Include="Docs\RESPOSTA_UNIFICACIO_SERILOG.md" />
+    <None Include="Docs\SISTEMA_MOSTRES_NEGATIVES.md" />
+    <None Include="Docs\VERIFICACIO_FIX_LOGGING.md" />
     <None Include="packages.config" />
     <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Infrastructure\ExternalServices\Email\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Serilog.4.3.1\build\Serilog.targets" Condition="Exists('..\packages\Serilog.4.3.1\build\Serilog.targets')" />

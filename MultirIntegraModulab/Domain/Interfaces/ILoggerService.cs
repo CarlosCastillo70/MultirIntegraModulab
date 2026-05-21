@@ -18,5 +18,10 @@ namespace MultirIntegraModulab.Domain.Interfaces
         string ObtenirRutaLogAvui();
         bool ExisteixLogAvui();
         long ObtenirMidaLogAvui();
+        
+        /// <summary>
+        /// Genera logs de prova amb diferents nivells per configurar Seq
+        /// </summary>
+        void GenerarLogsDeProva();
     }
 }

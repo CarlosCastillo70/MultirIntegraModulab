@@ -251,7 +251,7 @@ namespace MultirIntegraModulab
                             
                             if (!string.IsNullOrWhiteSpace(observacions))
                             {
-                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   • Observacions: {observacions}");
+                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   - Observacions: {observacions}");
                             }
                             
                             return true;

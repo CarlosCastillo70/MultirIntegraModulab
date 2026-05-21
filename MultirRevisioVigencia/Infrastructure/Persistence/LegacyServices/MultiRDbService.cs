@@ -9,7 +9,7 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
     /// <summary>
     /// Servei per accedir a la base de dades MySQL de MultiR
     /// </summary>
-    public class MultiRDbService : IMultiRRepository
+    public partial class MultiRDbService : IMultiRRepository
     {
         private readonly string _connectionString;
         private readonly ILoggerService _logger;
@@ -127,7 +127,10 @@ namespace MultirRevisioVigencia.Infrastructure.Persistence.LegacyServices
                                     VigenciaInactiu = reader.IsDBNull(reader.GetOrdinal("vigencia_inactiu"))
                                         ? (int?)null
                                         : reader.GetInt32("vigencia_inactiu"),
-                                    DataDarrergPositiuEsDeDataDiagnostic = esDeDataDiagnostic
+                                    DataDarrergPositiuEsDeDataDiagnostic = esDeDataDiagnostic,
+                                    DataDiagnostic = reader.IsDBNull(reader.GetOrdinal("data_diagnostic"))
+                                        ? (DateTime?)null
+                                        : reader.GetDateTime("data_diagnostic")
                                 });
                             }
                         }

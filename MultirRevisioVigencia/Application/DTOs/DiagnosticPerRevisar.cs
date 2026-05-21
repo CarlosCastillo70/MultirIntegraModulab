@@ -18,5 +18,6 @@ namespace MultirRevisioVigencia.Application.DTOs
         public DateTime? DataDarrergPositiu { get; set; }
         public int? VigenciaInactiu { get; set; }
         public bool DataDarrergPositiuEsDeDataDiagnostic { get; set; }
+        public DateTime? DataDiagnostic { get; set; }
     }
 }

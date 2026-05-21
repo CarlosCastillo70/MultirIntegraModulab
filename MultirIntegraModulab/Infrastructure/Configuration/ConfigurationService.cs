@@ -526,15 +526,15 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
             {
                 tipusCarrega = "INCREMENTAL (Prioritat Alta)";
                 detallsCarrega = $@"
-  • Dies revisió seguretat: {CarregaIncremental_DiesRevisioSeguretat} dies
-  • Descripció: Carrega només dades noves des de l'última sincronització";
+  - Dies revisió seguretat: {CarregaIncremental_DiesRevisioSeguretat} dies
+  - Descripció: Carrega només dades noves des de l'última sincronització";
             }
             else if (CarregaDiesEnrere_Activa)
             {
                 tipusCarrega = "DIES ENRERE (Prioritat Mitjana)";
                 detallsCarrega = $@"
-  • Nombre de dies: {CarregaDiesEnrere_NombreDies} dies enrere
-  • Descripció: Carrega dades dels últims N dies cap enrere";
+  - Nombre de dies: {CarregaDiesEnrere_NombreDies} dies enrere
+  - Descripció: Carrega dades dels últims N dies cap enrere";
             }
             else if (CarregaRangDates_Activa)
             {
@@ -547,9 +547,9 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
                     : "NO CONFIGURAT";
                 
                 detallsCarrega = $@"
-  • Data inici: {dataIniciStr}
-  • Data fi: {dataFiStr}
-  • Descripció: Carrega dades d'un període específic";
+  - Data inici: {dataIniciStr}
+  - Data fi: {dataFiStr}
+  - Descripció: Carrega dades d'un període específic";
             }
 
             // Mostrar avís si hi ha més d'un tipus activat

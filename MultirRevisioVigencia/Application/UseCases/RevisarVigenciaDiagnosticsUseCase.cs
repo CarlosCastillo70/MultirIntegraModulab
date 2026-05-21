@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MultirRevisioVigencia.Application.DTOs;
+using MultirRevisioVigencia.Application.Services;
 using MultirRevisioVigencia.Domain.Interfaces;
 
 namespace MultirRevisioVigencia.Application.UseCases
@@ -13,11 +14,13 @@ namespace MultirRevisioVigencia.Application.UseCases
     {
         private readonly IMultiRRepository _repository;
         private readonly ILoggerService _logger;
+        private readonly MostresNegativesService _mostresNegativesService;
 
         public RevisarVigenciaDiagnosticsUseCase(IMultiRRepository repository, ILoggerService logger)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _mostresNegativesService = new MostresNegativesService(repository, logger);
         }
 
         /// <summary>
@@ -100,6 +103,7 @@ namespace MultirRevisioVigencia.Application.UseCases
                         string motiu = null;
                         bool hauDeMarcarNoVigent = false;
                         bool esPerExitus = false;
+                        bool esPerMostresNegatives = false;
 
                         // COMPROVACIÓ 1: Pacient èxitus (global)
                         if (EsPacientExitus(diagnostic))
@@ -123,12 +127,30 @@ namespace MultirRevisioVigencia.Application.UseCases
                             hauDeMarcarNoVigent = true;
                             motiu = "V";
                         }
-                        
+
+                        // COMPROVACIÓ 3: Mostres negatives consecutives (només per Multiresistents)
+                        if (!hauDeMarcarNoVigent && 
+                            diagnostic.TipusMicroorganisme == "M")
+                        {
+                            _logger.Info($"   🔍 Comprovant mostres negatives consecutives...");
+
+                            string detalls;
+                            bool compleixMostresNegatives = _mostresNegativesService.CompleixRequisitsMostresNegatives(diagnostic, out detalls);
+
+                            if (compleixMostresNegatives)
+                            {
+                                _logger.Info($"   ✓ Compleix requisits de mostres negatives: {detalls}");
+                                hauDeMarcarNoVigent = true;
+                                esPerMostresNegatives = true;
+                                motiu = "N";
+                            }
+                        }
+
                         if (!hauDeMarcarNoVigent)
                         {
                             if (diagnostic.TipusMicroorganisme == "R")
                             {
-                                _logger.Info($"   ✓ Diagnòstic de Virus Respiratori vigent (no s'aplica vigència temporal)");
+                                _logger.Info($"   ✓ Diagnòstic de Virus Respiratori vigent (no s'aplica vigència temporal ni mostres negatives)");
                             }
                             else
                             {
@@ -152,16 +174,20 @@ namespace MultirRevisioVigencia.Application.UseCases
                             if (marcat)
                             {
                                 resum.MarcatsNoVigents++;
-                                
+
                                 if (esPerExitus)
                                 {
                                     resum.MarcatsPerExitus++;
+                                }
+                                else if (esPerMostresNegatives)
+                                {
+                                    resum.MarcatsPerMostresNegatives++;
                                 }
                                 else
                                 {
                                     resum.MarcatsPerVigencia++;
                                 }
-                                
+
                                 resum.DiagnosticsMarcats.Add(new DiagnosticMarcat
                                 {
                                     DiagnosticId = diagnostic.Id,
@@ -267,7 +293,7 @@ namespace MultirRevisioVigencia.Application.UseCases
 
             if (haSuperatVigencia)
             {
-                _logger.Info($"   ⚠️ Ha superat la vigència ({diesTranscorreguts} dies > {diesVigenciaAplicar} dies)");
+                _logger.Info($"   ✓ Ha superat la vigència ({diesTranscorreguts} dies > {diesVigenciaAplicar} dies)");
             }
 
             return haSuperatVigencia;

@@ -28,6 +28,11 @@ namespace MultirIntegraModulab
             loggerService.MarcarIniciExecucio();
             loggerService.Info("=== Iniciant aplicació d' integració de dades de Modulab a MultiR ===");
 
+            // 🧪 TEMPORAL: Generar logs de prova amb diferents nivells per configurar Seq
+            // NOTA: Comentar aquesta línia després de configurar els signals a Seq
+            loggerService.GenerarLogsDeProva();
+            loggerService.Info("🎯 Logs de prova generats. Ara pots configurar signals a Seq (http://localhost:5341)");
+
             // 1.2 Configurar connexió temporal a MultiR per llegir paràmetres
             // NOTA: Utilitzem ConfigurationService base per obtenir connection string
             var configServiceTemp = new ConfigurationService();

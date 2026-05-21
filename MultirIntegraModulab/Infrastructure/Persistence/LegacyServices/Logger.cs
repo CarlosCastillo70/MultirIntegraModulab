@@ -2,12 +2,14 @@ using System;
 using System.Configuration;
 using System.IO;
 using System.Threading;
+using Serilog;
 
 namespace MultirIntegraModulab
 {
     /// <summary>
-    /// Sistema de logging que escriu els missatges a fitxers organitzats per execució
-    /// Cada execució crea un fitxer de log independent amb timestamp i sufix d'entorn
+    /// Sistema de logging que redirigeix les crides cap a Serilog
+    /// NOTA: Aquest logger està deprecated. Utilitzeu ILoggerService amb injecció de dependències.
+    /// Es manté per compatibilitat amb codi legacy.
     /// </summary>
     public static class Logger
     {
@@ -180,7 +182,7 @@ namespace MultirIntegraModulab
         }
 
         /// <summary>
-        /// Escriu un missatge al fitxer de log de l'execució actual
+        /// Escriu un missatge al fitxer de log utilitzant Serilog
         /// </summary>
         /// <param name="tipus">Tipus de missatge</param>
         /// <param name="missatge">Missatge a escriure</param>
@@ -188,27 +190,27 @@ namespace MultirIntegraModulab
         {
             try
             {
-                lock (_lockObject)
+                // Redirigir cap a Serilog per unificar els logs
+                switch (tipus)
                 {
-                    // Assegurar que tenim inicialitzada l'execució
-                    InicialitzarExecucio();
-                    
-                    DateTime ara = DateTime.Now;
-
-                    // Format: data hora minut segon actual tipus : missatge
-                    string lineaLog = $"{ara:yyyy-MM-dd HH:mm:ss} {tipus} : {missatge}";
-
-                    // Escriure al fitxer de l'execució actual
-                    using (var writer = new StreamWriter(_rutaLogActual, append: true))
-                    {
-                        writer.WriteLine(lineaLog);
-                        writer.Flush();
-                    }
-
-                    // També mostrar a la consola per a debug immediat (opcional)
-                    #if DEBUG
-                    Console.WriteLine($"[{tipus}] {missatge}");
-                    #endif
+                    case TipusLog.INFO:
+                        Log.Information(missatge);
+                        break;
+                    case TipusLog.ERROR:
+                        Log.Error(missatge);
+                        break;
+                    case TipusLog.WARNING:
+                        Log.Warning(missatge);
+                        break;
+                    case TipusLog.DEBUG:
+                        Log.Debug(missatge);
+                        break;
+                    case TipusLog.TRACE:
+                        Log.Verbose(missatge);
+                        break;
+                    default:
+                        Log.Information(missatge);
+                        break;
                 }
             }
             catch (Exception ex)
@@ -220,11 +222,35 @@ namespace MultirIntegraModulab
 
         /// <summary>
         /// Obté la ruta del fitxer de log de l'execució actual
+        /// NOTA: Ara que s'utilitza Serilog, aquesta ruta la gestiona LoggerService
         /// </summary>
         /// <returns>Ruta completa del fitxer de log de l'execució actual</returns>
         public static string ObtenirRutaLogActual()
         {
+            // Mantenim la inicialització per compatibilitat
             InicialitzarExecucio();
+            
+            // Intentar obtenir la ruta del LoggerService si està disponible
+            try
+            {
+                var rutaConfig = ConfigurationManager.AppSettings["RutaFitxerLog"];
+                if (!string.IsNullOrEmpty(rutaConfig))
+                {
+                    var entorn = ConfigurationManager.AppSettings["Entorn"] ?? "Preproduccio";
+                    var suffixEntorn = entorn.Equals("Produccio", StringComparison.OrdinalIgnoreCase) ? "pro" : "pre";
+                    
+                    // Si la ruta conté placeholders, retornar la versió calculada
+                    if (rutaConfig.Contains("{0}") && rutaConfig.Contains("{1}"))
+                    {
+                        return string.Format(rutaConfig, DateTime.Now, suffixEntorn);
+                    }
+                    
+                    return rutaConfig;
+                }
+            }
+            catch { }
+            
+            // Fallback: retornar la ruta legacy
             return _rutaLogActual;
         }
 
@@ -234,7 +260,8 @@ namespace MultirIntegraModulab
         /// <returns>True si existeix el fitxer</returns>
         public static bool ExisteixLogActual()
         {
-            return File.Exists(ObtenirRutaLogActual());
+            string ruta = ObtenirRutaLogActual();
+            return !string.IsNullOrEmpty(ruta) && File.Exists(ruta);
         }
 
         /// <summary>
@@ -244,7 +271,7 @@ namespace MultirIntegraModulab
         public static long ObtenirMidaLogActual()
         {
             string rutaLog = ObtenirRutaLogActual();
-            return File.Exists(rutaLog) ? new FileInfo(rutaLog).Length : 0;
+            return !string.IsNullOrEmpty(rutaLog) && File.Exists(rutaLog) ? new FileInfo(rutaLog).Length : 0;
         }
 
         /// <summary>
