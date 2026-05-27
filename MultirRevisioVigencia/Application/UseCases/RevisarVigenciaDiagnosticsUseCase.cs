@@ -142,7 +142,7 @@ namespace MultirRevisioVigencia.Application.UseCases
                                 _logger.Info($"   ✓ Compleix requisits de mostres negatives: {detalls}");
                                 hauDeMarcarNoVigent = true;
                                 esPerMostresNegatives = true;
-                                motiu = "N";
+                                motiu = "D";
                             }
                         }
 
