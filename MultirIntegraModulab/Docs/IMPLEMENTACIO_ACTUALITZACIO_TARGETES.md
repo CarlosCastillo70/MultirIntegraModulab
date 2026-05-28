@@ -3,6 +3,22 @@
 ## Context
 Quan es detecta una mostra positiva de **MultiResistent** (no Virus Respiratori), cal recalcular automàticament el nombre de targetes necessàries en els seguiments oberts per assolir l'objectiu de descolonització: **3 mostres negatives consecutives**.
 
+**NOTA**: Aquest document descriu l'actualització de la **quantitat de targetes**. Per a l'actualització de la **data última mostra**, consulteu: [`IMPLEMENTACIO_DATA_ULTIMA_MOSTRA.md`](IMPLEMENTACIO_DATA_ULTIMA_MOSTRA.md)
+
+## Funcionalitats Relacionades
+
+Aquest fitxer forma part d'un conjunt de funcionalitats de seguiments:
+
+| Funcionalitat | Fitxer | Descripció |
+|--------------|--------|------------|
+| **Quantitat de targetes** | Aquest fitxer | Recalcula el nombre de targetes necessàries |
+| **Data última mostra** | [`IMPLEMENTACIO_DATA_ULTIMA_MOSTRA.md`](IMPLEMENTACIO_DATA_ULTIMA_MOSTRA.md) | Actualitza `dt_ultima_mostra` quan arriba una mostra |
+
+Ambdues funcionalitats:
+- S'executen automàticament quan s'incorpora una mostra MultiResistent (positiva o negativa)
+- Actualitzen els seguiments oberts del pacient
+- NO s'apliquen a Virus Respiratoris
+
 ## Arquitectura de la Solució
 
 ### 1. Nou Fitxer de Servei de Base de Dades

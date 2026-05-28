@@ -398,6 +398,18 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                     // No deixem que un error en actualització de targetes bloquegi el processament
                                     _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Error actualitzant targetes: {exTargetes.Message}");
                                 }
+
+                                // Actualitzar data última mostra en seguiments oberts
+                                try
+                                {
+                                    _multiRRepository.ActualitzarDataUltimaMostra(
+                                        mostra.PacientSap,
+                                        resultatMostra.MostraDescripcio);
+                                }
+                                catch (Exception exData)
+                                {
+                                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Error actualitzant data última mostra: {exData.Message}");
+                                }
                             }
                         }
                     }

@@ -530,6 +530,15 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>True si s'ha actualitzat almenys un seguiment, False en cas contrari</returns>
         bool ActualitzarQuantitatTargetes(string npat, string tipusMostra);
 
+        /// <summary>
+        /// Actualitza la data de l'última mostra en seguiments oberts quan s'incorpora una mostra (positiva o negativa) de MultiResistent.
+        /// Actualitza els camps dt_ultima_mostra a les taules pacients_seguiments i pacients_seguiments_mostres.
+        /// </summary>
+        /// <param name="npat">Número de pacient</param>
+        /// <param name="tipusMostra">Tipus de mostra incorporada</param>
+        /// <returns>True si s'ha actualitzat almenys un seguiment, False en cas contrari</returns>
+        bool ActualitzarDataUltimaMostra(string npat, string tipusMostra);
+
         #endregion
     }
 }

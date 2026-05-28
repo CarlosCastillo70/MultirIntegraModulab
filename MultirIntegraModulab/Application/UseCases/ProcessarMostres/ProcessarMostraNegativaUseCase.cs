@@ -436,6 +436,23 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                     mostraDiagnosticCreada = true;
                                     resultat.MostresDiagnosticCreades++;
                                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra diagnòstic negativa creada per neutralitzar positiu (ID: {mostraDiagnosticIdFinal})");
+
+                                    // Actualitzar data última mostra en seguiments oberts (només per Multiresistent)
+                                    var tipusMicroorganisme = _multiRRepository.ObtenirTipusMicroorganisme(resultatMostra.AillamentDescripcio);
+
+                                    if (tipusMicroorganisme == Domain.Enums.TipusMicroorganisme.Multiresistent)
+                                    {
+                                        try
+                                        {
+                                            _multiRRepository.ActualitzarDataUltimaMostra(
+                                                mostra.PacientSap,
+                                                resultatMostra.MostraDescripcio);
+                                        }
+                                        catch (Exception exData)
+                                        {
+                                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Error actualitzant data última mostra: {exData.Message}");
+                                        }
+                                    }
                                 }
                                 else
                                 {

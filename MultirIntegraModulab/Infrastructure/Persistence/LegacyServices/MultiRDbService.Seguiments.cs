@@ -243,5 +243,121 @@ namespace MultirIntegraModulab
 
             return patroChars.ToString();
         }
+
+        /// <summary>
+        /// Actualitza la data de l'última mostra en seguiments oberts quan s'incorpora una mostra (positiva o negativa) de MultiResistent.
+        /// Actualitza els camps dt_ultima_mostra a les taules pacients_seguiments i pacients_seguiments_mostres.
+        /// </summary>
+        /// <param name="npat">Número de pacient</param>
+        /// <param name="tipusMostra">Tipus de mostra incorporada</param>
+        /// <returns>True si s'ha actualitzat almenys un seguiment, False en cas contrari</returns>
+        public bool ActualitzarDataUltimaMostra(string npat, string tipusMostra)
+        {
+            if (string.IsNullOrWhiteSpace(npat) || string.IsNullOrWhiteSpace(tipusMostra))
+            {
+                Logger.Warning($"ActualitzarDataUltimaMostra: Paràmetres invàlids (npat: {npat}, tipusMostra: {tipusMostra})");
+                return false;
+            }
+
+            try
+            {
+                Logger.Debug($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}📅 Actualitzant data última mostra en seguiments per pacient {npat}, tipus mostra '{tipusMostra}'");
+
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+
+                    // Obtenir seguiments oberts amb aquest tipus de mostra
+                    string sqlSeguiments = @"
+                        SELECT ps.id as seguiment_id, 
+                               psm.id as mostra_seguiment_id
+                        FROM pacients_seguiments ps
+                        INNER JOIN pacients_seguiments_mostres psm ON ps.id = psm.seguiment_id
+                        WHERE ps.npat = @npat
+                          AND ps.estat = 'O'
+                          AND TRIM(psm.tipus_mostra) = TRIM(@tipusMostra)";
+
+                    var seguiments = new List<(int seguimentId, int mostraSeguimentId)>();
+
+                    using (var cmd = new MySqlCommand(sqlSeguiments, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@npat", npat.Trim());
+                        cmd.Parameters.AddWithValue("@tipusMostra", tipusMostra.Trim());
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                seguiments.Add((
+                                    Convert.ToInt32(reader["seguiment_id"]),
+                                    Convert.ToInt32(reader["mostra_seguiment_id"])
+                                ));
+                            }
+                        }
+                    }
+
+                    if (seguiments.Count == 0)
+                    {
+                        Logger.Debug($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Detall)}ℹ️ No hi ha seguiments oberts per actualitzar dt_ultima_mostra");
+                        return false;
+                    }
+
+                    Logger.Debug($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Detall)}📋 Trobats {seguiments.Count} seguiment(s) obert(s) per actualitzar");
+
+                    bool algunaActualitzacio = false;
+
+                    // Per cada seguiment obert
+                    foreach (var (seguimentId, mostraSeguimentId) in seguiments)
+                    {
+                        // Actualitzar pacients_seguiments.dt_ultima_mostra
+                        string sqlUpdateSeguiment = @"
+                            UPDATE pacients_seguiments
+                            SET dt_ultima_mostra = NOW()
+                            WHERE id = @seguimentId";
+
+                        using (var cmd = new MySqlCommand(sqlUpdateSeguiment, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@seguimentId", seguimentId);
+                            int rowsAffected = cmd.ExecuteNonQuery();
+
+                            if (rowsAffected > 0)
+                            {
+                                Logger.Debug($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Detall)}   ✔️ Actualitzat dt_ultima_mostra a pacients_seguiments (ID {seguimentId})");
+                            }
+                        }
+
+                        // Actualitzar pacients_seguiments_mostres.dt_ultima_mostra
+                        string sqlUpdateMostra = @"
+                            UPDATE pacients_seguiments_mostres
+                            SET dt_ultima_mostra = NOW()
+                            WHERE id = @mostraSeguimentId";
+
+                        using (var cmd = new MySqlCommand(sqlUpdateMostra, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@mostraSeguimentId", mostraSeguimentId);
+                            int rowsAffected = cmd.ExecuteNonQuery();
+
+                            if (rowsAffected > 0)
+                            {
+                                Logger.Debug($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Detall)}   ✔️ Actualitzat dt_ultima_mostra a pacients_seguiments_mostres (ID {mostraSeguimentId})");
+                                algunaActualitzacio = true;
+                            }
+                        }
+                    }
+
+                    if (algunaActualitzacio)
+                    {
+                        Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✅ Data última mostra actualitzada en {seguiments.Count} seguiment(s)");
+                    }
+
+                    return algunaActualitzacio;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error actualitzant data última mostra per pacient {npat}, tipus mostra '{tipusMostra}': {ex.Message}", ex);
+                return false;
+            }
+        }
     }
 }

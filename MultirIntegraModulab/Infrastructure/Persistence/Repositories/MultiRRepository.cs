@@ -344,6 +344,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool ActualitzarQuantitatTargetes(string npat, string tipusMostra) =>
             _multiRDbService.ActualitzarQuantitatTargetes(npat, tipusMostra);
 
+        public bool ActualitzarDataUltimaMostra(string npat, string tipusMostra) =>
+            _multiRDbService.ActualitzarDataUltimaMostra(npat, tipusMostra);
+
         #endregion
     }
 }
