@@ -373,6 +373,32 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         {
                             mostraDiagnosticIdFinal = nouMostraDiagnosticId;
                             resultat.MostresDiagnosticCreades++;
+
+                            // Actualitzar quantitat de targetes en seguiments oberts (només per Multiresistent)
+                            // Comprovar si el microorganisme és de tipus Multiresistent
+                            var tipusMicroorganisme = _multiRRepository.ObtenirTipusMicroorganisme(resultatMostra.AillamentDescripcio);
+
+                            if (tipusMicroorganisme == Domain.Enums.TipusMicroorganisme.Multiresistent)
+                            {
+                                _logger.Debug($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Actualitzant targetes de seguiment per mostra positiva MultiResistent...");
+
+                                try
+                                {
+                                    bool targeteActualitzades = _multiRRepository.ActualitzarQuantitatTargetes(
+                                        mostra.PacientSap,
+                                        resultatMostra.MostraDescripcio);
+
+                                    if (targeteActualitzades)
+                                    {
+                                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✅ Targetes de seguiment actualitzades correctament");
+                                    }
+                                }
+                                catch (Exception exTargetes)
+                                {
+                                    // No deixem que un error en actualització de targetes bloquegi el processament
+                                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Error actualitzant targetes: {exTargetes.Message}");
+                                }
+                            }
                         }
                     }
                     else

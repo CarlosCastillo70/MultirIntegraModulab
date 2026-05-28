@@ -520,6 +520,16 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>True si s'ha inserit la nota, false en cas contrari</returns>
         bool AfegirNotaCursClinicVirusRespiratoriSiCal(string pacientSap, bool sShanAfegitPositius);
 
+        // Seguiments de pacients
+        /// <summary>
+        /// Actualitza la quantitat de targetes necessàries en seguiments oberts quan es detecta una mostra positiva.
+        /// Recalcula automàticament el nombre de targetes per assolir l'objectiu de descolonització (3 mostres negatives consecutives).
+        /// </summary>
+        /// <param name="npat">Número de pacient</param>
+        /// <param name="tipusMostra">Tipus de mostra afectada (ex: "Aspirat traqueal", "Frotis rectal")</param>
+        /// <returns>True si s'ha actualitzat almenys un seguiment, False en cas contrari</returns>
+        bool ActualitzarQuantitatTargetes(string npat, string tipusMostra);
+
         #endregion
     }
 }

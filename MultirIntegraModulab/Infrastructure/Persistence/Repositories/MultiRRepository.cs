@@ -340,6 +340,10 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
             return _multiRDbService.ObtenirDiagnosticsPositiusPacientPerTipusMostraIEquivalents(pacientSap, tipusMostra, etiqueta);
         }
 
+        // Seguiments de pacients
+        public bool ActualitzarQuantitatTargetes(string npat, string tipusMostra) =>
+            _multiRDbService.ActualitzarQuantitatTargetes(npat, tipusMostra);
+
         #endregion
     }
 }
