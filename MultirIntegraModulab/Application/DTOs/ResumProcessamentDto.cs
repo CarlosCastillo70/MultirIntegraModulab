@@ -54,9 +54,19 @@ namespace MultirIntegraModulab.Application.DTOs
         public int MostresPositives { get; set; }
 
         /// <summary>
+        /// Nombre de positius realment incorporats
+        /// </summary>
+        public int PositiusIncorporats { get; set; }
+
+        /// <summary>
         /// Nombre de mostres negatives processades
         /// </summary>
         public int MostresNegatives { get; set; }
+
+        /// <summary>
+        /// Nombre de negatius realment incorporats
+        /// </summary>
+        public int NegatiusIncorporats { get; set; }
 
         /// <summary>
         /// Nombre de mostres mixtes processades (amb resultats positius i negatius)

@@ -1,0 +1,20 @@
+[
+  {
+    "workflowFile": "workflow-processar-mostres-modulab",
+    "cron": "0 0/15 * * * ?",
+    "description": "Processar mostres de Modulab cada 15 minuts",
+    "runOnStartup": false,
+    "type": "MultirIntegraModulab.Service.Jobs.ProcessarMostresModulabJob",
+    "assembly": "MultirIntegraModulab.Service",
+    "parameters": {}
+  },
+  {
+    "workflowFile": "workflow-revisar-vigencia-diagnostics",
+    "cron": "0 0 4 * * ?",
+    "description": "Revisar vigència de diagnòstics cada dia a les 4:00 AM",
+    "runOnStartup": false,
+    "type": "MultirIntegraModulab.Service.Jobs.RevisarVigenciaDiagnosticsJob",
+    "assembly": "MultirIntegraModulab.Service",
+    "parameters": {}
+  }
+]

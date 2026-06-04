@@ -23,6 +23,7 @@
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="Serilog.Sinks.Seq" Version="8.0.0" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     
     <!-- Afegir referència explícita a System.Configuration per .NET Framework -->
@@ -39,10 +40,17 @@
     <!-- ❌ Excloure la carpeta _Legacy de la compilació -->
     <Compile Remove="MultirRevisioVigencia\**" />
     <Compile Remove="_Legacy\**" />
+    <Compile Remove="MultirIntegraModulab.Service\**" />
     <EmbeddedResource Remove="MultirRevisioVigencia\**" />
     <EmbeddedResource Remove="_Legacy\**" />
+    <EmbeddedResource Remove="MultirIntegraModulab.Service\**" />
     <None Remove="MultirRevisioVigencia\**" />
     <None Remove="_Legacy\**" />
+    <None Remove="MultirIntegraModulab.Service\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="MultirIntegraModulab.Service\MultirIntegraModulab.Service.csproj" />
   </ItemGroup>
 
   <!-- ⚙️ Post-Build: Eliminar DLLs innecessàries de la sortida -->

@@ -1,0 +1,11 @@
+## Ignora fitxers de Visual Studio
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.cache
+
+## Ignora paquets NuGet (es restauraran automàticament)
+packages/
+*.nupkg
