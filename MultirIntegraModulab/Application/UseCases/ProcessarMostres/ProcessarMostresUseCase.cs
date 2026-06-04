@@ -216,7 +216,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         if (resultatVR.Exitosa)
                         {
                             resum.MostresPositives++;
-                            resum.PositiusIncorporats++;
+                            resum.PositiusIncorporats += resultatVR.PositiusVirusRespiratorisIncorporats;
+                            resum.PositiusVirusRespiratorisIncorporats += resultatVR.PositiusVirusRespiratorisIncorporats;
                             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Mostra VR processada correctament");
                         }
                         else
@@ -239,7 +240,10 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         {
                             resum.MostresMixtes++;
                             resum.MostresPositives++;
-                            resum.PositiusIncorporats += resultatMixt.ResultatsMMRPositius + resultatMixt.ResultatsVRProcessats;
+                            resum.PositiusIncorporats += resultatMixt.PositiusMMRIncorporats + resultatMixt.PositiusVRIncorporats;
+                            resum.NegatiusIncorporats += resultatMixt.NegatiusMMRIncorporats;
+                            resum.PositiusVirusRespiratorisIncorporats += resultatMixt.PositiusVRIncorporats;
+                            resum.NegatiusContrarestaPositiuIncorporats += resultatMixt.NegatiusMMRContrarestaPositiuIncorporats;
                             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Mostra mixta (MMR+VR) processada correctament");
                         }
                         else
@@ -357,10 +361,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         resum.MostresPositives++;
                         // Comprovar si s'ha afegit algun positiu
                         sShanAfegitPositius = resultatPositiu.PositiuAfegit;
-                        if (resultatPositiu.PositiuAfegit)
-                        {
-                            resum.PositiusIncorporats++;
-                        }
+                        resum.PositiusIncorporats += resultatPositiu.PositiusIncorporats;
+                        resum.NegatiusContrarestaPositiuIncorporats += resultatPositiu.NegatiusContrarestaPositiuIncorporats;
                     }
                     else
                     {
@@ -375,10 +377,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         resum.MostresPositives++;
                         // Comprovar si s'ha afegit algun positiu
                         sShanAfegitPositius = resultatPositives.PositiuAfegit;
-                        if (resultatPositives.PositiuAfegit)
-                        {
-                            resum.PositiusIncorporats++;
-                        }
+                        resum.PositiusIncorporats += resultatPositives.PositiusIncorporats;
+                        resum.NegatiusContrarestaPositiuIncorporats += resultatPositives.NegatiusContrarestaPositiuIncorporats;
                     }
                     else
                     {
@@ -391,7 +391,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (resultatNegatiu.Exitosa)
                     {
                         resum.MostresNegatives++;
-                        resum.NegatiusIncorporats += resultatNegatiu.IncorporatsPerComprovacio1 + resultatNegatiu.IncorporatsPerComprovacio2;
+                        resum.NegatiusIncorporats += resultatNegatiu.NegatiusIncorporats;
                     }
                     else
                     {
@@ -404,7 +404,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (resultatNegatives.Exitosa)
                     {
                         resum.MostresNegatives++;
-                        resum.NegatiusIncorporats += resultatNegatives.IncorporatsPerComprovacio1 + resultatNegatives.IncorporatsPerComprovacio2;
+                        resum.NegatiusIncorporats += resultatNegatives.NegatiusIncorporats;
                     }
                     else
                     {
@@ -419,11 +419,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         resum.MostresMixtes++;
                         // Comprovar si s'ha afegit algun positiu (les mixtes també poden tenir positius)
                         sShanAfegitPositius = resultatMixta.PositiuAfegit;
-                        if (resultatMixta.PositiuAfegit)
-                        {
-                            resum.PositiusIncorporats++;
-                        }
-                        resum.NegatiusIncorporats += resultatMixta.IncorporatsPerComprovacio1 + resultatMixta.IncorporatsPerComprovacio2;
+                        resum.PositiusIncorporats += resultatMixta.PositiusIncorporats;
+                        resum.NegatiusIncorporats += resultatMixta.NegatiusIncorporats;
+                        resum.NegatiusContrarestaPositiuIncorporats += resultatMixta.NegatiusContrarestaPositiuIncorporats;
                     }
                     else
                     {

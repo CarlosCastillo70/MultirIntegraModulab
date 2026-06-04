@@ -38,9 +38,15 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         public int IncorporatsPerComprovacio1 { get; set; }
         public int IncorporatsPerComprovacio2 { get; set; }
 
+        /// <summary>
+        /// Nombre real de negatius incorporats (auditories OKN)
+        /// </summary>
+        public int NegatiusIncorporats { get; set; }
+
         public ResultatProcessamentNegatiu()
         {
             Exitosa = true;
+            NegatiusIncorporats = 0;
         }
     }
 
@@ -509,6 +515,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                 if (auditoriaCreadaOk)
                                 {
                                     resultat.AuditoriasCreades++;
+                                    resultat.NegatiusIncorporats++;
                                 }
 
                             }

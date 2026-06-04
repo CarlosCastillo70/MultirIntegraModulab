@@ -37,6 +37,21 @@ namespace MultirIntegraModulab.Application.DTOs
         /// </summary>
         public bool PositiuAfegit { get; set; }
 
+        /// <summary>
+        /// Nombre real de positius MMR incorporats (auditories OKP)
+        /// </summary>
+        public int PositiusMMRIncorporats { get; set; }
+
+        /// <summary>
+        /// Nombre real de negatius MMR incorporats (auditories OKN)
+        /// </summary>
+        public int NegatiusMMRIncorporats { get; set; }
+
+        /// <summary>
+        /// Nombre real de negatius MMR contraresta positiu incorporats (auditories OKNCP)
+        /// </summary>
+        public int NegatiusMMRContrarestaPositiuIncorporats { get; set; }
+
         // ═══════════════════════════════════════════════════════════
         // ESTADÍSTIQUES VIRUS RESPIRATORIS (VR)
         // ═══════════════════════════════════════════════════════════
@@ -52,6 +67,11 @@ namespace MultirIntegraModulab.Application.DTOs
         public int DiagnosticsVRCreats { get; set; }
 
         /// <summary>
+        /// Nombre real de positius VR incorporats (auditories OKVR)
+        /// </summary>
+        public int PositiusVRIncorporats { get; set; }
+
+        /// <summary>
         /// Constructor per defecte amb valors inicials
         /// </summary>
         public ResultatProcessamentMixtMMRVR()
@@ -61,8 +81,12 @@ namespace MultirIntegraModulab.Application.DTOs
             ResultatsMMRPositius = 0;
             ResultatsMMRNegatius = 0;
             PositiuAfegit = false;
+            PositiusMMRIncorporats = 0;
+            NegatiusMMRIncorporats = 0;
+            NegatiusMMRContrarestaPositiuIncorporats = 0;
             ResultatsVRProcessats = 0;
             DiagnosticsVRCreats = 0;
+            PositiusVRIncorporats = 0;
         }
 
         /// <summary>

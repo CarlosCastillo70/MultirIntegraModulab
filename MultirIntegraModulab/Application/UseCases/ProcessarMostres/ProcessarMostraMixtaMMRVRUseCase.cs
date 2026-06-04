@@ -84,6 +84,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 {
                     resultat.ResultatsVRProcessats = resultatVR.ResultatsProcessats;
                     resultat.DiagnosticsVRCreats = resultatVR.DiagnosticsCreats;
+                    resultat.PositiusVRIncorporats = resultatVR.PositiusVirusRespiratorisIncorporats;
                 }
             }
 
@@ -151,13 +152,18 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     {
                         resultat.ResultatsMMRPositius++;
                         resultat.PositiuAfegit = resPositiu.PositiuAfegit;
+                        resultat.PositiusMMRIncorporats += resPositiu.PositiusIncorporats;
+                        resultat.NegatiusMMRContrarestaPositiuIncorporats += resPositiu.NegatiusContrarestaPositiuIncorporats;
                     }
                     break;
 
                 case TipusMostra.UnSolResultatNegatiu:
                     var resNegatiu = await _processarNegativaMMR.ExecutarAsync(mostra, classificacio);
                     if (resNegatiu.Exitosa)
+                    {
                         resultat.ResultatsMMRNegatius++;
+                        resultat.NegatiusMMRIncorporats += resNegatiu.NegatiusIncorporats;
+                    }
                     break;
 
                 case TipusMostra.MultiplesResultatsTotsPositius:
@@ -166,13 +172,18 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     {
                         resultat.ResultatsMMRPositius += classificacio.ResultatsPositius;
                         resultat.PositiuAfegit = resPositives.PositiuAfegit;
+                        resultat.PositiusMMRIncorporats += resPositives.PositiusIncorporats;
+                        resultat.NegatiusMMRContrarestaPositiuIncorporats += resPositives.NegatiusContrarestaPositiuIncorporats;
                     }
                     break;
 
                 case TipusMostra.MultiplesResultatsTotsNegatius:
                     var resNegatives = await _processarNegativesMMR.ExecutarAsync(mostra, classificacio);
                     if (resNegatives.Exitosa)
+                    {
                         resultat.ResultatsMMRNegatius += classificacio.ResultatsNegatius;
+                        resultat.NegatiusMMRIncorporats += resNegatives.NegatiusIncorporats;
+                    }
                     break;
 
                 case TipusMostra.MultiplesResultatsPositiusINegatius:
@@ -182,6 +193,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         resultat.ResultatsMMRPositius += classificacio.ResultatsPositius;
                         resultat.ResultatsMMRNegatius += classificacio.ResultatsNegatius;
                         resultat.PositiuAfegit = resMixta.PositiuAfegit;
+                        resultat.PositiusMMRIncorporats += resMixta.PositiusIncorporats;
+                        resultat.NegatiusMMRIncorporats += resMixta.NegatiusIncorporats;
+                        resultat.NegatiusMMRContrarestaPositiuIncorporats += resMixta.NegatiusContrarestaPositiuIncorporats;
                     }
                     break;
             }

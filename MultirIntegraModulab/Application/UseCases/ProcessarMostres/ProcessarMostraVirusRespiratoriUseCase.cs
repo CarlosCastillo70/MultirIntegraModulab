@@ -22,10 +22,16 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         public int MostresExistents { get; set; }
         public int RelacionsCreades { get; set; }
         public int AuditoriasCreades { get; set; }
-        
+
+        /// <summary>
+        /// Nombre real d'OKVR inserits
+        /// </summary>
+        public int PositiusVirusRespiratorisIncorporats { get; set; }
+
         public ResultatProcessamentVirusRespiratori()
         {
             Exitosa = true;
+            PositiusVirusRespiratorisIncorporats = 0;
         }
 
         public override string ToString()
@@ -427,6 +433,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 if (auditoriaCreada)
                 {
                     resultat.AuditoriasCreades++;
+                    resultat.PositiusVirusRespiratorisIncorporats++;
                 }
 
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ VR '{microorganisme}' processat correctament");

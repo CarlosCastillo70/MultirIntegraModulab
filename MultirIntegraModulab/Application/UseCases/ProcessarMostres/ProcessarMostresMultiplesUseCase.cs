@@ -142,7 +142,22 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// Indica si s'ha afegit almenys un positiu nou durant aquest processament
         /// </summary>
         public bool PositiuAfegit { get; set; }
-        
+
+        /// <summary>
+        /// Nombre real de positius incorporats (auditories OKP)
+        /// </summary>
+        public int PositiusIncorporats { get; set; }
+
+        /// <summary>
+        /// Nombre real de negatius incorporats (auditories OKN)
+        /// </summary>
+        public int NegatiusIncorporats { get; set; }
+
+        /// <summary>
+        /// Nombre real de negatius contraresta positiu incorporats (auditories OKNCP)
+        /// </summary>
+        public int NegatiusContrarestaPositiuIncorporats { get; set; }
+
         // Comptadors positius
         public bool PacientCreat { get; set; }
         public int DiagnosticsCreats { get; set; }
@@ -172,6 +187,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         {
             Exitosa = true;
             PositiuAfegit = false;
+            PositiusIncorporats = 0;
+            NegatiusIncorporats = 0;
+            NegatiusContrarestaPositiuIncorporats = 0;
         }
     }
 
@@ -251,6 +269,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 resultat.MostresNegativesCreades = resultatPositius.MostresNegativesCreades;
                 resultat.AuditoriasCreades = resultatPositius.AuditoriasCreades;
                 resultat.PositiuAfegit = resultatPositius.PositiuAfegit;  // Copiar també si s'ha afegit positiu
+                resultat.PositiusIncorporats = resultatPositius.PositiusIncorporats;
+                resultat.NegatiusContrarestaPositiuIncorporats = resultatPositius.NegatiusContrarestaPositiuIncorporats;
 
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✔️ Processats {resultatPositius.MecanismesProcessats} resultat(s) positiu(s)");
 
@@ -286,6 +306,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     resultat.ResultatsNoIncorporats = resultatNegatius.ResultatsNoIncorporats;
                     resultat.IncorporatsPerComprovacio1 = resultatNegatius.IncorporatsPerComprovacio1;
                     resultat.IncorporatsPerComprovacio2 = resultatNegatius.IncorporatsPerComprovacio2;
+                    resultat.NegatiusIncorporats = resultatNegatius.NegatiusIncorporats;
                     resultat.AuditoriasCreades += resultatNegatius.AuditoriasCreades;
 
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✔️ Processats {resultatNegatius.ResultatsProcessats} resultat(s) negatiu(s)");

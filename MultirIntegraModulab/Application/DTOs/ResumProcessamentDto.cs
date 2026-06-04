@@ -69,6 +69,16 @@ namespace MultirIntegraModulab.Application.DTOs
         public int NegatiusIncorporats { get; set; }
 
         /// <summary>
+        /// Nombre d'auditories OKVR (Positius virus respiratoris)
+        /// </summary>
+        public int PositiusVirusRespiratorisIncorporats { get; set; }
+
+        /// <summary>
+        /// Nombre d'auditories OKNCP (Negatius contraresta positiu)
+        /// </summary>
+        public int NegatiusContrarestaPositiuIncorporats { get; set; }
+
+        /// <summary>
         /// Nombre de mostres mixtes processades (amb resultats positius i negatius)
         /// </summary>
         public int MostresMixtes { get; set; }

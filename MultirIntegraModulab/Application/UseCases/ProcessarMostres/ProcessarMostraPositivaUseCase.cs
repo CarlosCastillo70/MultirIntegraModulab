@@ -24,6 +24,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// </summary>
         public bool PositiuAfegit { get; set; }
 
+        /// <summary>
+        /// Nombre real de positius incorporats (auditories OKP)
+        /// </summary>
+        public int PositiusIncorporats { get; set; }
+
         // Comptadors detallats
         public int DiagnosticsCreats { get; set; }
         public int DiagnosticsExistents { get; set; }
@@ -36,10 +41,17 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         public int AuditoriasCreades { get; set; }
         public int MostresNegativesCreades { get; set; }
 
+        /// <summary>
+        /// Nombre real de negatius contraresta positiu incorporats (auditories OKNCP)
+        /// </summary>
+        public int NegatiusContrarestaPositiuIncorporats { get; set; }
+
         public ResultatProcessamentPositiu()
         {
             Exitosa = true;
             PositiuAfegit = false;
+            PositiusIncorporats = 0;
+            NegatiusContrarestaPositiuIncorporats = 0;
         }
     }
 
@@ -544,6 +556,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (auditoriaCreadaOk)
                     {
                         resultat.AuditoriasCreades++;
+                        resultat.PositiusIncorporats++;
                     }
 
                     // Incrementar comptador de mecanismes processats
@@ -811,6 +824,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                     if (auditoriaNegatiuCreadaOk)
                                     {
                                         resultat.AuditoriasCreades++;
+                                        resultat.NegatiusContrarestaPositiuIncorporats++;
                                     }
 
                                 }
