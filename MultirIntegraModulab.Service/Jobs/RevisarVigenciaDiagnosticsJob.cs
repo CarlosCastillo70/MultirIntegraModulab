@@ -22,7 +22,7 @@ namespace MultirIntegraModulab.Service.Jobs
             {
                 // Escriure al Event Log de Windows
                 EventLog.WriteEntry(logSource, 
-                    $"[{dataInici:dd/MM/yyyy HH:mm:ss}] Iniciant revisió de vigència de diagnòstics ...", 
+                    $"[{dataInici:dd/MM/yyyy HH:mm:ss}] Iniciant revisió de vigència de diagnòstics MultiR ...", 
                     EventLogEntryType.Information);
 
                 // Cridar l'executable de MultirRevisioVigencia
@@ -77,8 +77,8 @@ namespace MultirIntegraModulab.Service.Jobs
                             EventLogEntryType.Warning);
                     }
 
-                    EventLog.WriteEntry(logSource, 
-                        $"Revisió finalitzada. Durada: {durada.TotalSeconds:F2}s. Exit code: {process.ExitCode}", 
+                    EventLog.WriteEntry(logSource,
+                        $"[{dataInici:dd/MM/yyyy HH:mm:ss}] Processament de revisió de vigència de diagnòstics MultiR finalitzat. Durada: {durada.TotalSeconds:F2}s. Exit code: {process.ExitCode}",
                         process.ExitCode == 0 ? EventLogEntryType.Information : EventLogEntryType.Warning);
                 }
                 else

@@ -5,6 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Linq.Expressions;
 using System.ServiceProcess;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +24,11 @@ namespace MultirIntegraModulab.Service.Services
         private Thread _fallbackThread;  // ✅ Thread background para monitoreo de triggers
         private volatile bool _stopFallbackThread = false;
 
+        /// <summary>
+        /// Propietat pública per permetre a l'EXE principal enllaçar el motor amb CrystalQuartz de forma segura.
+        /// </summary>
+        public IScheduler Scheduler => _scheduler;
+
         public WorkflowService()
         {
             this.ServiceName = "MultirIntegraModulabService";
@@ -28,13 +36,12 @@ namespace MultirIntegraModulab.Service.Services
             this.CanPauseAndContinue = false;
             this.AutoLog = true;
         }
+
         protected override void OnStart(string[] args)
         {
             try
             {
-                EventLog.WriteEntry(this.ServiceName,
-                    "Iniciant workflow servei " + this.ServiceName + " ...",
-                    EventLogEntryType.Information);
+                SafeWriteEventLog($"Iniciant workflow servei {this.ServiceName} ...", EventLogEntryType.Information);
 
                 // ✅ FILTRE: Llançem la inicialització en segon pla i alliberem l'OnStart immediatament.
                 // Windows veurà que el servei arrenca a l'instant sense bloquejos de fils.
@@ -51,15 +58,13 @@ namespace MultirIntegraModulab.Service.Services
             }
             catch (Exception ex)
             {
-                EventLog.WriteEntry(this.ServiceName, $"ERROR crític a l'OnStart del servei: {ex.Message}", EventLogEntryType.Error);
-                throw;
+                SafeWriteEventLog($"ERROR crític a l'OnStart del servei: {ex}", EventLogEntryType.Error);
             }
         }
 
         /// <summary>
-        /// Inicialitza el motor de Quartz i programa les tasques sense bloquejar el fil principal de Windows.
+        /// Inicialitza el motor de Quartz i programa les tasques sota el context del fil principal del servei.
         /// </summary>
-
         private async void InitializeQuartzAsync()
         {
             try
@@ -77,9 +82,11 @@ namespace MultirIntegraModulab.Service.Services
                 };
 
                 var schedulerFactory = new StdSchedulerFactory(properties);
-                _scheduler = await schedulerFactory.GetScheduler().ConfigureAwait(false);
 
-                // 2. Registrar el listener d'errors (Apuntant ara a "Application")
+                // 🚀 ELIMINAT ConfigureAwait(false): Mantenim el fil de context del servei de Windows
+                _scheduler = await schedulerFactory.GetScheduler();
+
+                // 2. Registrar el listener d'errors amb el ServiceName dinàmic
                 _scheduler.ListenerManager.AddJobListener(new QuartzErrorListener(this.ServiceName));
 
                 // 3. Llegir i carregar la configuració del JSON
@@ -105,52 +112,8 @@ namespace MultirIntegraModulab.Service.Services
                     }
                 }
 
-
-                // ====================================================================
-                // 🚀 PROVA DEL COTÓ CORREGIDA PER A CONSOLE APPLICATION (.EXE)
-                // ====================================================================
-                //try
-                //{
-                //    // En lloc de buscar una DLL a cegues, agafem directament l'executable que s'està executant ara mateix
-                //    var currentAssembly = System.Reflection.Assembly.GetExecutingAssembly();
-
-                //    // Cerquem el tipus dins del propi domini del procés executant
-                //    var typeTest = currentAssembly.GetType("MultirIntegraModulab.Service.Jobs.ProcessarMostresModulabJob");
-
-                //    if (typeTest != null)
-                //    {
-                //        // Forcem la creació de l'objecte a memòria en aquest fil
-                //        var jobInstance = Activator.CreateInstance(typeTest);
-
-                //        // Comprovem si .NET reconeix que implementa la interfície local IJob de Quartz
-                //        bool isIJob = jobInstance is Quartz.IJob;
-
-                //        EventLog.WriteEntry("MultirIntegraModulab",
-                //            $"[DIAGNOSTIC TEST] Èxit creant instància des de l'EXE principal: {jobInstance.GetType().FullName}. " +
-                //            $"Implementa IJob correctament? = {isIJob}",
-                //            EventLogEntryType.Information);
-                //    }
-                //    else
-                //    {
-                //        EventLog.WriteEntry("MultirIntegraModulab",
-                //            $"[DIAGNOSTIC TEST WARNING] No s'ha trobat el tipus 'ProcessarMostresModulab.Service.Jobs.ProcessarMostresModulabJob' dins del propi EXE principal.",
-                //            EventLogEntryType.Warning);
-                //    }
-                //}
-                //catch (Exception ex)
-                //{
-                //    EventLog.WriteEntry("MultirIntegraModulab",
-                //        $"[DIAGNOSTIC TEST CRITICAL] L'Activator de l'EXE ha petat a l'arrencada:\n" +
-                //        $"Missatge: {ex.Message}\n" +
-                //        $"StackTrace: {ex.StackTrace}",
-                //        EventLogEntryType.Error);
-                //}
-                // ====================================================================
-
-
-
                 // 6. L'ÚLTIM PAS: Forcem l'arrencada de Quartz
-                await _scheduler.Start().ConfigureAwait(false);
+                await _scheduler.Start();
 
                 // Afegim l'estat real al canal global per confirmar l'obertura de comportes
                 EventLog.WriteEntry(this.ServiceName,
@@ -172,7 +135,6 @@ namespace MultirIntegraModulab.Service.Services
         {
             try
             {
-                // Obtenir el tipus de la classe del Job
                 Type type = null;
 
                 // 1. Intentem la càrrega robusta forçant l'Assembly a memòria RAM
@@ -180,13 +142,9 @@ namespace MultirIntegraModulab.Service.Services
                 {
                     if (!string.IsNullOrWhiteSpace(wf.Assembly))
                     {
-                        // 🚀 MILLORA PER A CONSOLE APPLICATIONS (.EXE) / DLLs
-                        // Si el nom de l'assembly coincideix amb el procés actual o acaba en .Service,
-                        // mirem primer si el tipus existeix dins del mateix executable executant.
                         var currentAssembly = System.Reflection.Assembly.GetExecutingAssembly();
                         type = currentAssembly.GetType(wf.Type);
 
-                        // Si no s'ha trobat al .exe actual, intentem carregar-lo com a DLL externa (Pla B original)
                         if (type == null)
                         {
                             var loadedAssembly = System.Reflection.Assembly.Load(wf.Assembly);
@@ -196,20 +154,18 @@ namespace MultirIntegraModulab.Service.Services
                 }
                 catch (Exception ex)
                 {
-                    // Loguegem l'avís al canal global, però deixem que intenti el següent pas
                     EventLog.WriteEntry(this.ServiceName,
                         $"[REFLECTION NOTE] No s'ha pogut carregar l'assembly '{wf.Assembly}' per reflexió directa: {ex.Message}",
                         EventLogEntryType.Warning);
                 }
 
-                // 2. PLA B: Si el mètode anterior falla, usem el mètode estàndard per si ja estigués carregat
+                // 2. PLA B: Si el mètode anterior falla
                 if (type == null)
                 {
                     type = Type.GetType($"{wf.Type}, {wf.Assembly}");
                 }
 
-                // 3. PLA C (Última oportunitat per a projectes Console unificats): 
-                // Si encara és null, busquem el tipus net a qualsevol lloc de l'executable corrent
+                // 3. PLA C
                 if (type == null)
                 {
                     type = System.Reflection.Assembly.GetExecutingAssembly().GetType(wf.Type);
@@ -224,22 +180,14 @@ namespace MultirIntegraModulab.Service.Services
                     return;
                 }
 
-                // Log de confirmació de resolució universal
-                //EventLog.WriteEntry(this.ServiceName,
-                //    $"[RESOLVED] Tipus trobat correctament al context d'execució: {type.FullName}",
-                //    EventLogEntryType.Information);
-
-
-                // Crear el Job
-                // 1. FORCEM EL JOB A SER DURABLE
+                // Crear el Job durable
                 var job = JobBuilder.Create(type)
                     .WithIdentity($"{wf.WorkflowFile}-job")
                     .UsingJobData("workflowFile", wf.WorkflowFile)
                     .UsingJobData("serviceName", this.ServiceName)
-                    .StoreDurably() // Manté el Job al JobStore encara que no tingui triggers actius un mil·lisegon
+                    .StoreDurably()
                     .Build();
 
-                // Afegir paràmetres si n'hi ha
                 if (wf.Parameters != null)
                 {
                     foreach (var kvp in wf.Parameters)
@@ -251,30 +199,24 @@ namespace MultirIntegraModulab.Service.Services
                     }
                 }
 
-                // Crear el trigger amb expressió CRON de forma robusta per a Quartz 3.x
-                // 2. AJUSTEM EL TRIGGER AMB LA POLÍTICA DE MISFIRE DE QUARTZ 3.x
+                // Crear el trigger amb la política de misfire de Quartz 3.x
                 var trigger = TriggerBuilder.Create()
                     .WithIdentity($"{wf.WorkflowFile}-trigger")
                     .ForJob(job)
                     .WithCronSchedule(wf.Cron, x => x
                         .InTimeZone(TimeZoneInfo.Local)
-                        // Ignorem desajustos de mil·lisegons a l'arrencada
                         .WithMisfireHandlingInstructionDoNothing())
                     .WithDescription(wf.Description)
-                    // 🚀 FORCEM L'INICI UN MINUT ENRERE: Evita el conflicte de mil·lisegons a l'arrencada
                     .StartAt(DateTimeOffset.Now.AddMinutes(-1))
                     .Build();
 
-                // Programar el Job
                 _scheduler.ScheduleJob(job, trigger);
 
-                // Verificar que s'ha programat correctament
                 var nextFireTime = trigger.GetNextFireTimeUtc();
                 var nextFireTimeLocal = nextFireTime.HasValue ?
                     TimeZoneInfo.ConvertTimeFromUtc(nextFireTime.Value.DateTime, TimeZoneInfo.Local) :
                     DateTime.MinValue;
 
-                // Obtenir més fires per verificar el patró
                 var nextFireTimes = new List<string>();
                 var fireTime = nextFireTime;
                 for (int i = 0; i < 3 && fireTime.HasValue; i++)
@@ -285,12 +227,11 @@ namespace MultirIntegraModulab.Service.Services
 
                 EventLog.WriteEntry(this.ServiceName,
                     $"[Tasca Activada] {wf.Description}\n" +
-                    $"• Tipus resolt: {type.FullName}\n" + // 👈 Fussionat aquí!
+                    $"• Tipus resolt: {type.FullName}\n" +
                     $"• Patró CRON: {wf.Cron}\n" +
                     $"• Propera execució: {nextFireTimeLocal:dd/MM/yyyy HH:mm:ss}\n" +
                     $"• Següents cicles: {string.Join(" | ", nextFireTimes)}",
                     EventLogEntryType.Information);
-
             }
             catch (Exception ex)
             {
@@ -313,8 +254,8 @@ namespace MultirIntegraModulab.Service.Services
                     var jobInstance = (IJob)Activator.CreateInstance(type);
                     var context = new JobExecutionContextMock(wf.WorkflowFile, wf.Parameters);
 
-                    EventLog.WriteEntry(this.ServiceName, 
-                        $"Executant tasca a l'inici (runOnStartup = true): {wf.Description}", 
+                    EventLog.WriteEntry(this.ServiceName,
+                        $"Executant tasca a l'inici (runOnStartup = true): {wf.Description}",
                         EventLogEntryType.Information);
 
                     jobInstance.Execute(context).Wait();
@@ -322,8 +263,8 @@ namespace MultirIntegraModulab.Service.Services
             }
             catch (Exception ex)
             {
-                EventLog.WriteEntry(this.ServiceName, 
-                    $"ERROR executant tasca a l'inici {wf.WorkflowFile}: {ex.Message}", 
+                EventLog.WriteEntry(this.ServiceName,
+                    $"ERROR executant tasca a l'inici {wf.WorkflowFile}: {ex.Message}",
                     EventLogEntryType.Error);
             }
         }
@@ -332,23 +273,60 @@ namespace MultirIntegraModulab.Service.Services
         {
             try
             {
+                RequestAdditionalTime(15000);
+
                 // Detener el thread fallback
                 _stopFallbackThread = true;
-                if (_fallbackThread != null && _fallbackThread.IsAlive)
+                if (_fallbackThread != null && _fallbackThread.IsAlive && !_fallbackThread.Join(3000))
                 {
-                    _fallbackThread.Join(5000);  // Esperar máximo 5 segundos
+                    SafeWriteEventLog("Timeout aturant el thread de fallback. Es continua amb l'aturada del servei.", EventLogEntryType.Warning);
                 }
 
-                _scheduler?.Shutdown(true).Wait();
-                EventLog.WriteEntry(this.ServiceName, 
-                    $"Servei {this.ServiceName} aturat correctament", 
-                    EventLogEntryType.Information);
+                // Tancat net del motor de Quartz sense bloquejar el Service Control Manager
+                if (_scheduler != null)
+                {
+                    try
+                    {
+                        var shutdownTask = _scheduler.Shutdown(waitForJobsToComplete: false);
+                        if (!shutdownTask.Wait(TimeSpan.FromSeconds(8)))
+                        {
+                            SafeWriteEventLog("Timeout aturant Quartz. Es finalitza l'OnStop sense bloquejar el SCM.", EventLogEntryType.Warning);
+                        }
+                    }
+                    catch (Exception schEx)
+                    {
+                        SafeWriteEventLog($"Error aturant Quartz: {schEx.Message}", EventLogEntryType.Warning);
+                    }
+                    finally
+                    {
+                        _scheduler = null;
+                    }
+                }
+
+                SafeWriteEventLog($"Servei {this.ServiceName} aturat correctament", EventLogEntryType.Information);
             }
             catch (Exception ex)
             {
-                EventLog.WriteEntry(this.ServiceName, 
-                    $"ERROR aturant servei {this.ServiceName}: {ex.Message}", 
-                    EventLogEntryType.Error);
+                SafeWriteEventLog($"ERROR aturant servei {this.ServiceName}: {ex}", EventLogEntryType.Error);
+            }
+        }
+
+        private void SafeWriteEventLog(string message, EventLogEntryType entryType)
+        {
+            try
+            {
+                EventLog.WriteEntry(this.ServiceName, message, entryType);
+            }
+            catch
+            {
+                try
+                {
+                    EventLog.WriteEntry("Application", $"[{this.ServiceName}] {message}", entryType);
+                }
+                catch
+                {
+                    // Evitem excepcions d'EventLog en cicle de vida del servei
+                }
             }
         }
 
@@ -357,23 +335,15 @@ namespace MultirIntegraModulab.Service.Services
         /// </summary>
         private void FallbackMonitorThread()
         {
-            EventLog.WriteEntry(this.ServiceName, 
-                "Fallback monitor thread inicia bucle de monitoreo", 
+            EventLog.WriteEntry(this.ServiceName,
+                "Fallback monitor thread inicia bucle de monitoreo",
                 EventLogEntryType.Information);
 
-
-            int checkCount = 0;
             while (!_stopFallbackThread)
             {
                 try
                 {
-                    Thread.Sleep(30000);  // Esperar 30 segundos
-                    checkCount++;
-
-                    //EventLog.WriteEntry(this.ServiceName, 
-                    //    $"[FALLBACK CHECK #{checkCount}] Verificando triggers a las {DateTime.Now:HH:mm:ss}", 
-                    //    EventLogEntryType.Information);
-
+                    Thread.Sleep(30000);
                     CheckAndExecuteTriggers();
                 }
                 catch (ThreadAbortException)
@@ -382,20 +352,19 @@ namespace MultirIntegraModulab.Service.Services
                 }
                 catch (Exception ex)
                 {
-                    EventLog.WriteEntry(this.ServiceName, 
-                        $"[FALLBACK MONITOR ERROR] {ex.Message}", 
+                    EventLog.WriteEntry(this.ServiceName,
+                        $"[FALLBACK MONITOR ERROR] {ex.Message}",
                         EventLogEntryType.Warning);
                 }
             }
 
-            EventLog.WriteEntry(this.ServiceName, 
-                "Fallback monitor thread finalizado", 
+            EventLog.WriteEntry(this.ServiceName,
+                "Fallback monitor thread finalizado",
                 EventLogEntryType.Information);
         }
 
         /// <summary>
-        /// Fallback: Verifica de forma ultra-precisa si una tasca s'ha quedat enrere en el temps real
-        /// i l'executa només si Quartz ha perdut el seu torn (misfire silent).
+        /// Fallback: actua com a xarxa de seguretat si el motor perd un cicle
         /// </summary>
         private void CheckAndExecuteTriggers()
         {
@@ -409,7 +378,6 @@ namespace MultirIntegraModulab.Service.Services
                 var triggerKeys = _scheduler.GetTriggerKeys(null).ConfigureAwait(false).GetAwaiter().GetResult();
                 var now = DateTime.Now;
 
-                // Filtrar i processar només triggers reals (evitem els volàtils creats a mà per codi que comencen per MT_)
                 foreach (var triggerKey in triggerKeys)
                 {
                     if (triggerKey.Name.StartsWith("MT_"))
@@ -419,27 +387,13 @@ namespace MultirIntegraModulab.Service.Services
                     if (trigger == null)
                         continue;
 
-                    // Anem a buscar quan s'HAURIA d'haver executat de forma immediata anterior (o la teòrica actual)
                     var nextFireTimeUtc = trigger.GetNextFireTimeUtc();
                     if (!nextFireTimeUtc.HasValue)
                         continue;
 
                     var nextFireLocal = TimeZoneInfo.ConvertTimeFromUtc(nextFireTimeUtc.Value.DateTime, TimeZoneInfo.Local);
-
-                    // Calculem el retard en segons de manera lineal: si és positiu, la tasca és FUTURA. Si és negatiu, és PASSADA.
                     var segonsDeRetard = (now - nextFireLocal).TotalSeconds;
 
-                    // LOG DE DIAGNÒSTIC INTEGRAT
-                    // Ens serveix per auditar el comportament real al visor d'esdeveniments
-                    //EventLog.WriteEntry(this.ServiceName,
-                    //    $"[FALLBACK EVALUATION] Trigger: '{triggerKey.Name}' | Pròxima execució oficial: {nextFireLocal:dd/MM/yyyy HH:mm:ss} | Balanç: {segonsDeRetard:F0}s (enrere)",
-                    //    EventLogEntryType.Information);
-
-                    // =========================================================================
-                    // CRITERI EXACTE DE DISPAR: 
-                    // Si estem EXACTAMENT en el minut de l'execució o la tasca porta un retard de 
-                    // fins a 45 segons passats de l'hora teòrica, actua com a xarxa de seguretat.
-                    // =========================================================================
                     if (segonsDeRetard >= 0 && segonsDeRetard <= 45)
                     {
                         var jobKey = trigger.JobKey;
@@ -466,19 +420,19 @@ namespace MultirIntegraModulab.Service.Services
                 EventLog.WriteEntry(this.ServiceName, $"[FALLBACK CRITICAL] Error general: {ex.Message}", EventLogEntryType.Warning);
             }
         }
-
     }
+
+    /* ========================================================================
+       CLASSES DE SUPORT I LISTENERS DE QUARTZ
+       ======================================================================== */
 
     public class QuartzErrorListener : IJobListener
     {
         private readonly string _logSource;
-
         public string Name => "GlobalQuartzErrorListener";
 
-        // 🚀 CONSTRUCTOR: Reben el 'this.ServiceName' des del llançador del servei
         public QuartzErrorListener(string logSource)
         {
-            // Si per algun motiu vingués buit, ens defensem apuntant al canal genèric
             _logSource = string.IsNullOrWhiteSpace(logSource) ? "Application" : logSource;
         }
 
@@ -491,7 +445,6 @@ namespace MultirIntegraModulab.Service.Services
             {
                 if (jobException != null)
                 {
-                    // ✅ Ús de l'origen dinàmic del servei sense el text fix antic
                     EventLog.WriteEntry(_logSource,
                         $"[LISTENER ERROR] El Job '{context.JobDetail.Key}' ha llançat una excepció durant l'execució:\n" +
                         $"Message: {jobException.Message}\n" +
@@ -499,17 +452,9 @@ namespace MultirIntegraModulab.Service.Services
                         $"StackTrace: {jobException.StackTrace}",
                         EventLogEntryType.Error);
                 }
-                //else
-                //{
-                //    // ✅ ÈXIT: També unificat amb el nom del servei corrent
-                //    EventLog.WriteEntry(_logSource,
-                //        $"[LISTENER OK] El motor de Quartz confirma que '{context.JobDetail.Key}' s'ha executat amb èxit (Sense excepcions).",
-                //        EventLogEntryType.Information);
-                //}
             }
             catch (Exception ex)
             {
-                // Si el propi EventLog peta, com a mínim ho intentem escriure per consola/traça bàsica
                 System.Diagnostics.Trace.WriteLine($"Error crític al Listener de logs: {ex.Message}");
             }
 
@@ -519,21 +464,9 @@ namespace MultirIntegraModulab.Service.Services
 
     public class NullLogProvider : Quartz.Logging.ILogProvider
     {
-        public Quartz.Logging.Logger GetLogger(string name)
-        {
-            // Retornem un delegat que compleix amb la firma de Quartz i que ignora els logs
-            return (level, func, exception, parameters) => false;
-        }
-
-        public IDisposable OpenNestedContext(string message)
-        {
-            return null;
-        }
-
-        public IDisposable OpenMappedContext(string key, object value, bool destructure = false)
-        {
-            return null;
-        }
+        public Quartz.Logging.Logger GetLogger(string name) => (level, func, exception, parameters) => false;
+        public IDisposable OpenNestedContext(string message) => null;
+        public IDisposable OpenMappedContext(string key, object value, bool destructure = false) => null;
     }
 
     public class AuditedJobFactory : Quartz.Simpl.SimpleJobFactory
@@ -549,28 +482,16 @@ namespace MultirIntegraModulab.Service.Services
         {
             try
             {
-                EventLog.WriteEntry(_serviceName,
-                    $"[FACTORY] Intentant instanciar el Job: '{bundle.JobDetail.Key}' per al Trigger: '{bundle.Trigger.Key}'",
-                    EventLogEntryType.Information);
-
+                EventLog.WriteEntry(_serviceName, $"[FACTORY] Intentant instanciar el Job: '{bundle.JobDetail.Key}'", EventLogEntryType.Information);
                 IJob job = base.NewJob(bundle, scheduler);
-
-                EventLog.WriteEntry(_serviceName,
-                    $"[FACTORY] Job '{bundle.JobDetail.Key}' instanciat amb èxit. Tipus real: {job.GetType().FullName}",
-                    EventLogEntryType.Information);
-
+                EventLog.WriteEntry(_serviceName, $"[FACTORY] Job '{bundle.JobDetail.Key}' instanciat amb èxit.", EventLogEntryType.Information);
                 return job;
             }
             catch (Exception ex)
             {
-                EventLog.WriteEntry(_serviceName,
-                    $"[FACTORY CRITICAL ERROR] No s'ha pogut instanciar el Job '{bundle.JobDetail.Key}'. " +
-                    $"Error: {ex.Message}\n{ex.StackTrace}",
-                    EventLogEntryType.Error);
+                EventLog.WriteEntry(_serviceName, $"[FACTORY CRITICAL ERROR] No s'ha pogut instanciar el Job '{bundle.JobDetail.Key}': {ex.Message}", EventLogEntryType.Error);
                 throw;
             }
         }
     }
-
-
 }

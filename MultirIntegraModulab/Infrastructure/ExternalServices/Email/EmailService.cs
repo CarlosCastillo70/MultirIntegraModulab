@@ -241,21 +241,21 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             sb.AppendLine();
             sb.AppendLine("RESUM DEL PROCESSAMENT:");
             sb.AppendLine("-------------------");
-            sb.AppendLine($"• Total processats:             {resum.TotalProcessats}");
-            sb.AppendLine($"• Noves incorporacions:         {resum.NovesIncorporacions}");
-            sb.AppendLine($"• Repetides:                    {resum.MostresRepetides}");
-            sb.AppendLine($"• Validades:                    {resum.MostresValidades}");
-            sb.AppendLine($"• Revalidades:                  {resum.MostresRevalidades}");
-            sb.AppendLine($"• Desvalidades:                 {resum.MostresDesvalidades}");
-            sb.AppendLine($"• Antigues:                     {resum.MostresAntigues}");
+            sb.AppendLine($"• Total processats: {resum.TotalProcessats}");
+            sb.AppendLine($"• Noves incorporacions: {resum.NovesIncorporacions}");
+            sb.AppendLine($"• Repetides: {resum.MostresRepetides}");
+            sb.AppendLine($"• Validades: {resum.MostresValidades}");
+            sb.AppendLine($"• Revalidades: {resum.MostresRevalidades}");
+            sb.AppendLine($"• Desvalidades: {resum.MostresDesvalidades}");
+            sb.AppendLine($"• Antigues: {resum.MostresAntigues}");
             sb.AppendLine($"-------------------");
-            sb.AppendLine($"• Positius incorporats:         {resum.PositiusIncorporats}");
-            sb.AppendLine($"• Positius virus resp.:         {resum.PositiusVirusRespiratorisIncorporats}");
-            sb.AppendLine($"• Negatius incorporats:         {resum.NegatiusIncorporats}");
+            sb.AppendLine($"• Positius incorporats: {resum.PositiusIncorporats}");
+            sb.AppendLine($"• Positius virus resp.: {resum.PositiusVirusRespiratorisIncorporats}");
+            sb.AppendLine($"• Negatius incorporats: {resum.NegatiusIncorporats}");
             sb.AppendLine($"• Negatius contraresta positiu: {resum.NegatiusContrarestaPositiuIncorporats}");
             sb.AppendLine($"-------------------");
-            sb.AppendLine($"• Errors:                       {resum.MostresAmbError}");
-            sb.AppendLine($"• Durada:                       {resum.DuradaProcessament.TotalSeconds:F2} segons");
+            sb.AppendLine($"• Errors: {resum.MostresAmbError}");
+            sb.AppendLine($"• Durada: {resum.DuradaProcessament.TotalSeconds:F2} segons");
             sb.AppendLine();
 
             if (resum.TotalProcessats > 0)

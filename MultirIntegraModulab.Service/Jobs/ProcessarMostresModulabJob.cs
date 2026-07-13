@@ -84,7 +84,7 @@ namespace MultirIntegraModulab.Service.Jobs
                     }
 
                     EventLog.WriteEntry(logSource,
-                        $"[{dataInici:dd/MM/yyyy HH:mm:ss}] Processament finalitzat. Durada: {durada.TotalSeconds:F2}s. Exit code: {process.ExitCode}",
+                        $"[{dataInici:dd/MM/yyyy HH:mm:ss}] Processament de mostres Modulab finalitzat. Durada: {durada.TotalSeconds:F2}s. Exit code: {process.ExitCode}",
                         process.ExitCode == 0 ? EventLogEntryType.Information : EventLogEntryType.Warning);
 
                 }
