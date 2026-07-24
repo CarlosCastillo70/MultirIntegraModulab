@@ -129,24 +129,25 @@ namespace MultirIntegraModulab
                 }
 
                 ColeccioMostres mostres;
-                
+                DadesSincronitzacio ultimaSincronitzacio = null;
+
                 // ===========================================================
                 // DETERMINAR TIPUS DE CÀRREGA SEGONS PRIORITAT
                 // Prioritat: 1. Incremental, 2. Dies Enrere, 3. Rang de Dates
                 // ===========================================================
-                
+
                 if (configService.CarregaIncremental_Activa)
                 {
                     // ===========================================================
                     // TIPUS 1: CÀRREGA INCREMENTAL OPTIMITZADA (Prioritat Alta)
                     // ===========================================================
-                    
+
                     loggerService.Info($"🔍 Mode: CÀRREGA INCREMENTAL (Prioritat Alta)");
                     Console.WriteLine($"\n🔍 Mode: CÀRREGA INCREMENTAL");
 
                     // 1. Obtenir última sincronització exitosa
-                    var ultimaSincronitzacio = multiRRepository.ObtenirUltimaSincronitzacio();
-                    
+                    ultimaSincronitzacio = multiRRepository.ObtenirUltimaSincronitzacio();
+
                     if (ultimaSincronitzacio != null)
                     {
                         loggerService.Info($"📅 Última sincronització: {ultimaSincronitzacio.DataSincronitzacio:dd/MM/yyyy HH:mm}");
@@ -239,60 +240,74 @@ namespace MultirIntegraModulab
 
                     // Mostrar resultats
                     MostrarResumProcessament(resum, loggerService);
-                    
-                    // ===========================================================
-                    // GUARDAR DADES DE SINCRONITZACIÓ
-                    // ===========================================================
-                    
-                    // Només guardar sincronització si estem en mode incremental
-                    if (configService.CarregaIncremental_Activa && resum.MostresAmbError == 0)
-                    {
-                        try
-                        {
-                            loggerService.Info("💾 Guardant dades de sincronització...");
-                            
-                            var dadesSincronitzacio = new DadesSincronitzacio
-                            {
-                                DataResultatMaxProcessada = mostres.ObtenirDataResultatMaxima(),
-                                DataValidacioMaxProcessada = mostres.ObtenirDataValidacioMaxima(),
-                                DataSincronitzacio = DateTime.Now,
-                                NombreMostresProcessades = mostres.NombreTotalMostres,
-                                NombreMostresError = resum.MostresAmbError,
-                                DiesRevisioSeguretat = configService.CarregaIncremental_DiesRevisioSeguretat,
-                                Estat = "OK",
-                                DuradaSegons = resum.DuradaProcessament.TotalSeconds
-                            };
-                            
-                            int idSincronitzacio = multiRRepository.GuardarDadesSincronitzacio(dadesSincronitzacio);
-                            
-                            if (idSincronitzacio > 0)
-                            {
-                                loggerService.Info($"✅ Sincronització guardada correctament (ID: {idSincronitzacio})");
-                            }
-                            else
-                            {
-                                loggerService.Warning("⚠️ No s'ha pogut guardar la sincronització");
-                            }
-                        }
-                        catch (Exception exSync)
-                        {
-                            loggerService.Error("❌ Error guardant sincronització", exSync);
-                        }
-                    }
-                    else if (!configService.CarregaIncremental_Activa)
-                    {
-                        loggerService.Info("ℹ️ Mode càrrega incremental desactivat - no es guarden dades de sincronització");
-                    }
-                    else if (resum.MostresAmbError > 0)
-                    {
-                        loggerService.Warning($"⚠️ No es guarda sincronització perquè hi ha {resum.MostresAmbError} mostres amb error");
-                        Console.WriteLine($"\n⚠️ Sincronització no guardada ({resum.MostresAmbError} errors detectats)");
-                    }
                 }
                 else
                 {
                     loggerService.Warning("⚠️ No s'han trobat mostres per processar");
                     Console.WriteLine("⚠️ No s'han trobat mostres per processar");
+                }
+
+                // ===========================================================
+                // GUARDAR DADES DE SINCRONITZACIÓ
+                // Sempre en mode incremental, hagi o no mostres noves.
+                // Si no hi ha mostres, propaga les dates de l'última sincronització
+                // per no trencar la cadena incremental de la propera execució.
+                // ===========================================================
+
+                if (configService.CarregaIncremental_Activa)
+                {
+                    try
+                    {
+                        loggerService.Info("💾 Guardant dades de sincronització...");
+
+                        string estatSincronitzacio = resum.MostresAmbError == 0 ? "OK" : "PARCIAL";
+
+                        // Si no hi ha mostres noves, conservar les dates màximes anteriors
+                        DateTime? dataResultatMax = mostres.NombreTotalMostres > 0
+                            ? mostres.ObtenirDataResultatMaxima()
+                            : ultimaSincronitzacio?.DataResultatMaxProcessada;
+
+                        DateTime? dataValidacioMax = mostres.NombreTotalMostres > 0
+                            ? mostres.ObtenirDataValidacioMaxima()
+                            : ultimaSincronitzacio?.DataValidacioMaxProcessada;
+
+                        var dadesSincronitzacio = new DadesSincronitzacio
+                        {
+                            DataResultatMaxProcessada = dataResultatMax,
+                            DataValidacioMaxProcessada = dataValidacioMax,
+                            DataSincronitzacio = DateTime.Now,
+                            NombreMostresProcessades = mostres.NombreTotalMostres,
+                            NombreMostresError = resum.MostresAmbError,
+                            NombreResultatsIntegrat = resum.PositiusIncorporats + resum.NegatiusIncorporats
+                                + resum.PositiusVirusRespiratorisIncorporats + resum.NegatiusContrarestaPositiuIncorporats,
+                            DiesRevisioSeguretat = configService.CarregaIncremental_DiesRevisioSeguretat,
+                            Estat = estatSincronitzacio,
+                            DuradaSegons = resum.DuradaProcessament.TotalSeconds
+                        };
+
+                        int idSincronitzacio = multiRRepository.GuardarDadesSincronitzacio(dadesSincronitzacio);
+
+                        if (idSincronitzacio > 0)
+                        {
+                            loggerService.Info($"✅ Sincronització guardada correctament (ID: {idSincronitzacio}, estat: {estatSincronitzacio})");
+                            if (resum.MostresAmbError > 0)
+                            {
+                                loggerService.Warning($"⚠️ Sincronització guardada com '{estatSincronitzacio}' amb {resum.MostresAmbError} errors parcials");
+                            }
+                        }
+                        else
+                        {
+                            loggerService.Warning("⚠️ No s'ha pogut guardar la sincronització");
+                        }
+                    }
+                    catch (Exception exSync)
+                    {
+                        loggerService.Error("❌ Error guardant sincronització", exSync);
+                    }
+                }
+                else
+                {
+                    loggerService.Info("ℹ️ Mode càrrega incremental desactivat - no es guarden dades de sincronització");
                 }
 
                 loggerService.Info("✅ Execució finalitzada correctament");

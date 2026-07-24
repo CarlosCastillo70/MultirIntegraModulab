@@ -118,6 +118,7 @@ namespace MultirIntegraModulab
                             data_sincronitzacio,
                             nombre_mostres_processades,
                             nombre_mostres_error,
+                            nombre_resultats_integrat,
                             dies_revisio_seguretat,
                             estat,
                             observacions,
@@ -130,6 +131,7 @@ namespace MultirIntegraModulab
                             @dataSincronitzacio,
                             @nombreMostres,
                             @nombreErrors,
+                            @nombreResultatsIntegrat,
                             @diesRevisio,
                             @estat,
                             @observacions,
@@ -154,6 +156,7 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@dataSincronitzacio", dades.DataSincronitzacio);
                         cmd.Parameters.AddWithValue("@nombreMostres", dades.NombreMostresProcessades);
                         cmd.Parameters.AddWithValue("@nombreErrors", dades.NombreMostresError);
+                        cmd.Parameters.AddWithValue("@nombreResultatsIntegrat", dades.NombreResultatsIntegrat);
                         cmd.Parameters.AddWithValue("@diesRevisio", dades.DiesRevisioSeguretat);
                         cmd.Parameters.AddWithValue("@estat", dades.Estat ?? "OK");
                         cmd.Parameters.AddWithValue("@observacions", 

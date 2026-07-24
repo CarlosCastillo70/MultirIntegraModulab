@@ -61,6 +61,11 @@ namespace MultirIntegraModulab.Domain.Entities
         /// </summary>
         public double? DuradaSegons { get; set; }
 
+        /// <summary>
+        /// Nombre total de resultats integrats (positius + negatius + tipus especials)
+        /// </summary>
+        public int NombreResultatsIntegrat { get; set; }
+
         public DadesSincronitzacio()
         {
             DataSincronitzacio = DateTime.Now;

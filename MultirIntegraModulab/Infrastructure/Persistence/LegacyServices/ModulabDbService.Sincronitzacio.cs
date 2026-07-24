@@ -53,7 +53,11 @@ namespace MultirIntegraModulab
             {
                 _logger.Info($"Data validació > {dataValidacioFiltre:dd/MM/yyyy HH:mm} (amb overlap de 2 min)");
             }
-            
+            else if (dataResultatFiltre.HasValue)
+            {
+                _logger.Info("Data validació = NULL (capturant resultats sense validar)");
+            }
+
             // Precarregar microorganismes especials
             if (mysqlService != null)
             {
@@ -182,82 +186,84 @@ namespace MultirIntegraModulab
             int limitRegistres)
         {
             string consultaBase = @"
-                SELECT
-                  PET.ETIQUETA_ID || LPAD(NVL(CONT.PREFIX, '0'), 3, '0') AS ETIQUETA_ID,
-                  PA.PACIENT_SAP,
-                  nvl(PA.CIP,'N/D') CIP,
-                  ME.COLEGIAT_ID,
-                  REPLACE (ME.NOM_METGE,'''','´') AS NOM_METGE,
-                  REPLACE (LTRIM(C.CENTRE_DESCRIPCIO),'''','´') AS CENTRE_DESCRIPCIO,
-                  PET.DATA_PETICIO_TRUNC,
-                  REPLACE (A.AILLAMENT_DESCRIPCIO,'''','´') AS AILLAMENT_DESCRIPCIO,
-                  DETALL.MECANISME_RESISTENCIA1_ID,
-                  REPLACE (MR.MECANISME_RESISTENCIA_DESCRIP,'''','´') AS MECANISME_RESISTENCIA_DESCRIP,
-                  DETALL.MECANISME_RESISTENCIA2_ID,
-                  REPLACE (MR2.MECANISME_RESISTENCIA_DESCRIP,'''','´') AS MECANISME_RESISTENCIA_DESCRIP2,
-                  DETALL.MECANISME_RESISTENCIA3_ID,
-                  REPLACE (MR3.MECANISME_RESISTENCIA_DESCRIP,'''','´') AS MECANISME_RESISTENCIA_DESCRIP3,
-                  DETALL.MECANISME_RESISTENCIA4_ID,
-                  REPLACE (MR4.MECANISME_RESISTENCIA_DESCRIP,'''','´') AS MECANISME_RESISTENCIA_DESCRIP4,
-                  DETALL.MECANISME_RESISTENCIA5_ID,
-                  REPLACE (MR5.MECANISME_RESISTENCIA_DESCRIP,'''','´') AS MECANISME_RESISTENCIA_DESCRIP5,
-                  REPLACE (S.SERVEI_DESCRIPCIO,'''','´') AS SERVEI_DESCRIPCIO,
-                  REPLACE (PR.PROVA_DESCRIPCIO,'''','´') AS PROVA_DESCRIPCIO,
-                  REPLACE (MOS.MOSTRA_DESCRIPCIO,'''','´') AS MOSTRA_DESCRIPCIO,
-                  REPLACE (DETALL.SHORTDESCRIPTION1,'''','´') AS SHORTDESCRIPTION1,
-                  DETALL.DATA_RESULTAT,
-                  DETALL.DATA_VALIDACIO 
+                SELECT DISTINCT /*+ USE_CONCAT INDEX(rc PK_REQUESTCONTAINER) INDEX(rt PK_REQUESTTEST) */
+                    r.REQUESTLABEL || SUBSTR(rc.requestcontainerlabel, 1, 3) AS ETIQUETA_ID,
+                    SUBSTR(rc.requestcontainerlabel, 1, 3) AS PREFIX,
+                    p.EXTERNALID AS PACIENT_SAP,
+                    p.NTS AS CIP,
+                    d.COLLEGIATEID AS COLEGIAT_ID,
+                    d.DOCTORNAME AS NOM_METGE,
+                    scol.SAMPLECOLCENTERDESCRIPTION AS CENTRE_DESCRIPCIO,
+                    r.requestdate AS DATA_PETICIO_TRUNC,
+                    i.isolationdescription AS AILLAMENT_DESCRIPCIO,
+                    ci.resistancemechanismcode1 AS MECANISME_RESISTENCIA1_ID,
+                    rm1.RESISTANCEMECHANISMDESCRIPTION AS MECANISME_RESISTENCIA_DESCRIP,
+                    ci.resistancemechanismcode2 AS MECANISME_RESISTENCIA2_ID,
+                    rm2.RESISTANCEMECHANISMDESCRIPTION AS MECANISME_RESISTENCIA_DESCRIP2,
+                    ci.resistancemechanismcode3 AS MECANISME_RESISTENCIA3_ID,
+                    rm3.RESISTANCEMECHANISMDESCRIPTION AS MECANISME_RESISTENCIA_DESCRIP3,
+                    ci.resistancemechanismcode4 AS MECANISME_RESISTENCIA4_ID,
+                    rm4.RESISTANCEMECHANISMDESCRIPTION AS MECANISME_RESISTENCIA_DESCRIP4,
+                    ci.resistancemechanismcode5 AS MECANISME_RESISTENCIA5_ID,
+                    rm5.RESISTANCEMECHANISMDESCRIPTION AS MECANISME_RESISTENCIA_DESCRIP5,
+                    ser.SERVICEDESCRIPTION AS SERVEI_DESCRIPCIO,
+                    t.testdescription AS PROVA_DESCRIPCIO,
+                    sam.sampledescription AS MOSTRA_DESCRIPCIO,
+                    rt.RESULTDATE AS DATA_RESULTAT,
+                    rt.FVDATE AS DATA_VALIDACIO,
+                    t.shortdescription AS SHORTDESCRIPTION1
                 FROM
-                  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR,
-                  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR2,
-                  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR3,
-                  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR4,
-                  DWDIMICS.DIM_LAB_MEC_RESISTENCIA MR5,
-                  DWDIMICS.DIM_LAB_CENTRE C,
-                  DWDIMICS.DIM_LAB_SERVEI S,
-                  DWDIMICS.DIM_LAB_AILLAMENT A,
-                  DWDIMICS.DIM_LAB_PROVA PR,
-                  DWDIMICS.DIM_LAB_METGE ME,
-                  DWDIMICS.DIM_LAB_PACIENTS_DT PA,
-                  DWDIMICS.DIM_LAB_PETICIONS_DT PET,
-                  DWDIMICS.V_DIM_LAB_CONTENIDOR_DT CONT,
-                  DWDIMICS.V_DIM_LAB_MOSTRA_DT MOS,
-                  DWFACTICS.FAC_LAB_PROVES_DT DETALL
+                    MG.CULTUREISOLATION ci
+                    JOIN MG.REQUEST r ON r.REQUESTID = ci.REQUESTID
+                    JOIN MG.PATIENT p ON p.PATIENTID = r.PATIENTID
+                    JOIN MG.ISOLATION i ON i.ISOLATIONID = ci.ISOLATIONID
+                    LEFT JOIN MG.RESISTANCEMECHANISM rm1 ON rm1.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE1
+                    LEFT JOIN MG.RESISTANCEMECHANISM rm2 ON rm2.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE2
+                    LEFT JOIN MG.RESISTANCEMECHANISM rm3 ON rm3.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE3
+                    LEFT JOIN MG.RESISTANCEMECHANISM rm4 ON rm4.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE4
+                    LEFT JOIN MG.RESISTANCEMECHANISM rm5 ON rm5.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE5
+                    LEFT JOIN MG.DOCTOR d ON d.DOCTORID = r.DOCTORID
+                    LEFT JOIN MG.SERVICE ser ON ser.serviceid = r.serviceid
+                    LEFT JOIN MG.SAMPLECOLLECTIONCENTER scol ON scol.samplecollectioncenterid = r.samplecollectioncenterid
+                    LEFT JOIN MG.REQUESTTESTADDITIONALINFO rtai ON rtai.REQUESTID = ci.REQUESTID
+                        AND rtai.CONTAINERID = ci.CONTAINERID
+                        AND rtai.TESTID = ci.TESTID
+                    JOIN MG.TEST t ON rtai.TESTID = t.TESTID
+                    JOIN MG.CONTAINER c ON rtai.CONTAINERID = c.CONTAINERID
+                    JOIN MG.SAMPLE sam ON sam.SAMPLEID = c.SAMPLEID
+                    JOIN MG.ADDITIONALINFO ai ON ai.ADDITIONALINFOID = rtai.ADDITIONALINFOID
+                    LEFT JOIN MG.REQUESTDIAGNOSIS rd ON rd.REQUESTID = r.REQUESTID
+                    LEFT JOIN MG.DIAGNOSIS dia ON dia.DIAGNOSISID = rd.DIAGNOSISID
+                    LEFT JOIN MG.REQUESTCONTAINER rc ON rc.REQUESTID = r.REQUESTID AND rc.CONTAINERID = c.CONTAINERID
+                    LEFT JOIN MG.REQUESTTEST rt ON rt.REQUESTID = ci.REQUESTID
+                        AND rt.CONTAINERID = ci.CONTAINERID
+                        AND rt.TESTID = ci.TESTID
                 WHERE
-                  ( PET.PACIENT_ID = PA.PACIENT_ID(+) AND  PET.ORIGEN = PA.ORIGEN(+)  )
-                  AND  ( PET.METGE_ID = ME.METGE_ID AND  PET.ORIGEN = ME.ORIGEN  )
-                  AND  ( PET.ORIGEN = S.ORIGEN(+) AND  PET.SERVEI_ID = S.SERVEI_ID(+)  )
-                  AND  ( PET.ORIGEN = DETALL.ORIGEN AND  PET.PETICIO_ID = DETALL.PETICIO_ID  )
-                  AND  ( DETALL.ORIGEN = PR.ORIGEN(+) AND  DETALL.PROVA_ID = PR.PROVA_ID(+)  )
-                  AND  ( A.ORIGEN(+) = DETALL.ORIGEN AND  A.AILLAMENT_ID(+)=DETALL.AILLAMENT_ID  )
-                  AND  ( S.ORIGEN = C.ORIGEN(+) AND  S.CENTRE_ID = C.CENTRE_ID(+)  )
-                  AND  ( MR.ORIGEN(+) = DETALL.ORIGEN AND  MR.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA1_ID  )
-                  AND  ( MR2.ORIGEN(+) = DETALL.ORIGEN AND  MR2.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA2_ID  )
-                  AND  ( MR3.ORIGEN(+) = DETALL.ORIGEN AND  MR3.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA3_ID  )
-                  AND  ( MR4.ORIGEN(+) = DETALL.ORIGEN AND  MR4.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA4_ID  )
-                  AND  ( MR5.ORIGEN(+) = DETALL.ORIGEN AND  MR5.MECANISME_RESISTENCIA_CODI(+) = DETALL.MECANISME_RESISTENCIA5_ID  )
-                  AND  ( CONT.ORIGEN(+) = DETALL.ORIGEN AND  CONT.CONTENIDOR_ID(+) = DETALL.CONTENIDOR_ID )
-                  AND  ( MOS.ORIGEN(+) = CONT.ORIGEN AND  MOS.MOSTRA_ID(+) = CONT.MOSTRA_ID )
-                  AND  ( PA.TIPUS is null )
-                  AND  PET.ORIGEN  =  'DT'
-                  AND  DETALL.TIPUS = 'A'
-                  AND  (";
+                  r.REQUESTDATE >= TRUNC(SYSDATE) - 17
+                  AND (";
 
-            // Construir la clàusula de filtres de dates amb TO_DATE
+            // Construir la clàusula de filtres de dates amb TO_TIMESTAMP
             var filtres = new System.Collections.Generic.List<string>();
 
-            // Filtre 1: DATA_RESULTAT >= última processada
+            // Filtre 1: RESULTDATE >= última processada
             if (dataResultatFiltre.HasValue)
             {
                 string dataFormatejada = dataResultatFiltre.Value.ToString("yyyy-MM-dd HH:mm:ss");
-                filtres.Add($"DETALL.DATA_RESULTAT >= TO_DATE('{dataFormatejada}', 'YYYY-MM-DD HH24:MI:SS')");
+                filtres.Add($"rt.RESULTDATE >= TO_TIMESTAMP('{dataFormatejada}', 'YYYY-MM-DD HH24:MI:SS')");
             }
 
-            // Filtre 2: DATA_VALIDACIO >= última processada
+            // Filtre 2: FVDATE >= última processada
             if (dataValidacioFiltre.HasValue)
             {
                 string dataFormatejada = dataValidacioFiltre.Value.ToString("yyyy-MM-dd HH:mm:ss");
-                filtres.Add($"DETALL.DATA_VALIDACIO >= TO_DATE('{dataFormatejada}', 'YYYY-MM-DD HH24:MI:SS')");
+                filtres.Add($"rt.FVDATE >= TO_TIMESTAMP('{dataFormatejada}', 'YYYY-MM-DD HH24:MI:SS')");
+            }
+            else if (dataResultatFiltre.HasValue)
+            {
+                // IMPORTANT: Si DataValidacioMaxProcessada és null però DataResultatMaxProcessada té valor,
+                // significa que hi ha resultats sense validar que s'haurien de capturar en cada cicle incremental
+                // fins que siguin validats. Afegim un filtre explícit per resultats sense validació.
+                filtres.Add("rt.FVDATE IS NULL");
             }
 
             // Si no hi ha cap filtre, retornar una consulta que no retorni res
@@ -270,7 +276,7 @@ namespace MultirIntegraModulab
             consultaBase += string.Join(" OR ", filtres);
             consultaBase += @"
                   )
-                ORDER BY ETIQUETA_ID";
+                ORDER BY PACIENT_SAP, ETIQUETA_ID";
 
             // Afegir límit si cal
             if (limitRegistres > 0)
