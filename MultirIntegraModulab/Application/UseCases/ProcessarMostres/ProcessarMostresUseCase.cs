@@ -142,6 +142,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _logger.Info($"▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀");
 
 
+                    if (mostra.PacientSap == "15589479")
+                    {
+                        string aaa = "";
+                    }
+
+
                     // FASE 1: Validar mostra (existència dades bàsiques)
                     if (!_validarMostraUseCase.Executar(mostra))
                     {

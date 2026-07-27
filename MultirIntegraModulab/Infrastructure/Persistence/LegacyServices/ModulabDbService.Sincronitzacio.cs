@@ -192,31 +192,33 @@ namespace MultirIntegraModulab
                     p.EXTERNALID AS PACIENT_SAP,
                     p.NTS AS CIP,
                     d.COLLEGIATEID AS COLEGIAT_ID,
-                    d.DOCTORNAME AS NOM_METGE,
-                    scol.SAMPLECOLCENTERDESCRIPTION AS CENTRE_DESCRIPCIO,
+                    REPLACE(d.DOCTORNAME, '''', '´') AS NOM_METGE,
+                    REPLACE(LTRIM(c3.CENTERDESCRIPTION), '''', '´') AS CENTRE_DESCRIPCIO,
                     r.requestdate AS DATA_PETICIO_TRUNC,
-                    i.isolationdescription AS AILLAMENT_DESCRIPCIO,
+                    REPLACE(i.isolationdescription, '''', '´') AS AILLAMENT_DESCRIPCIO,
                     ci.resistancemechanismcode1 AS MECANISME_RESISTENCIA1_ID,
-                    rm1.RESISTANCEMECHANISMDESCRIPTION AS MECANISME_RESISTENCIA_DESCRIP,
+                    REPLACE(rm1.RESISTANCEMECHANISMDESCRIPTION, '''', '´') AS MECANISME_RESISTENCIA_DESCRIP,
                     ci.resistancemechanismcode2 AS MECANISME_RESISTENCIA2_ID,
-                    rm2.RESISTANCEMECHANISMDESCRIPTION AS MECANISME_RESISTENCIA_DESCRIP2,
+                    REPLACE(rm2.RESISTANCEMECHANISMDESCRIPTION, '''', '´') AS MECANISME_RESISTENCIA_DESCRIP2,
                     ci.resistancemechanismcode3 AS MECANISME_RESISTENCIA3_ID,
-                    rm3.RESISTANCEMECHANISMDESCRIPTION AS MECANISME_RESISTENCIA_DESCRIP3,
+                    REPLACE(rm3.RESISTANCEMECHANISMDESCRIPTION, '''', '´') AS MECANISME_RESISTENCIA_DESCRIP3,
                     ci.resistancemechanismcode4 AS MECANISME_RESISTENCIA4_ID,
-                    rm4.RESISTANCEMECHANISMDESCRIPTION AS MECANISME_RESISTENCIA_DESCRIP4,
+                    REPLACE(rm4.RESISTANCEMECHANISMDESCRIPTION, '''', '´') AS MECANISME_RESISTENCIA_DESCRIP4,
                     ci.resistancemechanismcode5 AS MECANISME_RESISTENCIA5_ID,
-                    rm5.RESISTANCEMECHANISMDESCRIPTION AS MECANISME_RESISTENCIA_DESCRIP5,
-                    ser.SERVICEDESCRIPTION AS SERVEI_DESCRIPCIO,
-                    t.testdescription AS PROVA_DESCRIPCIO,
-                    sam.sampledescription AS MOSTRA_DESCRIPCIO,
+                    REPLACE(rm5.RESISTANCEMECHANISMDESCRIPTION, '''', '´') AS MECANISME_RESISTENCIA_DESCRIP5,
+                    REPLACE(ser.SERVICEDESCRIPTION, '''', '´') AS SERVEI_DESCRIPCIO,
+                    REPLACE(t.testdescription, '''', '´') AS PROVA_DESCRIPCIO,
+                    REPLACE(sam.sampledescription, '''', '´') AS MOSTRA_DESCRIPCIO,
                     rt.RESULTDATE AS DATA_RESULTAT,
                     rt.FVDATE AS DATA_VALIDACIO,
-                    t.shortdescription AS SHORTDESCRIPTION1
+                    ci.SHORTDESCRIPTION AS SHORTDESCRIPTION1,
+                    ci.CODEDVALUESFAMILYID AS CODEDVALUESFAMILYID,
+                    c2.CODEDVALUEDESCRIPTION AS CODEDVALUEDESCRIPTION
                 FROM
                     MG.CULTUREISOLATION ci
-                    JOIN MG.REQUEST r ON r.REQUESTID = ci.REQUESTID
-                    JOIN MG.PATIENT p ON p.PATIENTID = r.PATIENTID
-                    JOIN MG.ISOLATION i ON i.ISOLATIONID = ci.ISOLATIONID
+                    LEFT JOIN MG.REQUEST r ON r.REQUESTID = ci.REQUESTID
+                    LEFT JOIN MG.PATIENT p ON p.PATIENTID = r.PATIENTID
+                    LEFT JOIN MG.ISOLATION i ON i.ISOLATIONID = ci.ISOLATIONID
                     LEFT JOIN MG.RESISTANCEMECHANISM rm1 ON rm1.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE1
                     LEFT JOIN MG.RESISTANCEMECHANISM rm2 ON rm2.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE2
                     LEFT JOIN MG.RESISTANCEMECHANISM rm3 ON rm3.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE3
@@ -228,16 +230,20 @@ namespace MultirIntegraModulab
                     LEFT JOIN MG.REQUESTTESTADDITIONALINFO rtai ON rtai.REQUESTID = ci.REQUESTID
                         AND rtai.CONTAINERID = ci.CONTAINERID
                         AND rtai.TESTID = ci.TESTID
-                    JOIN MG.TEST t ON rtai.TESTID = t.TESTID
-                    JOIN MG.CONTAINER c ON rtai.CONTAINERID = c.CONTAINERID
-                    JOIN MG.SAMPLE sam ON sam.SAMPLEID = c.SAMPLEID
-                    JOIN MG.ADDITIONALINFO ai ON ai.ADDITIONALINFOID = rtai.ADDITIONALINFOID
+                    LEFT JOIN MG.TEST t ON rtai.TESTID = t.TESTID
+                    LEFT JOIN MG.CONTAINER c ON rtai.CONTAINERID = c.CONTAINERID
+                    LEFT JOIN MG.SAMPLE sam ON sam.SAMPLEID = c.SAMPLEID
+                    LEFT JOIN MG.ADDITIONALINFO ai ON ai.ADDITIONALINFOID = rtai.ADDITIONALINFOID
                     LEFT JOIN MG.REQUESTDIAGNOSIS rd ON rd.REQUESTID = r.REQUESTID
                     LEFT JOIN MG.DIAGNOSIS dia ON dia.DIAGNOSISID = rd.DIAGNOSISID
-                    LEFT JOIN MG.REQUESTCONTAINER rc ON rc.REQUESTID = r.REQUESTID AND rc.CONTAINERID = c.CONTAINERID
+                    LEFT JOIN MG.REQUESTCONTAINER rc ON rc.REQUESTID = r.REQUESTID
+                        AND rc.CONTAINERID = c.CONTAINERID
                     LEFT JOIN MG.REQUESTTEST rt ON rt.REQUESTID = ci.REQUESTID
                         AND rt.CONTAINERID = ci.CONTAINERID
                         AND rt.TESTID = ci.TESTID
+                    LEFT JOIN MG.CODEDVALUE c2 ON c2.CODEDVALUESFAMILYID = ci.CODEDVALUESFAMILYID
+                        AND c2.SHORTDESCRIPTION = ci.SHORTDESCRIPTION
+                    LEFT JOIN MG.CENTER c3 ON c3.CENTERID = ser.CENTERID
                 WHERE
                   r.REQUESTDATE >= TRUNC(SYSDATE) - 17
                   AND (";
