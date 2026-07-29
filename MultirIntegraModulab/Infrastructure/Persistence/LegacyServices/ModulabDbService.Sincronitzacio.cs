@@ -57,6 +57,10 @@ namespace MultirIntegraModulab
             {
                 _logger.Info("Data validació = NULL (capturant resultats sense validar)");
             }
+            if (dataResultatFiltre.HasValue || dataValidacioFiltre.HasValue)
+            {
+                _logger.Info("➕ Filtre addicional: FVDATE IS NULL + REQUESTDATE últim dia (equivalent a 'dies enrere 1 dia' per mostres sense validar)");
+            }
 
             // Precarregar microorganismes especials
             if (mysqlService != null)
@@ -264,12 +268,15 @@ namespace MultirIntegraModulab
                 string dataFormatejada = dataValidacioFiltre.Value.ToString("yyyy-MM-dd HH:mm:ss");
                 filtres.Add($"rt.FVDATE >= TO_TIMESTAMP('{dataFormatejada}', 'YYYY-MM-DD HH24:MI:SS')");
             }
-            else if (dataResultatFiltre.HasValue)
+
+            // Filtre 3: FVDATE IS NULL de l'últim dia (resultats sense validar)
+            // Cobreix commits tardans a Oracle: la fila pot existir amb RESULTDATE/FVDATE NULL
+            // en el moment de la consulta i ser visible al proper cicle.
+            // Equivalent a fer una càrrega "dies enrere (1 dia)" però només per mostres sense validar,
+            // evitant reprocessar les ja validades. Limitat a 1 dia per rendiment.
+            if (dataResultatFiltre.HasValue || dataValidacioFiltre.HasValue)
             {
-                // IMPORTANT: Si DataValidacioMaxProcessada és null però DataResultatMaxProcessada té valor,
-                // significa que hi ha resultats sense validar que s'haurien de capturar en cada cicle incremental
-                // fins que siguin validats. Afegim un filtre explícit per resultats sense validació.
-                filtres.Add("rt.FVDATE IS NULL");
+                filtres.Add("(rt.FVDATE IS NULL AND r.REQUESTDATE >= TRUNC(SYSDATE) - 1)");
             }
 
             // Si no hi ha cap filtre, retornar una consulta que no retorni res

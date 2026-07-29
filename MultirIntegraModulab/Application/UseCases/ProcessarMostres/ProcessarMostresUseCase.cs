@@ -357,6 +357,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
 
             bool sShanAfegitPositius = false;
+            bool sShanAfegitNegatius = false;
 
             switch (classificacio.TipusMostra)
             {
@@ -365,6 +366,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (resultatPositiu.Exitosa)
                     {
                         resum.MostresPositives++;
+
                         // Comprovar si s'ha afegit algun positiu
                         sShanAfegitPositius = resultatPositiu.PositiuAfegit;
                         resum.PositiusIncorporats += resultatPositiu.PositiusIncorporats;
@@ -381,6 +383,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (resultatPositives.Exitosa)
                     {
                         resum.MostresPositives++;
+
                         // Comprovar si s'ha afegit algun positiu
                         sShanAfegitPositius = resultatPositives.PositiuAfegit;
                         resum.PositiusIncorporats += resultatPositives.PositiusIncorporats;
@@ -396,6 +399,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var resultatNegatiu = await _processarNegativaUseCase.ExecutarAsync(mostra, classificacio);
                     if (resultatNegatiu.Exitosa)
                     {
+                        sShanAfegitNegatius = resultatNegatiu.NegatiusIncorporats > 0 ? true : false;
                         resum.MostresNegatives++;
                         resum.NegatiusIncorporats += resultatNegatiu.NegatiusIncorporats;
                     }
@@ -409,6 +413,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var resultatNegatives = await _processarNegativesUseCase.ExecutarAsync(mostra, classificacio);
                     if (resultatNegatives.Exitosa)
                     {
+                        // Comprovar si s'ha afegit algun negatiu
+                        sShanAfegitNegatius = resultatNegatives.NegatiusIncorporats > 0 ? true : false;
                         resum.MostresNegatives++;
                         resum.NegatiusIncorporats += resultatNegatives.NegatiusIncorporats;
                     }
@@ -423,11 +429,15 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     if (resultatMixta.Exitosa)
                     {
                         resum.MostresMixtes++;
+
                         // Comprovar si s'ha afegit algun positiu (les mixtes també poden tenir positius)
                         sShanAfegitPositius = resultatMixta.PositiuAfegit;
                         resum.PositiusIncorporats += resultatMixta.PositiusIncorporats;
                         resum.NegatiusIncorporats += resultatMixta.NegatiusIncorporats;
                         resum.NegatiusContrarestaPositiuIncorporats += resultatMixta.NegatiusContrarestaPositiuIncorporats;
+
+                        // Comprovar si s'ha afegit algun negatiu
+                        sShanAfegitNegatius = resultatMixta.NegatiusIncorporats > 0 ? true : false;
                     }
                     else
                     {
@@ -443,29 +453,34 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             // Després del tractament de la mostra, comprovar si s'han afegit positius
             // i en cas afirmatiu, crear la nota del curs clínic
-            
+
             if (sShanAfegitPositius)
             {
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📋 S'han detectat nous positius per al pacient {mostra.PacientSap}");
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Procedint a crear nota del curs clínic...");
+                //_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Procedint a crear nota del curs clínic...");
 
-                try
-                {
-                    bool notaCreada = _multiRRepository.AfegirNotaCursClinicSiCal(mostra.PacientSap, sShanAfegitPositius);
+                //try
+                //{
+                //    bool notaCreada = _multiRRepository.AfegirNotaCursClinicSiCal(mostra.PacientSap, sShanAfegitPositius);
 
-                    if (notaCreada)
-                    {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Nota del curs clínic creada correctament per al pacient {mostra.PacientSap}");
-                    }
-                    else
-                    {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}ℹ️ No s'ha creat nota del curs clínic (pot ser que no hi hagi diagnòstics actius)");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Error creant nota del curs clínic: {ex.Message}", ex);
-                }
+                //    if (notaCreada)
+                //    {
+                //        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Nota del curs clínic creada correctament per al pacient {mostra.PacientSap}");
+                //    }
+                //    else
+                //    {
+                //        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}ℹ️ No s'ha creat nota del curs clínic (pot ser que no hi hagi diagnòstics actius)");
+                //    }
+                //}
+                //catch (Exception ex)
+                //{
+                //    _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Error creant nota del curs clínic: {ex.Message}", ex);
+                //}
+            }
+
+            if (sShanAfegitNegatius)
+            {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📋 S'han detectat nous negatius per al pacient {mostra.PacientSap}");
             }
         }
 
