@@ -43,6 +43,11 @@ namespace MultirIntegraModulab.Domain.Entities
         public bool Especial { get; set; }
 
         /// <summary>
+        /// Indica si el microorganisme s'ha d'incorporar des de Modulab (1 = sí, 0 = no)
+        /// </summary>
+        public bool IncorporaModulab { get; set; }
+
+        /// <summary>
         /// Indica si el microorganisme està eliminat
         /// </summary>
         public bool EstaEliminat => DtDelete.HasValue;

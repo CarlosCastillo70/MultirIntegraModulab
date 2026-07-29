@@ -107,9 +107,15 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 for (int i = 0; i < mostra.Resultats.Count; i++)
                 {
                     var resultatMostra = mostra.Resultats[i];
-                    
+
                     ComprovarMecanismesRegistre(resultatMostra, mostra, resultat, i);
-                    
+
+                    if (!resultat.ContinuarProcessament)
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ S'atura el processament de la mostra {mostra.EtiquetaId} per mecanisme(s) marcat(s) com NO INCORPORAR");
+                        return resultat;
+                    }
+
                     // Nota: Ja no aturem el processament si es detecta una CNI
                     // Simplement marquem el resultat per descartar i continuem amb els altres
                 }
@@ -322,9 +328,13 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                         Descripcio = mecanisme.descripcio
                     };
                     
-                    // Guardar auditoria (però continuar processant)
+                    // Guardar auditoria
                     _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "MNI", resultatMostra, mecanismeInfo);
-                    
+
+                    // Quan hi ha un mecanisme NO INCORPORAR, no s'ha de continuar amb la mostra
+                    resultat.ContinuarProcessament = false;
+                    resultat.Missatge = $"Mecanisme(s) marcat(s) com NO INCORPORAR: {string.Join(", ", resultat.MecanismesNoIncorporats.Distinct())}";
+
                     // Marcar que s'ha d'eliminar aquest mecanisme del registre
                     resultatMecanisme.EliminatMNI = true;
                 }

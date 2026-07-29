@@ -18,11 +18,13 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
         public string Missatge { get; set; }
         public Dictionary<string, bool> MicroorganismesEspecials { get; set; }
         public List<string> MicroorganismesNoCreats { get; set; }
+        public List<string> MicroorganismesNoIncorporats { get; set; }
 
         public ResultatComprovacioMicroorganismes()
         {
             MicroorganismesEspecials = new Dictionary<string, bool>();
             MicroorganismesNoCreats = new List<string>();
+            MicroorganismesNoIncorporats = new List<string>();
         }
     }
 
@@ -82,6 +84,14 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 foreach (var microorganisme in microorganismes)
                 {
                     ComprovarMicroorganisme(microorganisme, resultat);
+                }
+
+                if (resultat.MicroorganismesNoIncorporats.Any())
+                {
+                    resultat.ContinuarProcessament = false;
+                    resultat.Missatge = $"Microorganisme(s) marcat(s) com NO INCORPORAR: {string.Join(", ", resultat.MicroorganismesNoIncorporats.Distinct())}";
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ {resultat.Missatge}");
+                    return resultat;
                 }
 
                 if (resultat.MicroorganismesNoCreats.Any())
@@ -146,9 +156,19 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                     return;
                 }
 
+                // Comprovar si el microorganisme està marcat com NO INCORPORAR
+                var microorganismeBd = _multiRRepository.ObtenirMicroorganisme(microorganisme);
+                if (microorganismeBd != null && !microorganismeBd.IncorporaModulab)
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Microorganisme {microorganisme} marcat com NO INCORPORAR");
+                    resultat.MicroorganismesNoIncorporats.Add(microorganisme);
+                    resultat.ContinuarProcessament = false;
+                    return;
+                }
+
                 // Comprovar si és especial
                 var esEspecial = _multiRRepository.EsMicroorganismeEspecial(microorganisme);
-                
+
                 if (esEspecial.HasValue)
                 {
                     string tipus = esEspecial.Value ? "ESPECIAL" : "normal";

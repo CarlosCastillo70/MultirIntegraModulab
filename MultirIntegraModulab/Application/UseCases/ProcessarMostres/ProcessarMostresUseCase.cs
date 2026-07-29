@@ -177,6 +177,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     // FASE 4: Comprovar microorganismes
                     var resultatMicroorganismes = _comprovadorMicroorganismesUseCase.Executar(mostra);
+                    if (!resultatMicroorganismes.ContinuarProcessament)
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Mostra {mostra.EtiquetaId} descartada: {resultatMicroorganismes.Missatge}");
+                        resum.MostresAmbError++;
+                        continue;
+                    }
+
                     if (!resultatMicroorganismes.Exitosa)
                     {
                         _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ Error comprovant microorganismes: {resultatMicroorganismes.Missatge}");

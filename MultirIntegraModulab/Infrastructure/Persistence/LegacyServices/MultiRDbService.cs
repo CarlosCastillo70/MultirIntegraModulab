@@ -214,7 +214,7 @@ namespace MultirIntegraModulab
                     conn.Open();
                     
                     string sql = @"
-                        SELECT ID, CODI, DESCRIPCIO, DT_DELETE, ACTIU, DIES_VIGENCIA, ESPECIAL
+                        SELECT ID, CODI, DESCRIPCIO, DT_DELETE, ACTIU, DIES_VIGENCIA, ESPECIAL, INCORPORA_MODULAB
                         FROM microorganismes 
                         WHERE DESCRIPCIO = @descripcio 
                         AND DT_DELETE IS NULL 
@@ -239,7 +239,10 @@ namespace MultirIntegraModulab
                                         : (DateTime?)null,
                                     Actiu = Convert.ToInt32(reader["ACTIU"]),
                                     DiesVigencia = Convert.ToInt32(reader["DIES_VIGENCIA"]),
-                                    Especial = Convert.ToBoolean(reader["ESPECIAL"])
+                                    Especial = Convert.ToBoolean(reader["ESPECIAL"]),
+                                    IncorporaModulab = reader["INCORPORA_MODULAB"] != DBNull.Value
+                                        ? Convert.ToBoolean(reader["INCORPORA_MODULAB"])
+                                        : true
                                 };
                             }
                         }
@@ -269,7 +272,7 @@ namespace MultirIntegraModulab
                     conn.Open();
                     
                     string sql = @"
-                        SELECT ID, CODI, DESCRIPCIO, DT_DELETE, ACTIU, DIES_VIGENCIA, ESPECIAL
+                        SELECT ID, CODI, DESCRIPCIO, DT_DELETE, ACTIU, DIES_VIGENCIA, ESPECIAL, INCORPORA_MODULAB
                         FROM microorganismes 
                         WHERE DT_DELETE IS NULL 
                         AND ACTIU = 1 
@@ -291,7 +294,10 @@ namespace MultirIntegraModulab
                                     : (DateTime?)null,
                                 Actiu = Convert.ToInt32(reader["ACTIU"]),
                                 DiesVigencia = Convert.ToInt32(reader["DIES_VIGENCIA"]),
-                                Especial = Convert.ToBoolean(reader["ESPECIAL"])
+                                Especial = Convert.ToBoolean(reader["ESPECIAL"]),
+                                IncorporaModulab = reader["INCORPORA_MODULAB"] != DBNull.Value
+                                    ? Convert.ToBoolean(reader["INCORPORA_MODULAB"])
+                                    : true
                             });
                         }
                     }
