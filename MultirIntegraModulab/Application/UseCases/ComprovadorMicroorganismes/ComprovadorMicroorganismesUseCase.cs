@@ -83,7 +83,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 // Comprovar cada microorganisme
                 foreach (var microorganisme in microorganismes)
                 {
-                    ComprovarMicroorganisme(microorganisme, resultat);
+                    ComprovarMicroorganisme(mostra, microorganisme, resultat);
                 }
 
                 if (resultat.MicroorganismesNoIncorporats.Any())
@@ -139,6 +139,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
         /// Comprova un microorganisme individual
         /// </summary>
         private void ComprovarMicroorganisme(
+            Mostra mostra,
             string microorganisme, 
             ResultatComprovacioMicroorganismes resultat)
         {
@@ -146,9 +147,10 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
             
             try
             {
+
                 // Comprovar si existeix i crear-lo si cal
                 bool existeixOCreat = _multiRRepository.ComprovarICrearMicroorganisme(microorganisme);
-                
+
                 if (!existeixOCreat)
                 {
                     _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}No s'ha pogut comprovar/crear el microorganisme: {microorganisme}");
@@ -162,6 +164,13 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 {
                     _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Microorganisme {microorganisme} marcat com NO INCORPORAR");
                     resultat.MicroorganismesNoIncorporats.Add(microorganisme);
+
+                    var resultatMostraAssociat = mostra.Resultats.FirstOrDefault(r =>
+                        !string.IsNullOrWhiteSpace(r.AillamentDescripcio) &&
+                        string.Equals(r.AillamentDescripcio.Trim(), microorganisme, StringComparison.OrdinalIgnoreCase));
+
+                    _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "MICNI", resultatMostraAssociat);
+
                     resultat.ContinuarProcessament = false;
                     return;
                 }
