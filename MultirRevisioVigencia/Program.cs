@@ -59,7 +59,7 @@ namespace MultirRevisioVigencia
                 logger.Info("✅ Connexió amb MySQL establerta correctament");
 
                 // 5. Executar revisió de vigència
-                var useCase = new RevisarVigenciaDiagnosticsUseCase(dbService, logger);
+                var useCase = new RevisarVigenciaDiagnosticsUseCase(dbService, logger, configuracio.DiesVigenciaVirusRespiratoris);
                 var resum = useCase.Executar(configuracio.PacientsAProcessar, configuracio.LimitDiagnosticsAProcessar);
 
                 // 6. Mostrar resum
@@ -74,6 +74,7 @@ namespace MultirRevisioVigencia
                 Console.WriteLine($"Diagnòstics marcats no vigents:  {resum.MarcatsNoVigents}");
                 Console.WriteLine($"  - Per èxitus del pacient:      {resum.MarcatsPerExitus}");
                 Console.WriteLine($"  - Per superar vigència:        {resum.MarcatsPerVigencia}");
+                Console.WriteLine($"    · VR per vigència:           {resum.MarcatsPerVigenciaVR}");
                 Console.WriteLine($"  - Per mostres negatives:       {resum.MarcatsPerMostresNegatives}");
                 Console.WriteLine($"Diagnòstics amb error:           {resum.Errors}");
                 Console.WriteLine($"Durada:                          {durada.TotalSeconds:F2} segons");
@@ -87,6 +88,7 @@ namespace MultirRevisioVigencia
                 logger.Info($"Diagnòstics marcats no vigents:  {resum.MarcatsNoVigents}");
                 logger.Info($"  - Per èxitus del pacient:      {resum.MarcatsPerExitus}");
                 logger.Info($"  - Per superar vigència:        {resum.MarcatsPerVigencia}");
+                logger.Info($"    · VR per vigència:           {resum.MarcatsPerVigenciaVR}");
                 logger.Info($"  - Per mostres negatives:       {resum.MarcatsPerMostresNegatives}");
                 logger.Info($"Diagnòstics amb error:           {resum.Errors}");
                 logger.Info($"Durada:                          {durada.TotalSeconds:F2} segons");

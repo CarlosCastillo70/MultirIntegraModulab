@@ -30,19 +30,19 @@ namespace MultirRevisioVigencia.Application.Services
 
             try
             {
-                _logger.Info($"   📊 Calculant els tipus de mostra i quantitats necessàries de negatius, per poder desactivar ...");
+                _logger.Info($"     📊 Calculant els tipus de mostra i quantitats necessàries de negatius, per poder desactivar ...");
 
                 // 1. TAULA DE REGLES: tipusmostra_referencia
                 var regla = _repository.ObtenirReglaTipusMostra(diagnostic.Microorganisme, diagnostic.Mecanisme);
 
                 if (regla != null && !string.IsNullOrWhiteSpace(regla.Resultat))
                 {
-                    _logger.Info($"   ✓ Per tipus de mostra de referència - Regla trobada : '{regla.Resultat}'");
+                    _logger.Info($"     ℹ️ Per tipus de mostra de referència - Regla trobada : '{regla.Resultat}'");
                     ProcessarResultatRegla(regla.Resultat, tipusMostraAcumulat);
                 }
                 else
                 {
-                    _logger.Info($"   ℹ️ Per tipus de mostra de referència - No s'ha trobat cap regla específica a tipusmostra_referencia");
+                    _logger.Info($"     ℹ️ Per tipus de mostra de referència - No s'ha trobat cap regla específica a tipusmostra_referencia");
                 }
 
                 // 2. MOSTRES POSITIVES DEL DIAGNÒSTIC
@@ -50,26 +50,26 @@ namespace MultirRevisioVigencia.Application.Services
 
                 if (mostresPositives.Any())
                 {
-                    _logger.Info($"   ✓ Tipus de mostra dels diferents positius. Mostres positives trobades: {mostresPositives.Count}");
+                    _logger.Info($"     📋 Tipus de mostra dels diferents positius. Mostres positives trobades: {mostresPositives.Count}");
                     ProcessarMostresPositives(mostresPositives, tipusMostraAcumulat);
                 }
                 else
                 {
-                    _logger.Info($"   ℹ️ Tipus de mostra dels diferents positius. No hi ha mostres positives registrades per aquest diagnòstic");
+                    _logger.Info($"     ℹ️ Tipus de mostra dels diferents positius. No hi ha mostres positives registrades per aquest diagnòstic");
                 }
 
                 // Mostrar resultat final
                 if (tipusMostraAcumulat.Any())
                 {
-                    _logger.Info($"   📋 Tipus de mostra i quantitats necessàries:");
+                    _logger.Info($"     📋 Tipus de mostra i quantitats necessàries:");
                     foreach (var kvp in tipusMostraAcumulat.OrderBy(k => k.Key))
                     {
-                        _logger.Info($"      - {kvp.Key}: {kvp.Value} mostres negatives");
+                        _logger.Info($"        - {kvp.Key}: {kvp.Value} mostres negatives");
                     }
                 }
                 else
                 {
-                    _logger.Info($"   ⚠️ No s'han pogut determinar tipus de mostra i quantitats");
+                    _logger.Info($"     ⚠️ No s'han pogut determinar tipus de mostra i quantitats");
                 }
 
                 return tipusMostraAcumulat;
@@ -126,7 +126,7 @@ namespace MultirRevisioVigencia.Application.Services
                     }
                 }
 
-                _logger.Info($"   📊 Mostres trobades posteriors a la data de diagnòstic {diagnostic.DataDiagnostic.Value:dd/MM/yyyy}: {mostres.Count}");
+                _logger.Info($"     📊 Mostres trobades posteriors a la data de diagnòstic {diagnostic.DataDiagnostic.Value:dd/MM/yyyy}: {mostres.Count}");
 
                 // 3. Agrupar per tipus de mostra i comprovar si hi ha suficients negatives consecutives
                 var comptadors = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -144,7 +144,7 @@ namespace MultirRevisioVigencia.Application.Services
                     if (!mostresAquestTipus.Any())
                     {
                         detallsLlista.Add($"{tipusMostra}: No hi ha mostres d'aquest tipus");
-                        _logger.Info($"      ⚠️ {tipusMostra}: No hi ha mostres d'aquest tipus de mostra");
+                        _logger.Info($"        ⚠️ {tipusMostra}: No hi ha mostres d'aquest tipus de mostra");
                         compleixTots = false;
                         continue;
                     }
@@ -165,11 +165,11 @@ namespace MultirRevisioVigencia.Application.Services
 
                     if (hiHaPositius)
                     {
-                        _logger.Info($"      {simbolCompleix} {tipusMostra}: {negativesConsecutives}/{quantitatNecessaria} negatives consecutives després del darrer positiu (Seqüència: {sequencia})");
+                        _logger.Info($"        {simbolCompleix} {tipusMostra}: {negativesConsecutives}/{quantitatNecessaria} negatives consecutives després del darrer positiu (Seqüència: {sequencia})");
                     }
                     else
                     {
-                        _logger.Info($"      {simbolCompleix} {tipusMostra}: {negativesConsecutives}/{quantitatNecessaria} negatives consecutives (Seqüència: {sequencia})");
+                        _logger.Info($"        {simbolCompleix} {tipusMostra}: {negativesConsecutives}/{quantitatNecessaria} negatives consecutives (Seqüència: {sequencia})");
                     }
 
                     if (!compleix)

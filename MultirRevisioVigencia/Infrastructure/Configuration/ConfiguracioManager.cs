@@ -54,6 +54,7 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
                         .ToList() ?? new List<string>(),
 
                     LimitDiagnosticsAProcessar = int.TryParse(ConfigurationManager.AppSettings["LimitDiagnosticsAProcessar"], out int limit) ? limit : 0,
+                    DiesVigenciaVirusRespiratoris = int.TryParse(ConfigurationManager.AppSettings["DiesVigenciaVirusRespiratoris"], out int diesVr) ? diesVr : 7,
 
                     // Email
                     SmtpServer = ConfigurationManager.AppSettings["SmtpServer"],
@@ -112,6 +113,7 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
                 {
                     Console.WriteLine($"   - LÍMIT: {config.LimitDiagnosticsAProcessar} diagnòstic(s) màxim");
                 }
+                Console.WriteLine($"   - Vigència VR: {config.DiesVigenciaVirusRespiratoris} dies");
                 Console.WriteLine();
 
                 return config;
@@ -158,6 +160,7 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
         public string RutaFitxerLog { get; set; }
         public List<string> PacientsAProcessar { get; set; }
         public int LimitDiagnosticsAProcessar { get; set; }
+        public int DiesVigenciaVirusRespiratoris { get; set; }
         public string SmtpServer { get; set; }
         public int SmtpPort { get; set; }
         public string SmtpUsuari { get; set; }

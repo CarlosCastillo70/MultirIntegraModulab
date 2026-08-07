@@ -15,12 +15,14 @@ namespace MultirRevisioVigencia.Application.UseCases
         private readonly IMultiRRepository _repository;
         private readonly ILoggerService _logger;
         private readonly MostresNegativesService _mostresNegativesService;
+        private readonly int _diesVigenciaVirusRespiratoris;
 
-        public RevisarVigenciaDiagnosticsUseCase(IMultiRRepository repository, ILoggerService logger)
+        public RevisarVigenciaDiagnosticsUseCase(IMultiRRepository repository, ILoggerService logger, int diesVigenciaVirusRespiratoris)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _mostresNegativesService = new MostresNegativesService(repository, logger);
+            _diesVigenciaVirusRespiratoris = diesVigenciaVirusRespiratoris > 0 ? diesVigenciaVirusRespiratoris : 7;
         }
 
         /// <summary>
@@ -39,7 +41,8 @@ namespace MultirRevisioVigencia.Application.UseCases
             try
             {
                 _logger.Info("🔍 Iniciant revisió de vigència de diagnòstics MR ...");
-                
+                _logger.Info($"🫁 Vigència configurada per Virus Respiratoris: {_diesVigenciaVirusRespiratoris} dies");
+
                 // Informar si s'està aplicant un filtre de pacients
                 if (pacientsAfiltrar != null && pacientsAfiltrar.Any())
                 {
@@ -106,6 +109,7 @@ namespace MultirRevisioVigencia.Application.UseCases
                         bool esPerMostresNegatives = false;
 
                         // COMPROVACIÓ 1: Pacient èxitus (global)
+                        _logger.Info($"   🔍 Comprovant exitus...");
                         if (EsPacientExitus(diagnostic))
                         {
                             _logger.Info($"   ☠️ Pacient èxitus (data: {diagnostic.DataExitus:dd/MM/yyyy})");
@@ -118,19 +122,33 @@ namespace MultirRevisioVigencia.Application.UseCases
                             _logger.Info($"   ✓ Pacient NO és èxitus");
                         }
 
-                        // COMPROVACIÓ 2: Ha superat la vigència (només per Multiresistents)
+                        // COMPROVACIÓ 2: Ha superat la vigència (Multiresistents i Virus Respiratoris)
+                        _logger.Info($"   🔍 Comprovant vigència...");
                         if (!hauDeMarcarNoVigent && 
-                            diagnostic.TipusMicroorganisme == "M" && 
+                            (EsTipusMultiresistent(diagnostic) || EsTipusVirusRespiratori(diagnostic)) && 
                             HaSuperatVigencia(diagnostic))
                         {
                             _logger.Info($"   ⚠️ Diagnòstic ha superat la vigència");
                             hauDeMarcarNoVigent = true;
                             motiu = "V";
                         }
+                        else
+                        {
+                            if  (EsTipusMultiresistent(diagnostic))
+                            {
+                                _logger.Info($"   ✓ Diagnòstic de MultiResistent vigent (dins del període de vigència)");
+                            }
+
+                            if (EsTipusVirusRespiratori(diagnostic))
+                            {
+                                _logger.Info($"   ✓ Diagnòstic de Virus Respiratori vigent (dins del període de vigència)");
+                            }
+                        }
+
 
                         // COMPROVACIÓ 3: Mostres negatives consecutives (només per Multiresistents)
                         if (!hauDeMarcarNoVigent && 
-                            diagnostic.TipusMicroorganisme == "M")
+                            EsTipusMultiresistent(diagnostic))
                         {
                             _logger.Info($"   🔍 Comprovant mostres negatives consecutives...");
 
@@ -148,18 +166,8 @@ namespace MultirRevisioVigencia.Application.UseCases
 
                         if (!hauDeMarcarNoVigent)
                         {
-                            if (diagnostic.TipusMicroorganisme == "R")
-                            {
-                                _logger.Info($"   ✓ Diagnòstic de Virus Respiratori vigent (no s'aplica vigència temporal ni mostres negatives)");
-                            }
-                            else
-                            {
-                                _logger.Info($"   ✅ Diagnòstic encara vigent");
-                            }
+                            _logger.Info($"   ✅ Diagnòstic encara vigent");
                         }
-
-
-
 
 
                         // Marcar com a no vigent si cal
@@ -186,6 +194,11 @@ namespace MultirRevisioVigencia.Application.UseCases
                                 else
                                 {
                                     resum.MarcatsPerVigencia++;
+
+                                    if (EsTipusVirusRespiratori(diagnostic))
+                                    {
+                                        resum.MarcatsPerVigenciaVR++;
+                                    }
                                 }
 
                                 resum.DiagnosticsMarcats.Add(new DiagnosticMarcat
@@ -234,47 +247,60 @@ namespace MultirRevisioVigencia.Application.UseCases
         private bool HaSuperatVigencia(DiagnosticPerRevisar diagnostic)
         {
             int diesVigenciaAplicar = 0;
-            
-            // Comprovar si el diagnòstic té mecanisme de resistència
-            if (string.IsNullOrWhiteSpace(diagnostic.Mecanisme) || 
-                diagnostic.Mecanisme.Equals("NOCOD", StringComparison.OrdinalIgnoreCase))
+
+            if (EsTipusVirusRespiratori(diagnostic))
             {
-                // Per diagnòstics sense mecanisme o amb NOCOD, aplicar vigència per defecte de 365 dies
-                diesVigenciaAplicar = 365;
-                
-                if (string.IsNullOrWhiteSpace(diagnostic.Mecanisme))
+                diesVigenciaAplicar = _diesVigenciaVirusRespiratoris;
+                _logger.Info($"     ℹ️ Virus Respiratori - aplicant vigència configurada: {diesVigenciaAplicar} dies");
+            }
+            else if (EsTipusMultiresistent(diagnostic))
+            {
+                // Comprovar si el diagnòstic té mecanisme de resistència
+                if (string.IsNullOrWhiteSpace(diagnostic.Mecanisme) || 
+                    diagnostic.Mecanisme.Equals("NOCOD", StringComparison.OrdinalIgnoreCase))
                 {
-                    _logger.Info($"   ℹ️ Diagnòstic sense mecanisme de resistència - aplicant vigència per defecte: {diesVigenciaAplicar} dies");
+                    // Per diagnòstics sense mecanisme o amb NOCOD, aplicar vigència per defecte de 365 dies
+                    diesVigenciaAplicar = 365;
+
+                    if (string.IsNullOrWhiteSpace(diagnostic.Mecanisme))
+                    {
+                        _logger.Info($"     ℹ️ Diagnòstic sense mecanisme de resistència - aplicant vigència per defecte: {diesVigenciaAplicar} dies");
+                    }
+                    else
+                    {
+                        _logger.Info($"     ℹ️ Diagnòstic amb mecanisme NOCOD - aplicant vigència per defecte: {diesVigenciaAplicar} dies");
+                    }
                 }
                 else
                 {
-                    _logger.Info($"   ℹ️ Diagnòstic amb mecanisme NOCOD - aplicant vigència per defecte: {diesVigenciaAplicar} dies");
+                    // El diagnòstic té mecanisme: comprovar si té vigencia_inactiu configurat
+                    if (!diagnostic.VigenciaInactiu.HasValue || diagnostic.VigenciaInactiu.Value == 0)
+                    {
+                        _logger.Info($"   ℹ️ Mecanisme '{diagnostic.Mecanisme}' sense vigència d'inactivitat configurada - no s'aplica vigència");
+                        return false;
+                    }
+
+                    diesVigenciaAplicar = diagnostic.VigenciaInactiu.Value;
+                    _logger.Info($"     ℹ️ Mecanisme '{diagnostic.Mecanisme}' amb vigència configurada: {diesVigenciaAplicar} dies");
                 }
             }
             else
             {
-                // El diagnòstic té mecanisme: comprovar si té vigencia_inactiu configurat
-                if (!diagnostic.VigenciaInactiu.HasValue || diagnostic.VigenciaInactiu.Value == 0)
-                {
-                    _logger.Info($"   ℹ️ Mecanisme '{diagnostic.Mecanisme}' sense vigència d'inactivitat configurada - no s'aplica vigència");
-                    return false;
-                }
-                
-                diesVigenciaAplicar = diagnostic.VigenciaInactiu.Value;
-                _logger.Info($"   ℹ️ Mecanisme '{diagnostic.Mecanisme}' amb vigència configurada: {diesVigenciaAplicar} dies");
+                _logger.Info($"     ℹ️ Tipus de microorganisme '{diagnostic.TipusMicroorganisme}' sense regla de vigència temporal");
+                return false;
             }
 
             // Comprovar si existeix darrer positiu
             if (!diagnostic.DataDarrergPositiu.HasValue)
             {
-                _logger.Info($"   ℹ️ No hi ha darrer positiu registrat (ni a mostres ni a data_diagnostic)");
+                _logger.Info($"     ℹ️ No hi ha darrer positiu registrat (ni a mostres ni a data_diagnostic)");
                 return false;
             }
 
             // Indicar l'origen de la data del darrer positiu
             if (diagnostic.DataDarrergPositiuEsDeDataDiagnostic)
             {
-                _logger.Info($"   📌 Data darrer positiu obtinguda de 'data_diagnostic' (no hi ha mostres registrades)");
+                _logger.Info($"     📌 Data darrer positiu obtinguda de 'data_diagnostic' (no hi ha mostres registrades)");
             }
 
             // Calcular la data límit (data darrer positiu + vigència)
@@ -283,10 +309,10 @@ namespace MultirRevisioVigencia.Application.UseCases
 
             int diesTranscorreguts = (avui - diagnostic.DataDarrergPositiu.Value.Date).Days;
 
-            _logger.Info($"   📅 Data darrer positiu: {diagnostic.DataDarrergPositiu.Value:dd/MM/yyyy}");
-            _logger.Info($"   📅 Vigència aplicada: {diesVigenciaAplicar} dies");
-            _logger.Info($"   📅 Data límit: {dataLimit:dd/MM/yyyy}");
-            _logger.Info($"   📅 Dies transcorreguts: {diesTranscorreguts}");
+            _logger.Info($"     📅 Data darrer positiu: {diagnostic.DataDarrergPositiu.Value:dd/MM/yyyy}");
+            _logger.Info($"     📅 Vigència aplicada: {diesVigenciaAplicar} dies");
+            _logger.Info($"     📅 Data límit: {dataLimit:dd/MM/yyyy}");
+            _logger.Info($"     📅 Dies transcorreguts: {diesTranscorreguts}");
 
             // Si la data d'avui és posterior a la data límit, ha superat la vigència
             bool haSuperatVigencia = avui > dataLimit;
@@ -297,6 +323,18 @@ namespace MultirRevisioVigencia.Application.UseCases
             }
 
             return haSuperatVigencia;
+        }
+
+        private static bool EsTipusMultiresistent(DiagnosticPerRevisar diagnostic)
+        {
+            return string.Equals((diagnostic.TipusMicroorganisme ?? string.Empty).Trim(), "M", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool EsTipusVirusRespiratori(DiagnosticPerRevisar diagnostic)
+        {
+            var tipus = (diagnostic.TipusMicroorganisme ?? string.Empty).Trim();
+            return string.Equals(tipus, "R", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(tipus, "VR", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
