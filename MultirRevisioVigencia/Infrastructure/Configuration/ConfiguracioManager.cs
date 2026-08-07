@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 
 namespace MultirRevisioVigencia.Infrastructure.Configuration
@@ -79,6 +80,14 @@ namespace MultirRevisioVigencia.Infrastructure.Configuration
                 {
                     config.RutaFitxerLog = string.Format(config.RutaFitxerLog, DateTime.Now);
                 }
+
+                // Si la ruta és relativa, resoldre-la respecte al directori de l'executable
+                if (!Path.IsPathRooted(config.RutaFitxerLog))
+                {
+                    config.RutaFitxerLog = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, config.RutaFitxerLog);
+                }
+
+                config.RutaFitxerLog = Path.GetFullPath(config.RutaFitxerLog);
 
                 // Validacions
                 if (string.IsNullOrWhiteSpace(config.SmtpServer))

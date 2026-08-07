@@ -35,6 +35,7 @@ namespace MultirIntegraModulab.Service.Jobs
                         StartInfo = new ProcessStartInfo
                         {
                             FileName = exePath,
+                            WorkingDirectory = System.IO.Path.GetDirectoryName(exePath),
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,

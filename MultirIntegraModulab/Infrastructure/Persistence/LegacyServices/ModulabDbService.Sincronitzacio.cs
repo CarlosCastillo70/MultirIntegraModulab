@@ -191,8 +191,8 @@ namespace MultirIntegraModulab
         {
             string consultaBase = @"
                 SELECT DISTINCT /*+ USE_CONCAT INDEX(rc PK_REQUESTCONTAINER) INDEX(rt PK_REQUESTTEST) */
-                    r.REQUESTLABEL || LPAD(NVL(con.PREFIX, '0'), 3, '0') AS ETIQUETA_ID,
-                    con.PREFIX AS PREFIX,
+                    r.REQUESTLABEL || LPAD(NVL(con2.PREFIX, '0'), 3, '0') AS ETIQUETA_ID,
+                    con2.PREFIX AS PREFIX,
                     p.EXTERNALID AS PACIENT_SAP,
                     p.NTS AS CIP,
                     d.COLLEGIATEID AS COLEGIAT_ID,
