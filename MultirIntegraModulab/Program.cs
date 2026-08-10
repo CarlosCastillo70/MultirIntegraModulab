@@ -120,12 +120,41 @@ namespace MultirIntegraModulab
                 // ===========================================================
                 // FASE 3: CÀRREGA DE DADES
                 // ===========================================================
-                
+
                 int limitRegistres = configService.EsEntornProduccio ? 0 : configService.LimitResultatsProves;
-                
+
                 if (limitRegistres > 0)
                 {
                     loggerService.Info($"⚠️ Mode PROVES: Procés limitat a {limitRegistres} resultats");
+                }
+
+                // ===========================================================
+                // PARSEJAR ARGUMENTS DE LÍNIA DE COMANDES
+                // Permet activar la repesca sense modificar App.config
+                // Ús:
+                //   MultirIntegraModulab.exe --repesca        → 1 dia (per defecte)
+                //   MultirIntegraModulab.exe --repesca 2      → 2 dies
+                // Task Scheduler: configurar una tasca addicional 3-4x/dia amb --repesca
+                // ===========================================================
+
+                bool modeRepesca = false;
+                int diesRepesca = 1;
+
+                if (args != null && args.Length > 0)
+                {
+                    int idxRepesca = Array.FindIndex(args, a => a.Equals("--repesca", StringComparison.OrdinalIgnoreCase));
+                    if (idxRepesca >= 0)
+                    {
+                        modeRepesca = true;
+                        if (idxRepesca + 1 < args.Length &&
+                            int.TryParse(args[idxRepesca + 1], out int diesArg) &&
+                            diesArg > 0)
+                        {
+                            diesRepesca = diesArg;
+                        }
+                        loggerService.Info($"🎣 Argument --repesca detectat: càrrega dels últims {diesRepesca} dia/dies");
+                        Console.WriteLine($"\n🎣 Mode REPESCA activat per argument ({diesRepesca} dia/dies enrere)");
+                    }
                 }
 
                 ColeccioMostres mostres;
@@ -133,10 +162,24 @@ namespace MultirIntegraModulab
 
                 // ===========================================================
                 // DETERMINAR TIPUS DE CÀRREGA SEGONS PRIORITAT
-                // Prioritat: 1. Incremental, 2. Dies Enrere, 3. Rang de Dates
+                // --repesca (arg) té MÀXIMA prioritat sobre App.config
+                // Altrament: 1. Incremental, 2. Dies Enrere, 3. Rang de Dates
                 // ===========================================================
 
-                if (configService.CarregaIncremental_Activa)
+                if (modeRepesca)
+                {
+                    // ===========================================================
+                    // MODE REPESCA (activat per argument --repesca)
+                    // Complementa la càrrega incremental per recuperar resultats
+                    // que la incremental no ha detectat (validacions tardanes, etc.)
+                    // La sincronització incremental NO es modifica en aquest mode.
+                    // ===========================================================
+
+                    loggerService.Info($"🎣 Mode: REPESCA - carregant mostres dels últims {diesRepesca} dia/dies");
+
+                    mostres = modulabRepository.CarregarResultatsDiesEndarrera(diesRepesca, limitRegistres);
+                }
+                else if (configService.CarregaIncremental_Activa)
                 {
                     // ===========================================================
                     // TIPUS 1: CÀRREGA INCREMENTAL OPTIMITZADA (Prioritat Alta)
@@ -252,9 +295,11 @@ namespace MultirIntegraModulab
                 // Sempre en mode incremental, hagi o no mostres noves.
                 // Si no hi ha mostres, propaga les dates de l'última sincronització
                 // per no trencar la cadena incremental de la propera execució.
+                // NOTA: En mode repesca NO s'actualitza el punter incremental
+                // per no interferir amb la cadena de sincronització normal.
                 // ===========================================================
 
-                if (configService.CarregaIncremental_Activa)
+                if (configService.CarregaIncremental_Activa && !modeRepesca)
                 {
                     try
                     {

@@ -20,8 +20,12 @@ namespace MultirIntegraModulab.Service.Jobs
 
             try
             {
+                // Llegir arguments del JobDataMap (configurables des de workflow-schedule.json)
+                string arguments = context.JobDetail.JobDataMap.GetString("arguments") ?? string.Empty;
+                string descripcioMode = string.IsNullOrWhiteSpace(arguments) ? "incremental" : arguments.Trim();
+
                 EventLog.WriteEntry(logSource,
-                    $"[{dataInici:dd/MM/yyyy HH:mm:ss}] Iniciant processament de mostres Modulab ...",
+                    $"[{dataInici:dd/MM/yyyy HH:mm:ss}] Iniciant processament de mostres Modulab ({descripcioMode}) ...",
                     EventLogEntryType.Information);
 
                 // Cridar l'executable de MultirIntegraModulab
@@ -34,6 +38,7 @@ namespace MultirIntegraModulab.Service.Jobs
                         StartInfo = new ProcessStartInfo
                         {
                             FileName = exePath,
+                            Arguments = arguments,
                             WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory,  // Directori de treball
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
