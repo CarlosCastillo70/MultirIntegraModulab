@@ -180,13 +180,14 @@ namespace MultirIntegraModulab.Service.Services
                     return;
                 }
 
-                // Crear el Job durable
-                var job = JobBuilder.Create(type)
+                // Crear el Job durable afegint tots els paràmetres ABANS de Build()
+                // IMPORTANT: els paràmetres s'han d'afegir via UsingJobData() al builder,
+                // no modificant job.JobDataMap després de Build() (Quartz no ho garanteix).
+                var jobBuilder = JobBuilder.Create(type)
                     .WithIdentity($"{wf.WorkflowFile}-job")
                     .UsingJobData("workflowFile", wf.WorkflowFile)
                     .UsingJobData("serviceName", this.ServiceName)
-                    .StoreDurably()
-                    .Build();
+                    .StoreDurably();
 
                 if (wf.Parameters != null)
                 {
@@ -194,10 +195,12 @@ namespace MultirIntegraModulab.Service.Services
                     {
                         if (kvp.Value?.Expression != null)
                         {
-                            job.JobDataMap[kvp.Key] = kvp.Value.Expression;
+                            jobBuilder = jobBuilder.UsingJobData(kvp.Key, kvp.Value.Expression);
                         }
                     }
                 }
+
+                var job = jobBuilder.Build();
 
                 // Crear el trigger amb la política de misfire de Quartz 3.x
                 var trigger = TriggerBuilder.Create()

@@ -21,7 +21,9 @@ namespace MultirIntegraModulab.Service.Jobs
             try
             {
                 // Llegir arguments del JobDataMap (configurables des de workflow-schedule.json)
-                string arguments = context.JobDetail.JobDataMap.GetString("arguments") ?? string.Empty;
+                // Usar ContainsKey per evitar l'excepció de Quartz quan la clau no existeix
+                var dataMap = context.JobDetail.JobDataMap;
+                string arguments = dataMap.ContainsKey("arguments") ? dataMap.GetString("arguments") ?? string.Empty : string.Empty;
                 string descripcioMode = string.IsNullOrWhiteSpace(arguments) ? "incremental" : arguments.Trim();
 
                 EventLog.WriteEntry(logSource,
