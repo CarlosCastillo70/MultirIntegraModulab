@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -162,6 +162,37 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
         public int CarregaDiesEnrere_NombreDies
         {
             get { return LlegirIntConfiguracio("CarregaDiesEnrere_NombreDies", 1); }
+        }
+
+
+        // TIPUS 1B: CÀRREGA INCREMENTAL SEGONS ÚLTIM CANVI
+        
+        /// <summary>
+        /// Indica si la càrrega incremental segons últim canvi està activada
+        /// Prioritat: MITJANA (s'executa si Incremental no està activa)
+        /// Filtra per: RESULTLASTCHANGE >= data_ultim_canvi_max_processada
+        /// </summary>
+        public bool CarregaIncremental_UltimCanvi_Activa
+        {
+            get { return LlegirBoolConfiguracio("CarregaIncremental_UltimCanvi_Activa", false); }
+        }
+
+        /// <summary>
+        /// Dies de revisió de seguretat per a la primera execució de càrrega segons últim canvi
+        /// Per primera vegada: carrega els últims N dies
+        /// </summary>
+        public int CarregaIncremental_UltimCanvi_DiesRevisioSeguretat
+        {
+            get { return LlegirIntConfiguracio("CarregaIncremental_UltimCanvi_DiesRevisioSeguretat", 7); }
+        }
+
+        /// <summary>
+        /// Dies enrere per capturar canvis (finestra temporal)
+        /// Controla: REQUESTDATE >= TRUNC(SYSDATE) - DiasEnRe
+        /// </summary>
+        public int CarregaIncremental_UltimCanvi_DiasEnRe
+        {
+            get { return LlegirIntConfiguracio("CarregaIncremental_UltimCanvi_DiasEnRe", 50); }
         }
 
         // ──────────────────────────────────────────────────────────────

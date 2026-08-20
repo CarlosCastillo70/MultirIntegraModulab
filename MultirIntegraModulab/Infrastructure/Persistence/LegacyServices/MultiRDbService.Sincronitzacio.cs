@@ -30,6 +30,7 @@ namespace MultirIntegraModulab
                         SELECT id, 
                                data_resultat_max_processada,
                                data_validacio_max_processada,
+                               data_ultim_canvi_max_processada,
                                data_sincronitzacio,
                                nombre_mostres_processades,
                                nombre_mostres_error,
@@ -53,6 +54,7 @@ namespace MultirIntegraModulab
                                     Id = reader.GetInt32("id"),
                                     DataResultatMaxProcessada = reader["data_resultat_max_processada"] as DateTime?,
                                     DataValidacioMaxProcessada = reader["data_validacio_max_processada"] as DateTime?,
+                                    DataUltimCanviMaxProcessada = reader["data_ultim_canvi_max_processada"] as DateTime?,
                                     DataSincronitzacio = reader.GetDateTime("data_sincronitzacio"),
                                     NombreMostresProcessades = reader.GetInt32("nombre_mostres_processades"),
                                     NombreMostresError = reader.GetInt32("nombre_mostres_error"),
@@ -65,15 +67,20 @@ namespace MultirIntegraModulab
                                 };
 
                                 Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📊 Última sincronització: {dades.DataSincronitzacio:dd/MM/yyyy HH:mm} - {dades.NombreMostresProcessades} mostres");
-                                
+
                                 if (dades.DataResultatMaxProcessada.HasValue)
                                 {
                                     Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Data resultat màx: {dades.DataResultatMaxProcessada:dd/MM/yyyy HH:mm}");
                                 }
-                                
+
                                 if (dades.DataValidacioMaxProcessada.HasValue)
                                 {
                                     Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Data validació màx: {dades.DataValidacioMaxProcessada:dd/MM/yyyy HH:mm}");
+                                }
+
+                                if (dades.DataUltimCanviMaxProcessada.HasValue)
+                                {
+                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Data últim canvi màx: {dades.DataUltimCanviMaxProcessada:dd/MM/yyyy HH:mm}");
                                 }
 
                                 return dades;
@@ -115,6 +122,7 @@ namespace MultirIntegraModulab
                         INSERT INTO integracio_modulab_sincronitzacio (
                             data_resultat_max_processada,
                             data_validacio_max_processada,
+                            data_ultim_canvi_max_processada,
                             data_sincronitzacio,
                             nombre_mostres_processades,
                             nombre_mostres_error,
@@ -128,6 +136,7 @@ namespace MultirIntegraModulab
                         ) VALUES (
                             @dataResultatMax,
                             @dataValidacioMax,
+                            @dataUltimCanviMax,
                             @dataSincronitzacio,
                             @nombreMostres,
                             @nombreErrors,
@@ -147,10 +156,15 @@ namespace MultirIntegraModulab
                             dades.DataResultatMaxProcessada.HasValue 
                                 ? (object)dades.DataResultatMaxProcessada.Value 
                                 : DBNull.Value);
-                        
+
                         cmd.Parameters.AddWithValue("@dataValidacioMax", 
                             dades.DataValidacioMaxProcessada.HasValue 
                                 ? (object)dades.DataValidacioMaxProcessada.Value 
+                                : DBNull.Value);
+
+                        cmd.Parameters.AddWithValue("@dataUltimCanviMax", 
+                            dades.DataUltimCanviMaxProcessada.HasValue 
+                                ? (object)dades.DataUltimCanviMaxProcessada.Value 
                                 : DBNull.Value);
                         
                         cmd.Parameters.AddWithValue("@dataSincronitzacio", dades.DataSincronitzacio);

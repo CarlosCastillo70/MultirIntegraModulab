@@ -238,5 +238,23 @@ namespace MultirIntegraModulab.Domain.Entities
                 .DefaultIfEmpty()
                 .Max();
         }
+
+        /// <summary>
+        /// Obté el màxim RESULT_LAST_CHANGE de totes les mostres
+        /// Útil per al sistema de sincronització per últim canvi
+        /// </summary>
+        /// <returns>Màxim RESULT_LAST_CHANGE o null si no hi ha resultats amb aquest camp</returns>
+        public DateTime? ObtenirMaxResultLastChange()
+        {
+            if (_mostres.Count == 0)
+                return null;
+
+            return _mostres.Values
+                .SelectMany(m => m.Resultats)
+                .Where(r => r.ResultLastChange.HasValue)
+                .Select(r => r.ResultLastChange.Value)
+                .DefaultIfEmpty()
+                .Max();
+        }
     }
 }

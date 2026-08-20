@@ -177,18 +177,69 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
             try
             {
                 _logger.Info("🔄 Carregant mostres amb càrrega incremental (segons filtres de darreres dates de resultat i validació processades)");
-                
+
                 var resultat = _modulabDbService.CarregarResultatsAmbSincronitzacio(
                     dadesSincronitzacio, 
                     _multiRDbService, 
                     limit);
-                
+
                 _logger.Info($"✅ Carregades {resultat.NombreTotalMostres} mostres de forma incremental");
                 return resultat;
             }
             catch (Exception ex)
             {
                 _logger.Error($"❌ Error carregant mostres de forma incremental: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Carrega mostres segons l'últim canvi (RESULTLASTCHANGE) de forma síncrona
+        /// </summary>
+        public ColeccioMostres CarregarResultatsPerUltimCanvi(DateTime? dataUltimCanviReference, int diasEnRe, int limit = 0)
+        {
+            try
+            {
+                _logger.Info($"🔄 Carregant mostres per últim canvi (dies enrere: {diasEnRe})");
+
+                var resultat = _modulabDbService.CarregarResultatsDeMostresPerUltimCanvi(
+                    dataUltimCanviReference,
+                    diasEnRe,
+                    _multiRDbService,
+                    limit);
+
+                _logger.Info($"✅ Carregades {resultat.NombreTotalMostres} mostres per últim canvi");
+                return resultat;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"❌ Error carregant mostres per últim canvi: {ex.Message}", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Carrega mostres segons l'últim canvi (RESULTLASTCHANGE) de forma asíncrona
+        /// </summary>
+        public async Task<ColeccioMostres> CarregarResultatsPerUltimCanviAsync(DateTime? dataUltimCanviReference, int diasEnRe, int limit = 0)
+        {
+            try
+            {
+                _logger.Info($"🔄 Carregant mostres per últim canvi de forma asíncrona (dies enrere: {diasEnRe})");
+
+                var resultat = await Task.Run(() => 
+                    _modulabDbService.CarregarResultatsDeMostresPerUltimCanvi(
+                        dataUltimCanviReference,
+                        diasEnRe,
+                        _multiRDbService,
+                        limit));
+
+                _logger.Info($"✅ Carregades {resultat.NombreTotalMostres} mostres per últim canvi (async)");
+                return resultat;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"❌ Error carregant mostres per últim canvi (async): {ex.Message}", ex);
                 throw;
             }
         }

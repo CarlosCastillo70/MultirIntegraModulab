@@ -211,19 +211,54 @@ namespace MultirIntegraModulab
                         mostres = modulabRepository.CarregarResultatsDiesEndarrera(diesInicials, limitRegistres);
                     }
                 }
+                else if (configService.CarregaIncremental_UltimCanvi_Activa)
+                {
+                    // ===========================================================
+                    // TIPUS 1B: CÀRREGA INCREMENTAL SEGONS ÚLTIM CANVI (Prioritat Mitjana)
+                    // ===========================================================
+
+                    loggerService.Info($"🔍 Mode: CÀRREGA INCREMENTAL SEGONS ÚLTIM CANVI (Prioritat Mitjana)");
+                    Console.WriteLine($"\n🔍 Mode: CÀRREGA INCREMENTAL SEGONS ÚLTIM CANVI");
+
+                    // 1. Obtenir última sincronització exitosa
+                    ultimaSincronitzacio = multiRRepository.ObtenirUltimaSincronitzacio();
+
+                    if (ultimaSincronitzacio != null && ultimaSincronitzacio.DataUltimCanviMaxProcessada.HasValue)
+                    {
+                        loggerService.Info($"📅 Última sincronització: {ultimaSincronitzacio.DataSincronitzacio:dd/MM/yyyy HH:mm}");
+                        loggerService.Info($"⏱️ Últim canvi processat: {ultimaSincronitzacio.DataUltimCanviMaxProcessada:dd/MM/yyyy HH:mm:ss.fff}");
+                        Console.WriteLine($"📅 Última sincronització: {ultimaSincronitzacio.DataSincronitzacio:dd/MM/yyyy HH:mm}");
+                        Console.WriteLine($"⏱️ Últim canvi processat: {ultimaSincronitzacio.DataUltimCanviMaxProcessada:dd/MM/yyyy HH:mm:ss.fff}");
+
+                        // 2. Carregar amb filtres per últim canvi
+                        mostres = modulabRepository.CarregarResultatsPerUltimCanvi(
+                            ultimaSincronitzacio.DataUltimCanviMaxProcessada,
+                            configService.CarregaIncremental_UltimCanvi_DiasEnRe,
+                            limitRegistres);
+                    }
+                    else
+                    {
+                        int diesInicials = configService.CarregaIncremental_UltimCanvi_DiesRevisioSeguretat;
+                        loggerService.Info($"ℹ️ Primera execució - carregant mostres dels últims {diesInicials} dies");
+                        Console.WriteLine($"ℹ️ Primera execució - carregant mostres dels últims {diesInicials} dies");
+
+                        // 3. Primera càrrega (utilitzar dies de revisió de seguretat)
+                        mostres = modulabRepository.CarregarResultatsDiesEndarrera(diesInicials, limitRegistres);
+                    }
+                }
                 else if (configService.CarregaDiesEnrere_Activa)
                 {
                     // ===========================================================
                     // TIPUS 2: CÀRREGA PER DIES ENRERE (Prioritat Mitjana)
                     // ===========================================================
-                    
+
                     int diesEnrere = configService.CarregaDiesEnrere_NombreDies;
-                    
+
                     loggerService.Info($"🔍 Mode: CÀRREGA PER DIES ENRERE");
                     loggerService.Info($"📅 Carregant mostres dels últims {diesEnrere} dies");
                     Console.WriteLine($"\n🔍 Mode: CÀRREGA PER DIES ENRERE");
                     Console.WriteLine($"📅 Carregant mostres dels últims {diesEnrere} dies...");
-                    
+
                     mostres = modulabRepository.CarregarResultatsDiesEndarrera(diesEnrere, limitRegistres);
                 }
                 else if (configService.CarregaRangDates_Activa)
@@ -299,7 +334,7 @@ namespace MultirIntegraModulab
                 // per no interferir amb la cadena de sincronització normal.
                 // ===========================================================
 
-                if (configService.CarregaIncremental_Activa && !modeRepesca)
+                if ((configService.CarregaIncremental_Activa || configService.CarregaIncremental_UltimCanvi_Activa) && !modeRepesca)
                 {
                     try
                     {
@@ -316,16 +351,31 @@ namespace MultirIntegraModulab
                             ? mostres.ObtenirDataValidacioMaxima()
                             : ultimaSincronitzacio?.DataValidacioMaxProcessada;
 
+                        // Calcular màxim RESULT_LAST_CHANGE per al mode "Últim Canvi"
+                        DateTime? dataUltimCanviMax = null;
+                        if (configService.CarregaIncremental_UltimCanvi_Activa && mostres.NombreTotalMostres > 0)
+                        {
+                            dataUltimCanviMax = mostres.ObtenirMaxResultLastChange();
+                            loggerService.Info($"⏱️ Màxim RESULT_LAST_CHANGE a guardar: {dataUltimCanviMax:dd/MM/yyyy HH:mm:ss.fff}");
+                        }
+                        else if (ultimaSincronitzacio?.DataUltimCanviMaxProcessada.HasValue == true)
+                        {
+                            dataUltimCanviMax = ultimaSincronitzacio.DataUltimCanviMaxProcessada;
+                        }
+
                         var dadesSincronitzacio = new DadesSincronitzacio
                         {
                             DataResultatMaxProcessada = dataResultatMax,
                             DataValidacioMaxProcessada = dataValidacioMax,
+                            DataUltimCanviMaxProcessada = dataUltimCanviMax,
                             DataSincronitzacio = DateTime.Now,
                             NombreMostresProcessades = mostres.NombreTotalMostres,
                             NombreMostresError = resum.MostresAmbError,
                             NombreResultatsIntegrat = resum.PositiusIncorporats + resum.NegatiusIncorporats
                                 + resum.PositiusVirusRespiratorisIncorporats + resum.NegatiusContrarestaPositiuIncorporats,
-                            DiesRevisioSeguretat = configService.CarregaIncremental_DiesRevisioSeguretat,
+                            DiesRevisioSeguretat = configService.CarregaIncremental_Activa 
+                                ? configService.CarregaIncremental_DiesRevisioSeguretat
+                                : configService.CarregaIncremental_UltimCanvi_DiesRevisioSeguretat,
                             Estat = estatSincronitzacio,
                             DuradaSegons = resum.DuradaProcessament.TotalSeconds
                         };

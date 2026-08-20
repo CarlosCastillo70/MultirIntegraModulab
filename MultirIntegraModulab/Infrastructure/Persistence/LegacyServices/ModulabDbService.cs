@@ -249,6 +249,7 @@ RESUM DE LES DADES DE MODULAB A INCORPORAR:
 					REPLACE(sam2.sampledescription, '''', '´') AS MOSTRA_DESCRIPCIO,
 					rt.RESULTDATE AS DATA_RESULTAT,
 					rt.FVDATE AS DATA_VALIDACIO,
+					rt.RESULTLASTCHANGE AS RESULT_LAST_CHANGE,
 					rcvf.SHORTDESCRIPTION AS SHORTDESCRIPTION1
 				FROM
 					MG.CULTUREISOLATION ci
@@ -382,6 +383,17 @@ RESUM DE LES DADES DE MODULAB A INCORPORAR:
                 catch (Exception ex)
                 {
                     throw new InvalidOperationException($"Error convertint DATA_VALIDACIO: {reader["DATA_VALIDACIO"]} - {ex.Message}");
+                }
+
+                try
+                {
+                    registre.ResultLastChange = reader["RESULT_LAST_CHANGE"] != DBNull.Value 
+                        ? Convert.ToDateTime(reader["RESULT_LAST_CHANGE"]) 
+                        : (DateTime?)null;
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Error convertint RESULT_LAST_CHANGE: {reader["RESULT_LAST_CHANGE"]} - {ex.Message}");
                 }
 
                 // Mecanismes de resistència (IDs) amb validació individual
@@ -598,6 +610,143 @@ RESUM DE LA CÀRREGA PER RANG DE DATES ({dataInici:dd/MM/yyyy} - {dataFi:dd/MM/y
         }
 
         /// <summary>
+        /// Carrega resultats de mostres filtrats per últim canvi (RESULT_LAST_CHANGE)
+        /// Prioritat: MITJANA (s'executa si Incremental no està activa)
+        /// Filtra per: RESULTLASTCHANGE >= data_ultim_canvi_processada
+        /// </summary>
+        public ColeccioMostres CarregarResultatsDeMostresPerUltimCanvi(
+            DateTime? dataUltimCanviReference = null, 
+            int diasEnRe = 50, 
+            MultiRDbService mysqlService = null, 
+            int limitRegistres = 0)
+        {
+            _logger.Info($"Carregant resultats per últim canvi (RESULT_LAST_CHANGE >= {dataUltimCanviReference:dd/MM/yyyy HH:mm:ss.fff})");
+
+            var coleccioResultats = new ColeccioMostres();
+            int registresProcessats = 0;
+            int registresAmbError = 0;
+            int microorganismesEspecials = 0;
+            DateTime? maxResultLastChange = dataUltimCanviReference;
+
+            // Precarregar microorganismes especials si tenim el servei MySQL
+            if (mysqlService != null)
+            {
+                try
+                {
+                    _logger.Info("📋 Precarregant microorganismes especials...");
+                    mysqlService.CarregarMicroorganismesEspecials();
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error("⚠️ Error precarregant microorganismes especials", ex);
+                }
+            }
+
+            using (var conn = new OracleConnection(_connectionString))
+            {
+                conn.Open();
+
+                string sql = ObtenirConsultaResultatsProvesUltimCanvi(limitRegistres, dataUltimCanviReference);
+
+                using (var cmd = new OracleCommand(sql, conn))
+                {
+                    // Paràmetres per a la consulta
+                    cmd.Parameters.Add(new OracleParameter("diasEnRe", diasEnRe));
+
+                    if (dataUltimCanviReference.HasValue)
+                    {
+                        cmd.Parameters.Add(new OracleParameter("dataUltimCanvi", 
+                            dataUltimCanviReference.Value.ToString("yyyy-MM-dd HH:mm:ss.fff")));
+                    }
+
+                    _logger.Info($"🔍 Executant consulta Oracle per últim canvi (últims {diasEnRe} dies, RESULT_LAST_CHANGE >= {dataUltimCanviReference:dd/MM/yyyy HH:mm:ss.fff})");
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        _logger.Info("✅ Consulta executada correctament. Processant registres...");
+
+                        while (reader.Read())
+                        {
+                            try
+                            {
+                                registresProcessats++;
+
+                                var registre = CrearRegistreDesDeReader(reader, mysqlService);
+
+                                // Actualitzar el màxim RESULT_LAST_CHANGE
+                                if (registre.ResultLastChange.HasValue)
+                                {
+                                    if (!maxResultLastChange.HasValue || registre.ResultLastChange > maxResultLastChange)
+                                    {
+                                        maxResultLastChange = registre.ResultLastChange;
+                                    }
+                                }
+
+                                // Comptar microorganismes especials
+                                if (registre.EsMicroorganismeEspecial == true)
+                                {
+                                    microorganismesEspecials++;
+                                }
+
+                                // Validar dades crítiques abans d'afegir
+                                if (ValidarRegistre(registre, registresProcessats))
+                                {
+                                    coleccioResultats.AfegirResultat(registre);
+                                }
+                                else
+                                {
+                                    registresAmbError++;
+                                    _logger.Warning($"⚠️ Registre #{registresProcessats} omès per validació fallida - ETIQUETA_ID: {registre.EtiquetaId}");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                registresAmbError++;
+                                string etiquetaId = ObtenirValorSegur(reader, "ETIQUETA_ID");
+                                string pacientSap = ObtenirValorSegur(reader, "PACIENT_SAP");
+
+                                _logger.Error($"❌ Error processant registre #{registresProcessats}: ETIQUETA_ID={etiquetaId}, PACIENT_SAP={pacientSap}", ex);
+
+                                // Aturar si hi ha més de 10 errors
+                                if (registresAmbError > 10)
+                                {
+                                    _logger.Error($"🛑 S'han trobat {registresAmbError} errors. Aturant el processament");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Mostrar resum
+            string resum = $@"
+RESUM DE LA CÀRREGA PER ÚLTIM CANVI:
+   - Resultats processats: {registresProcessats}
+   - Resultats carregats correctament: {coleccioResultats.NombreTotalResultats}
+   - Resultats amb error: {registresAmbError}
+   - Microorganismes especials trobats: {microorganismesEspecials}
+   - Màxim RESULT_LAST_CHANGE processat: {maxResultLastChange:dd/MM/yyyy HH:mm:ss.fff}";
+
+            if (registresAmbError > 0)
+            {
+                double percentatgeError = (registresAmbError * 100.0 / registresProcessats);
+                resum += $"\n   - Percentatge d'error: {percentatgeError:F2}%";
+            }
+
+            if (mysqlService != null && microorganismesEspecials > 0)
+            {
+                double percentatgeEspecials = (microorganismesEspecials * 100.0 / coleccioResultats.NombreTotalResultats);
+                resum += $"\n   - Percentatge microorganismes especials: {percentatgeEspecials:F2}%";
+            }
+
+            _logger.Info($"📊 {resum}");
+            Console.WriteLine($"\n📊 {resum}");
+
+            return coleccioResultats;
+        }
+
+        /// <summary>
         /// Obté la consulta SQL per carregar els resultats per rang de dates
         /// IMPORTANT: Concatena PREFIX formatat a 3 caràcters amb ETIQUETA_ID per obtenir identificador únic real
         /// NOTA: Utilitzada per la funcionalitat de càrrega per rang de dates (disponible però no utilitzada actualment al flux principal)
@@ -673,6 +822,103 @@ RESUM DE LA CÀRREGA PER RANG DE DATES ({dataInici:dd/MM/yyyy} - {dataFi:dd/MM/y
                          (DETALL.DATA_RESULTAT >= :dataInici AND DETALL.DATA_RESULTAT <= :dataFi)
                         )
                 ORDER BY ETIQUETA_ID";
+        }
+
+        /// <summary>
+        /// Obté la consulta SQL per carregar els resultats de proves filtrats per últim canvi (RESULTLASTCHANGE)
+        /// IMPORTANT: Utilitza RESULTLASTCHANGE per capturar canvis recents sense modificar els filtres de DATA_RESULTAT/DATA_VALIDACIO
+        /// </summary>
+        private string ObtenirConsultaResultatsProvesUltimCanvi(int limitRegistres = 0, DateTime? dataUltimCanviReference = null)
+        {
+            string consultaBase = @"
+                SELECT DISTINCT /*+ USE_CONCAT INDEX(rc PK_REQUESTCONTAINER) INDEX(rt PK_REQUESTTEST) */
+                    r.REQUESTLABEL || LPAD(NVL(con2.PREFIX, '0'), 3, '0') AS ETIQUETA_ID,
+                    con2.PREFIX AS PREFIX,
+                    p.EXTERNALID AS PACIENT_SAP,
+                    p.NTS AS CIP,
+                    p.PATIENTNAME AS PACIENT_NOM,
+                    p.PATIENTFIRSTSURNAME AS PACIENT_COGNOM1,
+                    p.PATIENTSECONDSURNAME AS PACIENT_COGNOM2,
+                    p.GENDER AS PACIENT_SEXE,
+                    p.DOB AS PACIENT_CIP,
+                    d.COLLEGIATEID AS COLEGIAT_ID,
+                    REPLACE(d.DOCTORNAME, '''', '´') AS NOM_METGE,
+                    REPLACE(LTRIM(cent.CENTERDESCRIPTION), '''', '´') AS CENTRE_DESCRIPCIO,
+                    r.requestdate AS DATA_PETICIO_TRUNC,
+                    REPLACE(i.isolationdescription, '''', '´') AS AILLAMENT_DESCRIPCIO,
+                    ci.resistancemechanismcode1 AS MECANISME_RESISTENCIA1_ID,
+                    REPLACE(rm1.RESISTANCEMECHANISMDESCRIPTION, '''', '´') AS MECANISME_RESISTENCIA_DESCRIP,
+                    ci.resistancemechanismcode2 AS MECANISME_RESISTENCIA2_ID,
+                    REPLACE(rm2.RESISTANCEMECHANISMDESCRIPTION, '''', '´') AS MECANISME_RESISTENCIA_DESCRIP2,
+                    ci.resistancemechanismcode3 AS MECANISME_RESISTENCIA3_ID,
+                    REPLACE(rm3.RESISTANCEMECHANISMDESCRIPTION, '''', '´') AS MECANISME_RESISTENCIA_DESCRIP3,
+                    ci.resistancemechanismcode4 AS MECANISME_RESISTENCIA4_ID,
+                    REPLACE(rm4.RESISTANCEMECHANISMDESCRIPTION, '''', '´') AS MECANISME_RESISTENCIA_DESCRIP4,
+                    ci.resistancemechanismcode5 AS MECANISME_RESISTENCIA5_ID,
+                    REPLACE(rm5.RESISTANCEMECHANISMDESCRIPTION, '''', '´') AS MECANISME_RESISTENCIA_DESCRIP5,
+                    UPPER(REPLACE(ser.SERVICEDESCRIPTION, '''', '´')) AS SERVEI_DESCRIPCIO,
+                    REPLACE(test2.testdescription, '''', '´') AS PROVA_DESCRIPCIO,
+                    REPLACE(sam2.sampledescription, '''', '´') AS MOSTRA_DESCRIPCIO,
+                    rt.RESULTDATE AS DATA_RESULTAT,
+                    rt.FVDATE AS DATA_VALIDACIO,
+                    rt.RESULTLASTCHANGE AS RESULT_LAST_CHANGE,
+                    rcvf.SHORTDESCRIPTION AS SHORTDESCRIPTION1
+                FROM
+                    MG.CULTUREISOLATION ci
+                    LEFT JOIN MG.REQUEST r ON r.REQUESTID = ci.REQUESTID
+                    LEFT JOIN MG.PATIENT p ON p.PATIENTID = r.PATIENTID
+                    LEFT JOIN MG.ISOLATION i ON i.ISOLATIONID = ci.ISOLATIONID
+                    LEFT JOIN MG.RESISTANCEMECHANISM rm1 ON rm1.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE1
+                    LEFT JOIN MG.RESISTANCEMECHANISM rm2 ON rm2.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE2
+                    LEFT JOIN MG.RESISTANCEMECHANISM rm3 ON rm3.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE3
+                    LEFT JOIN MG.RESISTANCEMECHANISM rm4 ON rm4.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE4
+                    LEFT JOIN MG.RESISTANCEMECHANISM rm5 ON rm5.RESISTANCEMECHANISMCODE = ci.RESISTANCEMECHANISMCODE5
+                    LEFT JOIN MG.DOCTOR d on d.DOCTORID = r.DOCTORID
+                    LEFT JOIN MG.SERVICE ser ON ser.serviceid = r.serviceid
+                    LEFT JOIN MG.SAMPLECOLLECTIONCENTER scol ON scol.samplecollectioncenterid = r.samplecollectioncenterid
+                    LEFT JOIN MG.REQUESTTESTADDITIONALINFO rtai ON rtai.REQUESTID = ci.REQUESTID
+                        AND rtai.CONTAINERID = ci.CONTAINERID
+                        AND rtai.TESTID = ci.TESTID
+                    LEFT JOIN MG.CONTAINER con ON rtai.CONTAINERID = con.CONTAINERID
+                    LEFT JOIN MG.SAMPLE sam ON sam.SAMPLEID = con.SAMPLEID
+                    LEFT JOIN MG.ADDITIONALINFO ai ON ai.ADDITIONALINFOID = rtai.ADDITIONALINFOID
+                    LEFT JOIN MG.REQUESTDIAGNOSIS rd ON rd.REQUESTID = r.REQUESTID
+                    LEFT JOIN MG.DIAGNOSIS dia ON dia.DIAGNOSISID = rd.DIAGNOSISID
+                    LEFT JOIN MG.REQUESTTEST rt ON rt.REQUESTID = ci.REQUESTID
+                        AND rt.CONTAINERID = ci.CONTAINERID
+                        AND rt.TESTID = ci.TESTID
+                    LEFT JOIN MG.REQUESTCONTAINER rc ON rc.REQUESTID = rt.REQUESTID
+                        AND rc.CONTAINERID = rt.CONTAINERID
+                    LEFT JOIN MG.CONTAINER con2 ON con2.CONTAINERID = rc.CONTAINERID
+                    LEFT JOIN MG.SAMPLE sam2 ON sam2.SAMPLEID = con2.SAMPLEID
+                    LEFT JOIN MG.CENTER cent ON cent.CENTERID = ser.CENTERID
+                    LEFT JOIN MG.RESULTCODEDVALUEFINAL rcvf ON rt.REQUESTID = rcvf.REQUESTID
+                        AND rt.CONTAINERID = rcvf.CONTAINERID
+                        AND rt.TESTID = rcvf.TESTID
+                    LEFT JOIN MG.TEST test2 ON rt.TESTID = test2.TESTID
+                WHERE
+                    r.REQUESTDATE >= TRUNC(SYSDATE) - :diasEnRe";
+
+            // Afegir filtre de últim canvi si es proporciona
+            if (dataUltimCanviReference.HasValue)
+            {
+                consultaBase += $@"
+                    AND rt.RESULTLASTCHANGE >= TIMESTAMP '{dataUltimCanviReference.Value:yyyy-MM-dd HH:mm:ss}.000'";
+            }
+
+            consultaBase += @"
+                ORDER BY PACIENT_SAP, ETIQUETA_ID";
+
+            // Afegir clàusula ROWNUM si hi ha límit especificat
+            if (limitRegistres > 0)
+            {
+                return $@"
+                    SELECT * FROM (
+                        {consultaBase}
+                    ) WHERE ROWNUM <= {limitRegistres}";
+            }
+
+            return consultaBase;
         }
 
         /// <summary>

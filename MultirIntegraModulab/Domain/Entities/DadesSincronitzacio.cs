@@ -26,6 +26,12 @@ namespace MultirIntegraModulab.Domain.Entities
         public DateTime? DataValidacioMaxProcessada { get; set; }
 
         /// <summary>
+        /// Data de l'últim canvi màxima processada en l'última càrrega exitosa
+        /// S'utilitzarà per filtrar: RESULTLASTCHANGE > data_ultim_canvi_max_processada
+        /// </summary>
+        public DateTime? DataUltimCanviMaxProcessada { get; set; }
+
+        /// <summary>
         /// Data i hora en què es va realitzar la sincronització
         /// </summary>
         public DateTime DataSincronitzacio { get; set; }

@@ -158,6 +158,11 @@ namespace MultirIntegraModulab.Domain.Entities
         public DateTime? DataValidacio { get; set; }
 
         /// <summary>
+        /// Data de l'últim canvi del resultat (última actualització)
+        /// </summary>
+        public DateTime? ResultLastChange { get; set; }
+
+        /// <summary>
         /// Indica si la prova ha estat validada per un professional
         /// </summary>
         public bool EstaValidada => DataValidacio.HasValue;
