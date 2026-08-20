@@ -23,6 +23,31 @@ namespace MultirIntegraModulab.Domain.Entities
         public string Cip { get; set; }
 
         /// <summary>
+        /// Nom del pacient
+        /// </summary>
+        public string PacientNom { get; set; }
+
+        /// <summary>
+        /// Primer cognom del pacient
+        /// </summary>
+        public string PacientCognom1 { get; set; }
+
+        /// <summary>
+        /// Segon cognom del pacient
+        /// </summary>
+        public string PacientCognom2 { get; set; }
+
+        /// <summary>
+        /// Sexe del pacient informat per Modulab
+        /// </summary>
+        public string PacientSexe { get; set; }
+
+        /// <summary>
+        /// CIP/SIP del pacient obtingut de Modulab
+        /// </summary>
+        public string PacientCip { get; set; }
+
+        /// <summary>
         /// Número de col·legiat del metge sol·licitant
         /// </summary>
         public string ColegiatId { get; set; }

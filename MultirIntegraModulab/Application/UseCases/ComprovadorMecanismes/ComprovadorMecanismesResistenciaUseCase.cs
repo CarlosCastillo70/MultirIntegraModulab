@@ -112,12 +112,11 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
                     if (!resultat.ContinuarProcessament)
                     {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ S'atura el processament de la mostra {mostra.EtiquetaId} per mecanisme(s) marcat(s) com NO INCORPORAR");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ S'atura el processament de la mostra {mostra.EtiquetaId} per error crític en la comprovació de mecanismes");
                         return resultat;
                     }
 
-                    // Nota: Ja no aturem el processament si es detecta una CNI
-                    // Simplement marquem el resultat per descartar i continuem amb els altres
+                    // Nota: Ni CNI ni MNI aturen el bucle; continuem comprovant tots els resultats de la mostra
                 }
 
                 if (resultat.MecanismesCreats.Any())
@@ -127,7 +126,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
                 if (resultat.MecanismesNoIncorporats.Any())
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Eliminats {resultat.MecanismesNoIncorporats.Count} mecanisme(s) marcats com NO INCORPORAR");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Eliminats {resultat.MecanismesNoIncorporats.Count} per mecanisme(s) marcats com NO INCORPORAR");
                 }
                 
                 if (resultat.ResultatsADescartar.Any())
@@ -320,22 +319,19 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                     
                     // Afegir a la llista de mecanismes no incorporats
                     resultat.MecanismesNoIncorporats.Add(mecanisme.id);
-                    
+
                     // Crear informació del mecanisme per a l'auditoria
                     var mecanismeInfo = new MecanismeResistenciaInfo
                     {
                         Id = mecanisme.id,
                         Descripcio = mecanisme.descripcio
                     };
-                    
+
                     // Guardar auditoria
                     _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "MNI", resultatMostra, mecanismeInfo);
 
-                    // Quan hi ha un mecanisme NO INCORPORAR, no s'ha de continuar amb la mostra
-                    resultat.ContinuarProcessament = false;
-                    resultat.Missatge = $"Mecanisme(s) marcat(s) com NO INCORPORAR: {string.Join(", ", resultat.MecanismesNoIncorporats.Distinct())}";
-
                     // Marcar que s'ha d'eliminar aquest mecanisme del registre
+                    // No s'atura el processament global: els altres resultats de la mostra es continuaran comprovant
                     resultatMecanisme.EliminatMNI = true;
                 }
             }

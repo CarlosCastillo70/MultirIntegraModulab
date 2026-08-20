@@ -458,31 +458,10 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     break;
             }
 
-            // Després del tractament de la mostra, comprovar si s'han afegit positius
-            // i en cas afirmatiu, crear la nota del curs clínic
-
+            // Després del tractament de la mostra, comprovar si s'han afegit positius / negatius
             if (sShanAfegitPositius)
             {
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📋 S'han detectat nous positius per al pacient {mostra.PacientSap}");
-                //_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Procedint a crear nota del curs clínic...");
-
-                //try
-                //{
-                //    bool notaCreada = _multiRRepository.AfegirNotaCursClinicSiCal(mostra.PacientSap, sShanAfegitPositius);
-
-                //    if (notaCreada)
-                //    {
-                //        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Nota del curs clínic creada correctament per al pacient {mostra.PacientSap}");
-                //    }
-                //    else
-                //    {
-                //        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}ℹ️ No s'ha creat nota del curs clínic (pot ser que no hi hagi diagnòstics actius)");
-                //    }
-                //}
-                //catch (Exception ex)
-                //{
-                //    _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Error creant nota del curs clínic: {ex.Message}", ex);
-                //}
             }
 
             if (sShanAfegitNegatius)

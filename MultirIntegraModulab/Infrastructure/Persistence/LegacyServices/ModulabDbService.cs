@@ -224,6 +224,11 @@ RESUM DE LES DADES DE MODULAB A INCORPORAR:
 					con2.PREFIX AS PREFIX,
 					p.EXTERNALID AS PACIENT_SAP,
 					p.NTS AS CIP,
+					p.PATIENTNAME AS PACIENT_NOM,
+					p.PATIENTFIRSTSURNAME AS PACIENT_COGNOM1,
+					p.PATIENTSECONDSURNAME AS PACIENT_COGNOM2,
+					p.GENDER AS PACIENT_SEXE,
+					p.DOB AS PACIENT_CIP,
 					d.COLLEGIATEID AS COLEGIAT_ID,
 					REPLACE(d.DOCTORNAME, '''', '´') AS NOM_METGE,
 					REPLACE(LTRIM(cent.CENTERDESCRIPTION), '''', '´') AS CENTRE_DESCRIPCIO,
@@ -315,6 +320,11 @@ RESUM DE LES DADES DE MODULAB A INCORPORAR:
                 
                 // Nous camps afegits
                 registre.Cip = reader["CIP"]?.ToString()?.Trim();
+                registre.PacientNom = reader["PACIENT_NOM"]?.ToString()?.Trim();
+                registre.PacientCognom1 = reader["PACIENT_COGNOM1"]?.ToString()?.Trim();
+                registre.PacientCognom2 = reader["PACIENT_COGNOM2"]?.ToString()?.Trim();
+                registre.PacientSexe = reader["PACIENT_SEXE"]?.ToString()?.Trim();
+                registre.PacientCip = reader["PACIENT_CIP"]?.ToString()?.Trim();
                 registre.ColegiatId = reader["COLEGIAT_ID"]?.ToString()?.Trim();
                 registre.NomMetge = reader["NOM_METGE"]?.ToString()?.Trim();
                 registre.CentreDescripcio = reader["CENTRE_DESCRIPCIO"]?.ToString()?.Trim();

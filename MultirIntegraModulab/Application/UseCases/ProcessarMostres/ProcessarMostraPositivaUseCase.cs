@@ -190,33 +190,26 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         {
                             _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠ No s'ha pogut inserir el pacient {mostra.PacientSap} a MultiR");
                             resultat.PacientCreat = false;
-                            // No fallem el processament, només registrem l'advertència
                         }
                     }
                     else
                     {
-                        // Si la consulta al webservice no retorna dades per al pacient
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient {mostra.PacientSap} no trobat al web service");
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}💥 Inserint auditoria amb codi NPWS i aturant processament");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient {mostra.PacientSap} no trobat al web service. Es crearà pacient amb dades de Modulab");
 
-                        // Inserir a taula log amb codi NPWS (No trobat al Web Service de Pacients)
-                        bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NPWS");
+                        // Es crea pacient amb les dades de Modulab
+                        bool pacientCreat = CrearPacientDesDeDadesModulab(mostra, "pacient no trobat al web service");
 
-                        if (auditoriaCreada)
+                        if (pacientCreat)
                         {
-                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✓ Auditoria NPWS creada per mostra {mostra.EtiquetaId}");
-                            resultat.AuditoriasCreades++;
+                            resultat.PacientCreat = true;
                         }
                         else
                         {
-                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠ No s'ha pogut crear l'auditoria NPWS");
+                            resultat.Exitosa = false;
+                            resultat.PacientCreat = false;
+                            resultat.Missatge = "No s'ha pogut crear pacient amb dades de Modulab";
+                            return;
                         }
-
-                        // Marcar com a no exitós per no continuar endavant
-                        resultat.Exitosa = false;
-                        resultat.PacientCreat = false;
-                        resultat.Missatge = "Pacient no trobat al web service (NPWS)";
-                        return;
                     }
                 }
                 catch (Exception ex)
@@ -224,9 +217,19 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Error consultant/inserint pacient via web service: {ex.Message}");
                     _logger.Debug($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Detall error: {ex}");
 
-                    // Continuar igualment per no bloquejar el processament
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Continuant processament malgrat error en gestió del pacient");
-                    resultat.PacientCreat = false;
+                    bool pacientCreat = CrearPacientDesDeDadesModulab(mostra, "error consultant el web service");
+
+                    if (pacientCreat)
+                    {
+                        resultat.PacientCreat = true;
+                    }
+                    else
+                    {
+                        resultat.Exitosa = false;
+                        resultat.PacientCreat = false;
+                        resultat.Missatge = "No s'ha pogut crear pacient amb dades de Modulab";
+                        return;
+                    }
                 }
             }
             else
@@ -238,6 +241,63 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
 
             await Task.CompletedTask;
+        }
+
+        private bool CrearPacientDesDeDadesModulab(Mostra mostra, string motiu)
+        {
+            string pacientSap = mostra?.PacientSap;
+            var primerResultat = mostra?.Resultats?.FirstOrDefault();
+
+            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'han pogut obtenir dades del WebService de SAP del pacient {pacientSap} ({motiu}). Es crearà pacient amb dades de Modulab");
+
+            var dadesPacient = new DadesPacient
+            {
+                PacientSap = pacientSap,
+                Nom = primerResultat?.PacientNom,
+                Cognom1 = primerResultat?.PacientCognom1,
+                Cognom2 = primerResultat?.PacientCognom2,
+                Sexe = TransformarSexeModulab(primerResultat?.PacientSexe),
+                Cip = primerResultat?.PacientCip
+            };
+
+            bool inserit = _multiRRepository.InserirPacient(dadesPacient);
+
+            if (!inserit && _multiRRepository.ExisteixPacient(pacientSap))
+            {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}ℹ️ Pacient {pacientSap} ja existeix després de l'intent de creació");
+                return true;
+            }
+
+            if (inserit)
+            {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {pacientSap} creat correctament amb dades de Modulab");
+                return true;
+            }
+
+            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠ No s'ha pogut crear pacient {pacientSap} amb dades de Modulab");
+            return false;
+        }
+
+        private string TransformarSexeModulab(string sexeModulab)
+        {
+            if (string.IsNullOrWhiteSpace(sexeModulab))
+            {
+                return null;
+            }
+
+            string sexeNormalitzat = sexeModulab.Trim().ToUpperInvariant();
+
+            if (sexeNormalitzat == "M")
+            {
+                return "H";
+            }
+
+            if (sexeNormalitzat == "F")
+            {
+                return "D";
+            }
+
+            return sexeNormalitzat;
         }
 
         /// <summary>

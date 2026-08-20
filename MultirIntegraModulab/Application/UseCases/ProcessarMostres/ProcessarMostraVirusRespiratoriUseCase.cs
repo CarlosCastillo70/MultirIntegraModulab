@@ -252,13 +252,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 if (dadesPacient == null)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'han pogut obtenir dades del pacient");
-                    
-                    // Inserir auditoria NPWS
-                    var primerResultat = mostra.Resultats[0];
-                    _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NPWS", primerResultat);
-                    
-                    return false;
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'han pogut obtenir dades del pacient {mostra.PacientSap} des del web service. Es crearà pacient amb dades de Modulab");
+                    return CrearPacientDesDeDadesModulab(mostra, "pacient no trobat al web service");
                 }
 
                 // Inserir pacient
@@ -278,8 +273,65 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             catch (Exception ex)
             {
                 _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error processant pacient {mostra.PacientSap}", ex);
-                return false;
+                return CrearPacientDesDeDadesModulab(mostra, "error consultant el web service");
             }
+        }
+
+        private bool CrearPacientDesDeDadesModulab(Mostra mostra, string motiu)
+        {
+            string pacientSap = mostra?.PacientSap;
+            var primerResultat = mostra?.Resultats?[0];
+
+            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'han pogut obtenir dades completes del pacient {pacientSap} ({motiu}). Es crearà pacient amb dades de Modulab");
+
+            var dadesPacient = new DadesPacient
+            {
+                PacientSap = pacientSap,
+                Nom = primerResultat?.PacientNom,
+                Cognom1 = primerResultat?.PacientCognom1,
+                Cognom2 = primerResultat?.PacientCognom2,
+                Sexe = TransformarSexeModulab(primerResultat?.PacientSexe),
+                Cip = primerResultat?.PacientCip
+            };
+
+            bool inserit = _multiRRepository.InserirPacient(dadesPacient);
+
+            if (!inserit && _multiRRepository.ExisteixPacient(pacientSap))
+            {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}ℹ️ Pacient {pacientSap} ja existeix després de l'intent de creació");
+                return true;
+            }
+
+            if (inserit)
+            {
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {pacientSap} creat correctament amb dades de Modulab");
+                return true;
+            }
+
+            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠ No s'ha pogut crear pacient {pacientSap} amb dades de Modulab");
+            return false;
+        }
+
+        private string TransformarSexeModulab(string sexeModulab)
+        {
+            if (string.IsNullOrWhiteSpace(sexeModulab))
+            {
+                return null;
+            }
+
+            string sexeNormalitzat = sexeModulab.Trim().ToUpperInvariant();
+
+            if (sexeNormalitzat == "M")
+            {
+                return "H";
+            }
+
+            if (sexeNormalitzat == "F")
+            {
+                return "D";
+            }
+
+            return sexeNormalitzat;
         }
 
         /// <summary>
