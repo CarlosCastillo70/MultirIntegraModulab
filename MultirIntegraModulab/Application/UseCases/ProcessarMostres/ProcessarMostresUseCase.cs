@@ -673,11 +673,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     // Preparar dades per a l'historial
                     var tipusCanvi = "DESVALIDADA_AMB_CANVIS";
-                    
+
                     // Obtenir combinacions anteriors i noves en format text
                     var combinacionsAnteriors = ObtenirCombinacionsTextMostraExistent(mostraExistent);
                     var combinacionsNoves = ObtenirCombinacionsTextMostraEntrant(mostra);
-                    
+
                     // Guardar historial abans d'esborrar
                     bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
                         mostra.EtiquetaId,
@@ -688,7 +688,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         combinacionsNoves,
                         mostra.DataUltimResultat,
                         mostra.Resultats.FirstOrDefault()?.DataValidacio,
-                        mostra.PacientSap); // Afegir npat del pacient
+                        mostra.PacientSap,
+                        resultatComparacio.TipusProvaAnterior,
+                        resultatComparacio.TipusProvaNou); // Afegir npat del pacient i canvi de tipus prova si existeix
 
                     if (historialGuardat)
                     {
@@ -882,11 +884,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     // Preparar dades per a l'historial
                     var tipusCanvi = "VALIDADA_AMB_CANVIS";
-                    
+
                     // Obtenir combinacions anteriors i noves en format text
                     var combinacionsAnteriors = ObtenirCombinacionsTextMostraExistent(mostraExistent);
                     var combinacionsNoves = ObtenirCombinacionsTextMostraEntrant(mostra);
-                    
+
                     // Guardar historial abans d'esborrar
                     bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
                         mostra.EtiquetaId,
@@ -897,7 +899,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         combinacionsNoves,
                         mostra.DataUltimResultat,
                         mostra.Resultats.FirstOrDefault()?.DataValidacio,
-                        mostra.PacientSap); // Afegir npat del pacient
+                        mostra.PacientSap,
+                        resultatComparacio.TipusProvaAnterior,
+                        resultatComparacio.TipusProvaNou); // Afegir npat del pacient i canvi de tipus prova si existeix
 
                     if (historialGuardat)
                     {
@@ -1009,11 +1013,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     // Preparar dades per a l'historial
                     var tipusCanvi = "REVALIDADA_AMB_CANVIS";
-                    
+
                     // Obtenir combinacions anteriors i noves en format text
                     var combinacionsAnteriors = ObtenirCombinacionsTextMostraExistent(mostraExistent);
                     var combinacionsNoves = ObtenirCombinacionsTextMostraEntrant(mostra);
-                    
+
                     // Guardar historial abans d'esborrar
                     bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
                         mostra.EtiquetaId,
@@ -1024,7 +1028,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         combinacionsNoves,
                         mostra.DataUltimResultat,
                         mostra.Resultats.FirstOrDefault()?.DataValidacio,
-                        mostra.PacientSap); // Afegir npat del pacient
+                        mostra.PacientSap,
+                        resultatComparacio.TipusProvaAnterior,
+                        resultatComparacio.TipusProvaNou); // Afegir npat del pacient i canvi de tipus prova si existeix
 
                     if (historialGuardat)
                     {

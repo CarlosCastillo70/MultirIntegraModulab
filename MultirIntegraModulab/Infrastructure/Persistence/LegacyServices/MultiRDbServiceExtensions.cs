@@ -1602,6 +1602,8 @@ namespace MultirIntegraModulab
             if (!string.Equals(mostraExistent.TipusProva, tipusProvaEntrant, StringComparison.OrdinalIgnoreCase))
             {
                 resultat.HiHaCanvis = true;
+                resultat.TipusProvaAnterior = mostraExistent.TipusProva;
+                resultat.TipusProvaNou = tipusProvaEntrant;
                 resultat.CanvisDetectats.Add($"Tipus prova: '{mostraExistent.TipusProva}' -> '{tipusProvaEntrant}'");
             }
 

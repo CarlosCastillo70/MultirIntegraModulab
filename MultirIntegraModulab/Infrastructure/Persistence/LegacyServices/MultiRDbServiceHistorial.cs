@@ -208,6 +208,8 @@ namespace MultirIntegraModulab
         /// <param name="dataResultatNova">Data resultat nova</param>
         /// <param name="dataValidacioNova">Data validació nova</param>
         /// <param name="npat">Número de pacient (NPAT)</param>
+        /// <param name="tipusProvaAnterior">Tipus de prova anterior (opcional)</param>
+        /// <param name="tipusProvaNou">Tipus de prova nou (opcional)</param>
         /// <returns>True si s'ha guardat correctament</returns>
         public bool GuardarHistorialMostra(
             string etiquetaId, 
@@ -218,7 +220,9 @@ namespace MultirIntegraModulab
             string combinacionsNoves = null,
             DateTime? dataResultatNova = null,
             DateTime? dataValidacioNova = null,
-            string npat = null)
+            string npat = null,
+            string tipusProvaAnterior = null,
+            string tipusProvaNou = null)
         {
             if (string.IsNullOrWhiteSpace(etiquetaId))
             {
@@ -253,12 +257,12 @@ namespace MultirIntegraModulab
                                   (etiqueta, versio, tipus_canvi, 
                                    combinacions_anteriors, data_resultat_anterior, data_validacio_anterior,
                                    combinacions_noves, data_resultat_nova, data_validacio_nova,
-                                   data_canvi, proces_origen, npat)
+                                   data_canvi, proces_origen, npat, tipus_prova_anterior, tipus_prova_nou)
                                   VALUES 
                                   (@etiquetaId, @versio, @tipusCanvi,
                                    @combinacionsAnteriors, @dataResultatAnterior, @dataValidacioAnterior,
                                    @combinacionsNoves, @dataResultatNova, @dataValidacioNova,
-                                   NOW(), 'IntegracioModulab', @npat)";
+                                   NOW(), 'IntegracioModulab', @npat, @tipusProvaAnterior, @tipusProvaNou)";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -272,6 +276,8 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@dataResultatNova", dataResultatNova ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@dataValidacioNova", dataValidacioNova ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@npat", npat ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@tipusProvaAnterior", tipusProvaAnterior ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@tipusProvaNou", tipusProvaNou ?? (object)DBNull.Value);
 
                         int filesAfectades = cmd.ExecuteNonQuery();
 

@@ -9,6 +9,8 @@ namespace MultirIntegraModulab.Domain.Entities
     {
         public bool HiHaCanvis { get; set; }
         public List<string> CanvisDetectats { get; set; }
+        public string TipusProvaAnterior { get; set; }
+        public string TipusProvaNou { get; set; }
 
         public ResultatComparacioMostres()
         {
