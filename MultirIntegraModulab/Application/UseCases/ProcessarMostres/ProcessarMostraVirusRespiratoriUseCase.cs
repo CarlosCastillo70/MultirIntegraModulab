@@ -168,7 +168,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Centre '{centreDescripcio}' permet incorporar virus respiratoris");
 
-                // FASE 1: PROCESSAR PACIENT
+                // FASE 1: COMPROVAR / CREAR PACIENT
                 _logger.Info($"🔎 Comprovant / creant pacient: {mostra.PacientSap}");
                 
                 bool pacientProcessat = await ProcessarPacientAsync(mostra);
@@ -195,23 +195,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     resultat.ResultatsProcessats++;
                 }
 
-                // FASE 3: GENERAR NOTA CURS CLÍNIC (si s'han creat o ja existien diagnòstics)
-                if (resultat.DiagnosticsCreats > 0 || resultat.DiagnosticsExistents > 0)
-                {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}📝 Procedint a crear nota VR del curs clínic...");
-                    
-                    bool notaCreada = _multiRRepository.AfegirNotaCursClinicVirusRespiratoriSiCal(mostra.PacientSap, true);
-                    
-                    if (notaCreada)
-                    {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✔️ Nota curs clínic VR creada");
-                    }
-                    else
-                    {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}ℹ️ No s'ha creat nota curs clínic VR");
-                    }
-                }
-
+                // Resultat final
                 resultat.Missatge = $"VR processada correctament: {resultat.ResultatsProcessats} resultats";
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✔️ Mostra VR {mostra.EtiquetaId} processada: {resultat}");
 

@@ -107,7 +107,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             try
             {
-                // FASE 1: COMPROVAR/CREAR PACIENT
+                // FASE 1: COMPROVAR / CREAR PACIENT
                 await ProcessarPacientAsync(mostra, resultat);
 
                 if (!resultat.Exitosa)
