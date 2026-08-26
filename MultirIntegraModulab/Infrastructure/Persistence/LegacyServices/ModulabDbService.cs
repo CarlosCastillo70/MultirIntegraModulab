@@ -228,7 +228,7 @@ RESUM DE LES DADES DE MODULAB A INCORPORAR:
 					p.PATIENTFIRSTSURNAME AS PACIENT_COGNOM1,
 					p.PATIENTSECONDSURNAME AS PACIENT_COGNOM2,
 					p.GENDER AS PACIENT_SEXE,
-					p.DOB AS PACIENT_CIP,
+					p.NTS AS PACIENT_CIP,
 					d.COLLEGIATEID AS COLEGIAT_ID,
 					REPLACE(d.DOCTORNAME, '''', '´') AS NOM_METGE,
 					REPLACE(LTRIM(cent.CENTERDESCRIPTION), '''', '´') AS CENTRE_DESCRIPCIO,
@@ -650,16 +650,23 @@ RESUM DE LA CÀRREGA PER RANG DE DATES ({dataInici:dd/MM/yyyy} - {dataFi:dd/MM/y
 
                 using (var cmd = new OracleCommand(sql, conn))
                 {
-                    // Paràmetres per a la consulta
+                    // Paràmetres per a la consulta - SEMPRE afegir diasEnRe (s'usa en tots els casos)
                     cmd.Parameters.Add(new OracleParameter("diasEnRe", diasEnRe));
 
                     if (dataUltimCanviReference.HasValue)
                     {
-                        cmd.Parameters.Add(new OracleParameter("dataUltimCanvi", 
-                            dataUltimCanviReference.Value.ToString("yyyy-MM-dd HH:mm:ss.fff")));
+                        // Carregues posteriors: afegir filtre per RESULTLASTCHANGE
+                        cmd.Parameters.Add(new OracleParameter("dataUltimCanvi", OracleDbType.TimeStamp)
+                        {
+                            Value = dataUltimCanviReference.Value
+                        });
+                        _logger.Info($"🔍 Executant consulta Oracle per últim canvi - Filtres: REQUESTDATE >= últims {diasEnRe} dies AND RESULTLASTCHANGE >= {dataUltimCanviReference:dd/MM/yyyy HH:mm:ss.fff}");
                     }
-
-                    _logger.Info($"🔍 Executant consulta Oracle per últim canvi (últims {diasEnRe} dies, RESULT_LAST_CHANGE >= {dataUltimCanviReference:dd/MM/yyyy HH:mm:ss.fff})");
+                    else
+                    {
+                        // Primera execució: usar filtres per REQUESTDATE
+                        _logger.Info($"🔍 Executant consulta Oracle per últim canvi (primera execució) - Filtre: REQUESTDATE >= últims {diasEnRe} dies");
+                    }
 
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -840,7 +847,7 @@ RESUM DE LA CÀRREGA PER ÚLTIM CANVI:
                     p.PATIENTFIRSTSURNAME AS PACIENT_COGNOM1,
                     p.PATIENTSECONDSURNAME AS PACIENT_COGNOM2,
                     p.GENDER AS PACIENT_SEXE,
-                    p.DOB AS PACIENT_CIP,
+                    p.NTS AS PACIENT_CIP,
                     d.COLLEGIATEID AS COLEGIAT_ID,
                     REPLACE(d.DOCTORNAME, '''', '´') AS NOM_METGE,
                     REPLACE(LTRIM(cent.CENTERDESCRIPTION), '''', '´') AS CENTRE_DESCRIPCIO,
@@ -896,14 +903,21 @@ RESUM DE LA CÀRREGA PER ÚLTIM CANVI:
                         AND rt.CONTAINERID = rcvf.CONTAINERID
                         AND rt.TESTID = rcvf.TESTID
                     LEFT JOIN MG.TEST test2 ON rt.TESTID = test2.TESTID
-                WHERE
-                    r.REQUESTDATE >= TRUNC(SYSDATE) - :diasEnRe";
+                WHERE";
 
-            // Afegir filtre de últim canvi si es proporciona
+            // Aplicar filtres condicionals segons si és primera execució o carregues posteriors
             if (dataUltimCanviReference.HasValue)
             {
-                consultaBase += $@"
-                    AND rt.RESULTLASTCHANGE >= TIMESTAMP '{dataUltimCanviReference.Value:yyyy-MM-dd HH:mm:ss}.000'";
+                // Carregues posteriors: combinar REQUESTDATE (per performance/índex) + RESULTLASTCHANGE (per canvis recents)
+                consultaBase += @"
+                    r.REQUESTDATE >= TRUNC(SYSDATE) - :diasEnRe AND
+                    rt.RESULTLASTCHANGE >= :dataUltimCanvi";
+            }
+            else
+            {
+                // Primera execució: usar el filtre de dies enrere
+                consultaBase += @"
+                    r.REQUESTDATE >= TRUNC(SYSDATE) - :diasEnRe";
             }
 
             consultaBase += @"

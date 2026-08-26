@@ -351,6 +351,13 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool ActualitzarDataUltimaMostra(string npat, string tipusMostra) =>
             _multiRDbService.ActualitzarDataUltimaMostra(npat, tipusMostra);
 
+        // Comprovacions de mostres negatives
+        public int ComprovarMostraNegativaPerDiagnostic(string pacientSap, string microorganismeMecanismeCaptat, string etiqueta) =>
+            _multiRDbService.ComprovarMostraNegativaPerDiagnostic(pacientSap, microorganismeMecanismeCaptat, etiqueta);
+
+        public bool CancelarMostraDiagnostic(int mostraDiagnosticId) =>
+            _multiRDbService.CancelarMostraDiagnostic(mostraDiagnosticId);
+
         #endregion
     }
 }

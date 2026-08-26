@@ -543,6 +543,23 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>True si s'ha actualitzat almenys un seguiment, False en cas contrari</returns>
         bool ActualitzarDataUltimaMostra(string npat, string tipusMostra);
 
+        /// <summary>
+        /// Comprova si existeix una mostra NEGATIVA (valoracio = '1') per a un diagnòstic específic
+        /// amb els mateixos paràmetres: pacient, microorganisme+mecanisme, etiqueta
+        /// </summary>
+        /// <param name="pacientSap">SAP del pacient</param>
+        /// <param name="microorganismeMecanismeCaptat">Combinació microorganisme + mecanisme (ex: "E.coli - BLEE")</param>
+        /// <param name="etiqueta">Etiqueta de la mostra</param>
+        /// <returns>ID de la mostra negativa si existeix, 0 si no existeix</returns>
+        int ComprovarMostraNegativaPerDiagnostic(string pacientSap, string microorganismeMecanismeCaptat, string etiqueta);
+
+        /// <summary>
+        /// Cancel·la (soft delete) una mostra diagnòstic marcant dt_delete
+        /// </summary>
+        /// <param name="mostraDiagnosticId">ID de la mostra diagnòstic a cancel·lar</param>
+        /// <returns>True si s'ha cancel·lat correctament</returns>
+        bool CancelarMostraDiagnostic(int mostraDiagnosticId);
+
         #endregion
     }
 }

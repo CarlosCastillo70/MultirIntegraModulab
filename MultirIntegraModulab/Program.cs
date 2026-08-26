@@ -72,32 +72,28 @@ namespace MultirIntegraModulab
                     loggerService);
                 loggerService.Info("✅ Web service SAP de pacients configurat");
 
-                // 1.6 Configurar servei d'email per MDO (utilitzant la mateixa configuració)
+                // 1.6 Configurar servei d'email per alertes (pacient no trobat, etc.)
+                // NOTA: El servei d'email sempre es crea per enviar alertes crítiques
+                // El paràmetre EnviarEmailLog només controla l'enviament de logs generals
                 EmailService emailServiceMDO = null;
-                if (configService.EnviarEmailLog)
+                try
                 {
-                    try
-                    {
-                        emailServiceMDO = new EmailService(
-                            configService.SmtpServer,
-                            configService.SmtpPort,
-                            configService.SmtpUsuari,
-                            configService.SmtpPassword,
-                            configService.SmtpUsarSSL,
-                            configService.EmailFrom,
-                            configService.EmailsDestinataris,
-                            loggerService
-                        );
-                        loggerService.Info("✅ Servei d'email per MDO configurat");
-                    }
-                    catch (Exception exEmail)
-                    {
-                        loggerService.Warning($"⚠️ No s'ha pogut configurar el servei d'email per MDO: {exEmail.Message}");
-                    }
+                    emailServiceMDO = new EmailService(
+                        configService.SmtpServer,
+                        configService.SmtpPort,
+                        configService.SmtpUsuari,
+                        configService.SmtpPassword,
+                        configService.SmtpUsarSSL,
+                        configService.EmailFrom,
+                        configService.EmailsDestinataris,
+                        loggerService
+                    );
+                    loggerService.Info("✅ Servei d'email per alertes configurat (pacient no trobat, etc.)");
                 }
-                else
+                catch (Exception exEmail)
                 {
-                    loggerService.Info("ℹ️ Servei d'email desactivat - no s'enviaran alertes MDO");
+                    loggerService.Warning($"⚠️ No s'ha pogut configurar el servei d'email per alertes: {exEmail.Message}");
+                    loggerService.Warning("⚠️ Les alertes de pacient no trobat i altres no s'enviaran");
                 }
 
                 // 1.7 Configurar servei d'aplicació
@@ -293,11 +289,11 @@ namespace MultirIntegraModulab
                     // ===========================================================
                     // ERROR: CAP TIPUS DE CÀRREGA ACTIVAT
                     // ===========================================================
-                    
+
                     throw new InvalidOperationException(
                         "Cap tipus de càrrega està activat. " +
                         "Activar almenys un tipus a App.config: " +
-                        "CarregaIncremental_Activa, CarregaDiesEnrere_Activa o CarregaRangDates_Activa");
+                        "CarregaIncremental_Activa, CarregaIncremental_UltimCanvi_Activa, CarregaDiesEnrere_Activa o CarregaRangDates_Activa");
                 }
 
 

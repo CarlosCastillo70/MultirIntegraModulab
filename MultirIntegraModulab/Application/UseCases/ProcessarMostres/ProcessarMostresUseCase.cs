@@ -69,12 +69,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             _comprovadorMecanismesUseCase = new ComprovadorMecanismesResistenciaUseCase(_multiRRepository, _logger);
             
             // Inicialitzar Use Cases de processament
-            _processarPositivaUseCase = new ProcessarMostraPositivaUseCase(_multiRRepository, _pacientWebService, _logger);
+            _processarPositivaUseCase = new ProcessarMostraPositivaUseCase(_multiRRepository, _pacientWebService, _logger, _emailService);
             _processarNegativaUseCase = new ProcessarMostraNegativaUseCase(_multiRRepository, _logger);
-            _processarPositivesUseCase = new ProcessarMostresPositivesUseCase(_multiRRepository, _pacientWebService, _logger);
+            _processarPositivesUseCase = new ProcessarMostresPositivesUseCase(_multiRRepository, _pacientWebService, _logger, _emailService);
             _processarNegativesUseCase = new ProcessarMostresNegativesUseCase(_multiRRepository, _logger);
-            _processarMixtaUseCase = new ProcessarMostraMixtaUseCase(_multiRRepository, _pacientWebService, _logger);
-            _processarVirusRespiratoriUseCase = new ProcessarMostraVirusRespiratoriUseCase(_multiRRepository, _pacientWebService, _logger);
+            _processarMixtaUseCase = new ProcessarMostraMixtaUseCase(_multiRRepository, _pacientWebService, _logger, _emailService);
+            _processarVirusRespiratoriUseCase = new ProcessarMostraVirusRespiratoriUseCase(_multiRRepository, _pacientWebService, _logger, _emailService);
             _processarMixtaMMRVRUseCase = new ProcessarMostraMixtaMMRVRUseCase(
                 _multiRRepository, 
                 _pacientWebService, 
@@ -944,7 +944,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// </summary>
         private bool TractarMostraRevalidada(Mostra mostra, TipusIncorporacio tipusIncorporacio)
         {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Mostra revalidada - comprobant canvis...");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Mostra revalidada. Es comprova si hi ha hagut canvis");
 
             try
             {
@@ -1003,7 +1003,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 else
                 {
                     // CAS 2: Hi ha canvis - guardar historial, esborrar i continuar
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Mostres diferents - es detallen els canvis. Guardant historial i esborrant dades...");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Mostra entrant és diferent a la mostra existent. Es detallen els canvis.");
                     
                     // Mostrar canvis detectats
                     foreach (var canvi in resultatComparacio.CanvisDetectats)
@@ -1034,11 +1034,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     if (historialGuardat)
                     {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Historial guardat correctament");
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Historial de canvi de mostra desat correctament");
                     }
                     else
                     {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut guardar l'historial");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut desar l'historial");
                     }
 
                     // Esborrar dades de la mostra
@@ -1055,7 +1055,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
                     // Continuar processament per re-processar la mostra amb les noves dades
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}➡️ Continuant processament amb noves dades...");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}➡️ Continuant processament amb les noves dades");
                     return true; // Continuar processament
                 }
             }

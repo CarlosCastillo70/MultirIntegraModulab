@@ -339,6 +339,73 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             return sb.ToString();
         }
 
+        public bool EnviarEmailPersonalitzat(string subject, string body, List<string> destinataris, bool prioritatAlta = false)
+        {
+            if (destinataris == null || !destinataris.Any())
+            {
+                Log("⚠️ No hi ha destinataris configurats per l'email personalitzat", "WARNING");
+                return false;
+            }
+
+            try
+            {
+                Log($"📧 Preparant enviament d'email personalitzat: '{subject}'");
+
+                using (var message = new MailMessage())
+                {
+                    message.From = new MailAddress(_emailFrom, "Sistema MultiR - Integració Modulab");
+
+                    foreach (var destinatari in destinataris)
+                    {
+                        message.To.Add(new MailAddress(destinatari));
+                    }
+
+                    message.Subject = subject;
+                    message.Body = body;
+                    message.IsBodyHtml = false;
+                    message.BodyEncoding = Encoding.UTF8;
+                    message.SubjectEncoding = Encoding.UTF8;
+                    if (prioritatAlta)
+                    {
+                        message.Priority = MailPriority.High;
+                    }
+
+                    using (var smtpClient = new SmtpClient(_smtpServer, _smtpPort))
+                    {
+                        if (_utilitzarAutenticacio)
+                        {
+                            smtpClient.Credentials = new NetworkCredential(_smtpUsuari, _smtpPassword);
+                            Log($"🔐 Autenticació SMTP: {_smtpUsuari}");
+                        }
+                        else
+                        {
+                            smtpClient.UseDefaultCredentials = false;
+                            Log($"🔓 Connexió SMTP anònima");
+                        }
+
+                        smtpClient.EnableSsl = _usarSSL;
+                        smtpClient.Timeout = 30000;
+
+                        Log($"📤 Enviant email personalitzat a {destinataris.Count} destinatari(s) via {_smtpServer}:{_smtpPort}...");
+                        smtpClient.Send(message);
+
+                        Log($"✅ Email personalitzat enviat a: {string.Join(", ", destinataris)}");
+                        return true;
+                    }
+                }
+            }
+            catch (SmtpException ex)
+            {
+                Log($"❌ Error SMTP enviant email personalitzat: {ex.Message} (Codi: {ex.StatusCode})", "ERROR");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log($"❌ Error enviant email personalitzat: {ex.Message}", "ERROR");
+                return false;
+            }
+        }
+
         /// <summary>
         /// Envia un email d'alerta de MDO (Malaltia de Declaració Obligatòria)
         /// </summary>

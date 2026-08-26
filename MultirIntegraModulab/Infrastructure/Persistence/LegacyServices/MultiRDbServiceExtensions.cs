@@ -1225,7 +1225,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🔎 Comprovant / creant mostra del pacient '{pacientSap}' data '{dataMostra:dd/MM/yyyy}' tipus '{tipusMostra}'");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Comprovant / creant mostra del pacient '{pacientSap}' data '{dataMostra:dd/MM/yyyy}' tipus '{tipusMostra}'");
                     conn.Open();
 
                     // Obtenir les dades de la mostra existent
@@ -1626,7 +1626,7 @@ namespace MultirIntegraModulab
             {
                 resultat.HiHaCanvis = true;
 
-                // Identificar combinacions noves (queestan a l'entrant però no a l'existent)
+                // Identificar les noves combinacions (estan a la mostra entrant però no a la mostra ja existent)
                 var combinacionsNoves = conjuntEntrant.Except(conjuntExistent).ToList();
                 if (combinacionsNoves.Any())
                 {
@@ -2575,6 +2575,116 @@ namespace MultirIntegraModulab
             catch (Exception ex)
             {
                 Logger.Error($"Error esborrant dades de mostra {etiquetaId}: {ex.Message}", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Comprova si existeix una mostra NEGATIVA per a un diagnòstic específic
+        /// </summary>
+        public int ComprovarMostraNegativaPerDiagnostic(string pacientSap, string microorganismeMecanismeCaptat, string etiqueta)
+        {
+            if (string.IsNullOrWhiteSpace(pacientSap))
+            {
+                Logger.Warning("ComprovarMostraNegativaPerDiagnostic: pacientSap és null o buit");
+                return 0;
+            }
+
+            if (string.IsNullOrWhiteSpace(microorganismeMecanismeCaptat))
+            {
+                Logger.Warning("ComprovarMostraNegativaPerDiagnostic: microorganismeMecanismeCaptat és null o buit");
+                return 0;
+            }
+
+            if (string.IsNullOrWhiteSpace(etiqueta))
+            {
+                Logger.Warning("ComprovarMostraNegativaPerDiagnostic: etiqueta és null o buida");
+                return 0;
+            }
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+
+                    string sql = @"SELECT id 
+                                  FROM pacients_diagnostics_mostra 
+                                  WHERE npat = @pacientSap 
+                                  AND valoracio = '1'
+                                  AND etiqueta = @etiqueta
+                                  AND microorganisme_mecanisme_captat = @microorganismeMecanismeCaptat
+                                  AND dt_delete IS NULL
+                                  LIMIT 1";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
+                        cmd.Parameters.AddWithValue("@etiqueta", etiqueta);
+                        cmd.Parameters.AddWithValue("@microorganismeMecanismeCaptat", microorganismeMecanismeCaptat);
+
+                        var result = cmd.ExecuteScalar();
+                        int mostraId = result != null ? Convert.ToInt32(result) : 0;
+
+                        if (mostraId > 0)
+                        {
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🔍 Trobada mostra NEGATIVA per pacient '{pacientSap}', diagnòstic '{microorganismeMecanismeCaptat}', etiqueta '{etiqueta}' (ID: {mostraId})");
+                        }
+
+                        return mostraId;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error comprobant mostra negativa per diagnòstic: {ex.Message}", ex);
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// Cancel·la (soft delete) una mostra diagnòstic marcant dt_delete
+        /// </summary>
+        public bool CancelarMostraDiagnostic(int mostraDiagnosticId)
+        {
+            if (mostraDiagnosticId <= 0)
+            {
+                Logger.Warning("CancelarMostraDiagnostic: mostraDiagnosticId invàlid");
+                return false;
+            }
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+
+                    string sql = @"UPDATE pacients_diagnostics_mostra 
+                                  SET dt_delete = NOW(), dt_update = NOW()
+                                  WHERE id = @id";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", mostraDiagnosticId);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                        {
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra negativa cancel·lada correctament (ID: {mostraDiagnosticId})");
+                            return true;
+                        }
+                        else
+                        {
+                            Logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ No s'ha trobat mostra per cancel·lar (ID: {mostraDiagnosticId})");
+                            return false;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error cancel·lant mostra diagnòstic {mostraDiagnosticId}: {ex.Message}", ex);
                 return false;
             }
         }

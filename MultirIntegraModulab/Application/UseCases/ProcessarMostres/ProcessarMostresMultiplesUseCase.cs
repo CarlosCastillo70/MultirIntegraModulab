@@ -17,22 +17,26 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         private readonly IMultiRRepository _multiRRepository;
         private readonly IPacientWebService _pacientWebService;
         private readonly ILoggerService _logger;
+        private readonly Infrastructure.ExternalServices.Email.EmailService _emailService;
         private readonly ProcessarMostraPositivaUseCase _processarPositivaUseCase;
 
         public ProcessarMostresPositivesUseCase(
             IMultiRRepository multiRRepository,
             IPacientWebService pacientWebService,
-            ILoggerService logger)
+            ILoggerService logger,
+            Infrastructure.ExternalServices.Email.EmailService emailService = null)
         {
             _multiRRepository = multiRRepository ?? throw new ArgumentNullException(nameof(multiRRepository));
             _pacientWebService = pacientWebService;
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            
+            _emailService = emailService;
+
             // Reutilitzar el Use Case de mostra positiva individual
             _processarPositivaUseCase = new ProcessarMostraPositivaUseCase(
                 _multiRRepository,
                 _pacientWebService,
-                _logger);
+                _logger,
+                _emailService);
         }
 
         /// <summary>
@@ -202,15 +206,18 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         private readonly IMultiRRepository _multiRRepository;
         private readonly IPacientWebService _pacientWebService;
         private readonly ILoggerService _logger;
+        private readonly Infrastructure.ExternalServices.Email.EmailService _emailService;
 
         public ProcessarMostraMixtaUseCase(
             IMultiRRepository multiRRepository,
             IPacientWebService pacientWebService,
-            ILoggerService logger)
+            ILoggerService logger,
+            Infrastructure.ExternalServices.Email.EmailService emailService = null)
         {
             _multiRRepository = multiRRepository ?? throw new ArgumentNullException(nameof(multiRRepository));
             _pacientWebService = pacientWebService;
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _emailService = emailService;
         }
 
         /// <summary>
@@ -244,7 +251,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 var processarPositivaUseCase = new ProcessarMostraPositivaUseCase(
                     _multiRRepository,
                     _pacientWebService,
-                    _logger);
+                    _logger,
+                    _emailService);
 
                 var resultatPositius = await processarPositivaUseCase.ExecutarAsync(mostraPositius, classificacio);
 

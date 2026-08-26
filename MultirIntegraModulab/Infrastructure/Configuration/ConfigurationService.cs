@@ -462,12 +462,13 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
             // Validar configuració de càrrega
             int tipusCarregaActius = 0;
             if (CarregaIncremental_Activa) tipusCarregaActius++;
+            if (CarregaIncremental_UltimCanvi_Activa) tipusCarregaActius++;
             if (CarregaDiesEnrere_Activa) tipusCarregaActius++;
             if (CarregaRangDates_Activa) tipusCarregaActius++;
 
             if (tipusCarregaActius == 0)
             {
-                errors.Add("Cap tipus de càrrega està activat. Activar almenys un tipus: CarregaIncremental_Activa, CarregaDiesEnrere_Activa o CarregaRangDates_Activa");
+                errors.Add("Cap tipus de càrrega està activat. Activar almenys un tipus: CarregaIncremental_Activa, CarregaIncremental_UltimCanvi_Activa, CarregaDiesEnrere_Activa o CarregaRangDates_Activa");
             }
 
             // Validar paràmetres específics de càrrega per rang de dates
@@ -560,9 +561,17 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
   - Dies revisió seguretat: {CarregaIncremental_DiesRevisioSeguretat} dies
   - Descripció: Carrega només dades noves des de l'última sincronització";
             }
+            else if (CarregaIncremental_UltimCanvi_Activa)
+            {
+                tipusCarrega = "INCREMENTAL SEGONS ÚLTIM CANVI (Prioritat Mitjana)";
+                detallsCarrega = $@"
+  - Dies revisió seguretat: {CarregaIncremental_UltimCanvi_DiesRevisioSeguretat} dies (primera execució)
+  - Dias enrere per capturar: {CarregaIncremental_UltimCanvi_DiasEnRe} dies
+  - Descripció: Carrega dades segons RESULT_LAST_CHANGE (últim canvi del registre)";
+            }
             else if (CarregaDiesEnrere_Activa)
             {
-                tipusCarrega = "DIES ENRERE (Prioritat Mitjana)";
+                tipusCarrega = "DIES ENRERE (Prioritat Mitjana-Alta)";
                 detallsCarrega = $@"
   - Nombre de dies: {CarregaDiesEnrere_NombreDies} dies enrere
   - Descripció: Carrega dades dels últims N dies cap enrere";
@@ -576,7 +585,7 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
                 string dataFiStr = CarregaRangDates_DataFi.HasValue 
                     ? CarregaRangDates_DataFi.Value.ToString("dd/MM/yyyy") 
                     : "NO CONFIGURAT";
-                
+
                 detallsCarrega = $@"
   - Data inici: {dataIniciStr}
   - Data fi: {dataFiStr}
@@ -587,6 +596,7 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
             string avisMultiplesActius = "";
             int comptadorActius = 0;
             if (CarregaIncremental_Activa) comptadorActius++;
+            if (CarregaIncremental_UltimCanvi_Activa) comptadorActius++;
             if (CarregaDiesEnrere_Activa) comptadorActius++;
             if (CarregaRangDates_Activa) comptadorActius++;
 
@@ -594,7 +604,7 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
             {
                 avisMultiplesActius = $@"
   ⚠️  AVÍS: Hi ha {comptadorActius} tipus de càrrega activats simultàniament
-      Només s'executarà el PRIMER tipus (segons prioritat)";
+       Només s'executarà el PRIMER tipus (segons prioritat)";
             }
 
             return $@"
@@ -609,11 +619,12 @@ ENTORN:
 CÀRREGA DE DADES:
   - Tipus de càrrega: {tipusCarrega}{detallsCarrega}{avisMultiplesActius}
   - Límit resultats: {(LimitResultatsProves == 0 ? "Il·limitat" : LimitResultatsProves.ToString())}
-  
+
   Estats de càrrega:
-    1. Incremental: {(CarregaIncremental_Activa ? "✅ ACTIVA" : "✗ Inactiva")}
-    2. Dies Enrere: {(CarregaDiesEnrere_Activa ? "✅ ACTIVA" : "✗ Inactiva")}
-    3. Rang Dates:  {(CarregaRangDates_Activa ? "✅ ACTIVA" : "✗ Inactiva")}
+    1. Incremental Data Resultat i Data Validacio: {(CarregaIncremental_Activa ? "✅ ACTIVA" : "✗ Inactiva")}
+    2. Incremental Últim Canvi: {(CarregaIncremental_UltimCanvi_Activa ? "✅ ACTIVA" : "✗ Inactiva")}
+    3. Dies Enrere: {(CarregaDiesEnrere_Activa ? "✅ ACTIVA" : "✗ Inactiva")}
+    4. Rang Dates:  {(CarregaRangDates_Activa ? "✅ ACTIVA" : "✗ Inactiva")}
 
 FILTRATGE DE MOSTRES:
   - Etiquetes a processar: {etiquetesResum}

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using MultirIntegraModulab.Domain.Entities;
 using MultirIntegraModulab.Domain.Interfaces;
@@ -67,15 +68,18 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         private readonly IMultiRRepository _multiRRepository;
         private readonly IPacientWebService _pacientWebService;
         private readonly ILoggerService _logger;
+        private readonly Infrastructure.ExternalServices.Email.EmailService _emailService;
 
         public ProcessarMostraVirusRespiratoriUseCase(
             IMultiRRepository multiRRepository,
             IPacientWebService pacientWebService,
-            ILoggerService logger)
+            ILoggerService logger,
+            Infrastructure.ExternalServices.Email.EmailService emailService = null)
         {
             _multiRRepository = multiRRepository ?? throw new ArgumentNullException(nameof(multiRRepository));
             _pacientWebService = pacientWebService; // Pot ser null
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _emailService = emailService; // Pot ser null
         }
 
         /// <summary>
@@ -253,7 +257,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 if (dadesPacient == null)
                 {
                     _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'han pogut obtenir dades del pacient {mostra.PacientSap} des del web service. Es crearà pacient amb dades de Modulab");
-                    return CrearPacientDesDeDadesModulab(mostra, "pacient no trobat al web service");
+                    bool pacientCreat = CrearPacientDesDeDadesModulab(mostra, "pacient no trobat al web service");
+                    if (pacientCreat)
+                    {
+                        EnviarAlertaPacientNoTrobatWsSap(mostra);
+                    }
+
+                    return pacientCreat;
                 }
 
                 // Inserir pacient
@@ -332,6 +342,49 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
 
             return sexeNormalitzat;
+        }
+
+        private void EnviarAlertaPacientNoTrobatWsSap(Mostra mostra)
+        {
+            try
+            {
+                if (_emailService == null)
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ EmailService no configurat. No s'envia alerta per pacient no trobat a SAP");
+                    return;
+                }
+
+                List<string> destinataris = _multiRRepository.ObtenirValorsPerClau("EMAIL_PACIENT_NO_TROBAT_WS_SAP");
+                if (destinataris == null || destinataris.Count == 0)
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No hi ha destinataris a parametres_aplicacio per la clau EMAIL_PACIENT_NO_TROBAT_WS_SAP");
+                    return;
+                }
+
+                string subject = $"⚠️ MultiR - Pacient no trobat a SAP - Mostra {mostra?.EtiquetaId}";
+                string body =
+                    "S'ha incorporat una mostra amb pacient no trobat al web service SAP." + Environment.NewLine +
+                    Environment.NewLine +
+                    $"Etiqueta mostra: {mostra?.EtiquetaId}" + Environment.NewLine +
+                    $"Pacient SAP: {mostra?.PacientSap}" + Environment.NewLine +
+                    $"Data: {DateTime.Now:dd/MM/yyyy HH:mm:ss}" + Environment.NewLine +
+                    Environment.NewLine +
+                    "El pacient s'ha creat a MultiR amb dades provinents de la consulta Modulab.";
+
+                bool enviat = _emailService.EnviarEmailPersonalitzat(subject, body, destinataris, true);
+                if (enviat)
+                {
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}📧 Alerta enviada per pacient no trobat a SAP ({mostra?.PacientSap})");
+                }
+                else
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut enviar alerta per pacient no trobat a SAP ({mostra?.PacientSap})");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Error enviant alerta de pacient no trobat a SAP: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -461,7 +514,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 }
 
                 // 5. ACTUALITZAR DATES DIAGNÒSTIQUES
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🔄 Actualitzant data_diagnostic (pacients_diagnostics) per al pacient");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Actualitzant data_diagnostic (pacients_diagnostics) per al pacient");
                 
                 _multiRRepository.ActualitzarDataDiagnosticPacientsDiagnostics(
                     mostra.PacientSap,

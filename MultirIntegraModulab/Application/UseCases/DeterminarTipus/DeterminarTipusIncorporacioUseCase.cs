@@ -45,7 +45,7 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                 var dataResultatOracle = ObtenirDataResultatMaxima(mostra);
                 var dataValidacioOracle = ObtenirDataValidacioMaxima(mostra);
 
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}DataResultat = {dataResultatOracle:dd/MM/yyyy HH:mm}, DataValidacio = {dataValidacioOracle?.ToString("dd/MM/yyyy HH:mm") ?? "null"}");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Data Resultat = {dataResultatOracle:dd/MM/yyyy HH:mm}, Data Validacio = {dataValidacioOracle?.ToString("dd/MM/yyyy HH:mm") ?? "null"}");
 
                 // Classificar tipus incorporació comparant mostra amb una possible mostra de MultiR (MySQL)
                 var tipusEstat = _multiRRepository.ClassificarEstatResultat(

@@ -65,15 +65,18 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         private readonly IMultiRRepository _multiRRepository;
         private readonly IPacientWebService _pacientWebService;
         private readonly ILoggerService _logger;
+        private readonly Infrastructure.ExternalServices.Email.EmailService _emailService;
 
         public ProcessarMostraPositivaUseCase(
             IMultiRRepository multiRRepository,
             IPacientWebService pacientWebService,
-            ILoggerService logger)
+            ILoggerService logger,
+            Infrastructure.ExternalServices.Email.EmailService emailService = null)
         {
             _multiRRepository = multiRRepository ?? throw new ArgumentNullException(nameof(multiRRepository));
             _pacientWebService = pacientWebService; // Pot ser null si no està configurat
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _emailService = emailService; // Pot ser null si no està configurat
         }
 
         /// <summary>
@@ -175,6 +178,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             {
                 try
                 {
+                    
                     var dadesPacient = _pacientWebService.ObtenirDadesPacient(mostra.PacientSap);
 
                     if (dadesPacient != null)
@@ -194,7 +198,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
                     else
                     {
-                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient {mostra.PacientSap} no trobat al web service. Es crearà pacient amb dades de Modulab");
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Pacient {mostra.PacientSap} no trobat al web service SAP. Es crearà pacient amb les dades de Modulab");
 
                         // Es crea pacient amb les dades de Modulab
                         bool pacientCreat = CrearPacientDesDeDadesModulab(mostra, "pacient no trobat al web service");
@@ -202,6 +206,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         if (pacientCreat)
                         {
                             resultat.PacientCreat = true;
+                            EnviarAlertaPacientNoTrobatWsSap(mostra);
                         }
                         else
                         {
@@ -298,6 +303,57 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
 
             return sexeNormalitzat;
+        }
+
+        private void EnviarAlertaPacientNoTrobatWsSap(Mostra mostra)
+        {
+            try
+            {
+                if (_emailService == null)
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ EmailService no configurat. No s'envia alerta per pacient no trobat a SAP");
+                    return;
+                }
+
+                var destinataris = _multiRRepository.ObtenirValorsPerClau("EMAIL_PACIENT_NO_TROBAT_WS_SAP");
+                if (destinataris == null || !destinataris.Any())
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No hi ha destinataris a parametres_aplicacio per la clau EMAIL_PACIENT_NO_TROBAT_WS_SAP");
+                    return;
+                }
+
+                string subject = $"⚠️ MultiR - Pacient no trobat a SAP - Mostra {mostra?.EtiquetaId}";
+                string body =
+                    "ATENCIÓ: S'ha incorporat a MultiR una mostra de Modulab d´un pacient del que no s´han trobat dades a SAP." + Environment.NewLine +
+                    Environment.NewLine +
+                    $"Etiqueta mostra: {mostra?.EtiquetaId}" + Environment.NewLine +
+                    $"Pacient SAP: {mostra?.PacientSap} {mostra?.Resultats[0].PacientNom} {mostra?.Resultats[0].PacientCognom1} {mostra?.Resultats[0].PacientCognom2} " + Environment.NewLine +
+                    $"Data: {DateTime.Now:dd/MM/yyyy HH:mm:ss}" + Environment.NewLine +
+                    Environment.NewLine +
+                    "El pacient s'ha creat a MultiR amb dades provinents de Modulab. Cal revisar-ho" + Environment.NewLine + Environment.NewLine +
+                    "Queden pendents per part vostra fer les accions habituals a SAP";
+
+                if (_emailService == null)
+                {
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ EmailService no configurat. No s'envia alerta per pacient no trobat a SAP");
+                }
+                else
+                {
+                    bool enviat = _emailService.EnviarEmailPersonalitzat(subject, body, destinataris, true);
+                    if (enviat)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}📧 Alerta enviada per pacient no trobat a SAP ({mostra?.PacientSap})");
+                    }
+                    else
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut enviar alerta per pacient no trobat a SAP ({mostra?.PacientSap})");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Error enviant alerta de pacient no trobat a SAP: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -625,32 +681,62 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
 
 
+                    // Comprovació i cancel·lació de mostres negatives anteriors
+                    // ------------------------------------
+                    
+                    // Si existeix una mostra NEGATIVA anterior per al MATEIX diagnòstic amb mateixa etiqueta, cancel·lar-la
+
+                    // Una mostra no pot tenir positiu i negatiu per al mateix diagnòstic i mateixa etiqueta simultàniament
+                    // Aquesta comprovació ha de fer-se AQUÍ, just després de crear el positiu i ABANS de buscar altres diagnòstics
+                    // perquè el positiu té prioritat i hauria de cancel·lar negatius anteriors
+
+
+                    string microorganismeMecanismeABuscar = !string.IsNullOrWhiteSpace(mecanismeId)
+                        ? $"{microorganismeCodi} - {mecanismeId}"
+                        : microorganismeCodi;
+
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Comprovant si existeix mostra NEGATIVA anterior per al diagnòstic '{microorganismeMecanismeABuscar}' amb etiqueta '{mostra.EtiquetaId}'");
+
+                    int mostraNegativaAnterior = _multiRRepository.ComprovarMostraNegativaPerDiagnostic(
+                        mostra.PacientSap,
+                        microorganismeMecanismeABuscar,
+                        mostra.EtiquetaId);
+
+                    if (mostraNegativaAnterior > 0)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Trobada mostra NEGATIVA anterior (ID: {mostraNegativaAnterior}) que cal cancel·lar");
+
+                        bool negatiuCancelat = _multiRRepository.CancelarMostraDiagnostic(mostraNegativaAnterior);
+
+                        if (negatiuCancelat)
+                        {
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra negativa anterior cancel·lada correctament al incorporar el positiu");
+                        }
+                        else
+                        {
+                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ Error cancel·lant la mostra negativa anterior (ID: {mostraNegativaAnterior})");
+                        }
+                    }
+                    else
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ No hi ha mostra negativa anterior a cancel·lar per al diagnòstic '{microorganismeMecanismeABuscar}' amb etiqueta '{mostra.EtiquetaId}'");
+                    }
+
 
 
                     // Buscar altres diagnostics positius del mateix tipus de mostra, per crear mostres negatives que els contrarestin
                     // ------------------------------------
 
-                    // Obtenir tots els diagnòstics positius del pacient per aquest tipus de mostra (excloent l'actual)
-                    var altresDiagnosticsPositius = _multiRRepository.ObtenirDiagnosticsPositiusPacientPerTipusMostra(
-                        mostra.PacientSap,
-                        resultatMostra.MostraDescripcio,
-                        mostra.EtiquetaId
-                        );
-
-
                     // Obtenir tots els diagnòstics positius del pacient per aquest tipus de mostra i equivalents (excloent l'actual)
-                    // 20260213. Afegim també la cerca de tipus de mostra equivalent, per assegurar que capturem tots els positius que poden formar part de la mateixa mostra (etiqueta) encara que el tipus de mostra sigui diferent però equivalent
+                    // Afegim la cerca de tipus de mostra equivalent, per assegurar que capturem tots els positius que poden formar part de la mateixa mostra (etiqueta)
+                    // encara que el tipus de mostra sigui diferent però equivalent
+
                     var altresDiagnosticsPositiusPacientPerTipusMostraIEquivalents = _multiRRepository.ObtenirDiagnosticsPositiusPacientPerTipusMostraIEquivalents(
                         mostra.PacientSap,
                         resultatMostra.MostraDescripcio,
                         mostra.EtiquetaId
                         );
 
-
-                    if (altresDiagnosticsPositius.Count() != altresDiagnosticsPositiusPacientPerTipusMostraIEquivalents.Count())
-                    {
-                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}El nombre de positius incloent o no els equivalents, ÉS DIFERENT {altresDiagnosticsPositius.Count()} vs {altresDiagnosticsPositiusPacientPerTipusMostraIEquivalents.Count()}");
-                    }
 
                     // Filtrar els diagnòstics que tenen alguna mostra amb la mateixa etiqueta que la mostra actual
                     // Això evita crear negatius per diagnòstics que formen part de la mateixa mostra que estem processant
@@ -756,7 +842,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
 
-                    // En aquest punt tenim la llista de positius a contrarestar
+                    // En aquest punt tenim la llista de diagnòstics positius a contrarestar
                     if (diagnosticsPositius == null || diagnosticsPositius.Count == 0)
                     {
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ NO hi ha altres diagnòstics positius a contrarestar amb negatiu, per aquest pacient i tipus de mostra");
@@ -821,26 +907,6 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                             resultatMostra,
                                             altDiagnosticId,
                                             microorganismeMecanismeCaptat);
-
-
-                                    // No deixem registre auditoria, ja que el negatiu ja existia
-
-                                    // Actualitzant (si cal) microorganisme_mecanisme_captat
-                                    //_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}📝 Mostra diagnòstic negativa ja existent. Actualitzant (si cal) microorganisme_mecanisme_captat amb '{microorganismeMecanismeCaptat}'");
-
-                                    //bool actualitzat = _multiRRepository.ActualitzarMicroorganismeMecanismeCaptat(
-                                    //    mostraNegativaExistent,
-                                    //    microorganismeMecanismeCaptat);
-
-                                    //if (actualitzat)
-                                    //{
-                                    //    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Camp microorganisme_mecanisme_captat actualitzat correctament");
-                                    //}
-                                    //else
-                                    //{
-                                    //    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ No s'ha pogut actualitzar el camp microorganisme_mecanisme_captat");
-                                    //}
-
 
                                 }
                                 else
@@ -908,6 +974,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         }
 
                     }
+
 
                 }
             }

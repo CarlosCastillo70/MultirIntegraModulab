@@ -61,7 +61,10 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔀 FLUX MIXT (MMR + VR) activat");
 
             // PART 1: PROCESSAR RESULTATS MMR
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🦠 PROCESSANT RESULTATS MULTIRESISTENTS...");
+            
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}------------------------------------------------------------------------------");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🦠 PROCESSANT RESULTATS MULTIRESISTENTS");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}------------------------------------------------------------------------------");
 
             var mostraMMR = CrearMostraAmbResultatsMMR(mostra);
             
@@ -72,7 +75,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
 
             // PART 2: PROCESSAR RESULTATS VR
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🦠 PROCESSANT RESULTATS VIRUS RESPIRATORIS...");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}------------------------------------------------------------------------------");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🦠 PROCESSANT RESULTATS VIRUS RESPIRATORIS");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}------------------------------------------------------------------------------");
 
             var mostraVR = CrearMostraAmbResultatsVR(mostra);
             

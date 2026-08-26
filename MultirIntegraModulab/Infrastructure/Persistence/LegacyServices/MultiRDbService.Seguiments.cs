@@ -27,7 +27,7 @@ namespace MultirIntegraModulab
 
             try
             {
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🎯 Actualitzant possibles targetes de seguiment per pacient {npat}, tipus mostra '{tipusMostra}'");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🎯 Actualitzant possibles targetes de seguiment per pacient {npat}, tipus mostra '{tipusMostra}'");
 
                 using (var conn = new MySqlConnection(_connectionString))
                 {

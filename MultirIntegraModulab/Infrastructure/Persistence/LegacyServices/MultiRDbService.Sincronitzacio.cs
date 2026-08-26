@@ -15,7 +15,10 @@ namespace MultirIntegraModulab
 
         /// <summary>
         /// Obté les dades de l'última sincronització exitosa
-        /// Busca el registre més recent amb estat 'OK' o 'PARCIAL'
+        /// Prioritat: 
+        /// 1. Busca registre amb MAX(data_ultim_canvi_max_processada) si existeix
+        /// 2. Si no, retorna el registre més recent amb estat 'OK' o 'PARCIAL'
+        /// Això assegura que sempre s'obté la data més recent de canvi per filtrar
         /// </summary>
         /// <returns>Dades de sincronització o null si és la primera execució</returns>
         public DadesSincronitzacio ObtenirUltimaSincronitzacio()
@@ -26,7 +29,8 @@ namespace MultirIntegraModulab
                 {
                     conn.Open();
 
-                    string sql = @"
+                    // Pas 1: Intentar obtenir registre amb MAX(data_ultim_canvi_max_processada)
+                    string sqlMaxUltimCanvi = @"
                         SELECT id, 
                                data_resultat_max_processada,
                                data_validacio_max_processada,
@@ -39,11 +43,11 @@ namespace MultirIntegraModulab
                                observacions,
                                durada_segons
                         FROM integracio_modulab_sincronitzacio
-                        WHERE estat IN ('OK', 'PARCIAL')
-                        ORDER BY data_sincronitzacio DESC
+                        WHERE estat IN ('OK', 'PARCIAL') AND data_ultim_canvi_max_processada IS NOT NULL
+                        ORDER BY data_ultim_canvi_max_processada DESC
                         LIMIT 1";
 
-                    using (var cmd = new MySqlCommand(sql, conn))
+                    using (var cmd = new MySqlCommand(sqlMaxUltimCanvi, conn))
                     {
                         using (var reader = cmd.ExecuteReader())
                         {
@@ -70,17 +74,84 @@ namespace MultirIntegraModulab
 
                                 if (dades.DataResultatMaxProcessada.HasValue)
                                 {
-                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Data resultat màx: {dades.DataResultatMaxProcessada:dd/MM/yyyy HH:mm}");
+                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📅 Data resultat màx: {dades.DataResultatMaxProcessada:dd/MM/yyyy HH:mm}");
                                 }
 
                                 if (dades.DataValidacioMaxProcessada.HasValue)
                                 {
-                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Data validació màx: {dades.DataValidacioMaxProcessada:dd/MM/yyyy HH:mm}");
+                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📅 Data validació màx: {dades.DataValidacioMaxProcessada:dd/MM/yyyy HH:mm}");
                                 }
 
                                 if (dades.DataUltimCanviMaxProcessada.HasValue)
                                 {
-                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Data últim canvi màx: {dades.DataUltimCanviMaxProcessada:dd/MM/yyyy HH:mm}");
+                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📅 Data últim canvi màx: {dades.DataUltimCanviMaxProcessada:dd/MM/yyyy HH:mm:ss}");
+                                }
+
+                                return dades;
+                            }
+                        }
+                    }
+
+                    // Pas 2: Si no hi ha registre amb data_ultim_canvi_max_processada, obtenir el més recent
+                    string sqlUltim = @"
+                        SELECT id, 
+                               data_resultat_max_processada,
+                               data_validacio_max_processada,
+                               data_ultim_canvi_max_processada,
+                               data_sincronitzacio,
+                               nombre_mostres_processades,
+                               nombre_mostres_error,
+                               dies_revisio_seguretat,
+                               estat,
+                               observacions,
+                               durada_segons
+                        FROM integracio_modulab_sincronitzacio
+                        WHERE estat IN ('OK', 'PARCIAL')
+                        ORDER BY data_sincronitzacio DESC
+                        LIMIT 1";
+
+                    using (var cmd = new MySqlCommand(sqlUltim, conn))
+                    {
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                var dades = new DadesSincronitzacio
+                                {
+                                    Id = reader.GetInt32("id"),
+                                    DataResultatMaxProcessada = reader["data_resultat_max_processada"] as DateTime?,
+                                    DataValidacioMaxProcessada = reader["data_validacio_max_processada"] as DateTime?,
+                                    DataUltimCanviMaxProcessada = reader["data_ultim_canvi_max_processada"] as DateTime?,
+                                    DataSincronitzacio = reader.GetDateTime("data_sincronitzacio"),
+                                    NombreMostresProcessades = reader.GetInt32("nombre_mostres_processades"),
+                                    NombreMostresError = reader.GetInt32("nombre_mostres_error"),
+                                    DiesRevisioSeguretat = reader.GetInt32("dies_revisio_seguretat"),
+                                    Estat = reader["estat"]?.ToString() ?? "OK",
+                                    Observacions = reader["observacions"]?.ToString(),
+                                    DuradaSegons = reader["durada_segons"] != DBNull.Value 
+                                        ? Convert.ToDouble(reader["durada_segons"]) 
+                                        : (double?)null
+                                };
+
+                                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📊 Última sincronització: {dades.DataSincronitzacio:dd/MM/yyyy HH:mm} - {dades.NombreMostresProcessades} mostres");
+
+                                if (dades.DataResultatMaxProcessada.HasValue)
+                                {
+                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📅 Data resultat màx: {dades.DataResultatMaxProcessada:dd/MM/yyyy HH:mm}");
+                                }
+
+                                if (dades.DataValidacioMaxProcessada.HasValue)
+                                {
+                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📅 Data validació màx: {dades.DataValidacioMaxProcessada:dd/MM/yyyy HH:mm}");
+                                }
+
+                                if (dades.DataUltimCanviMaxProcessada.HasValue)
+                                {
+                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}📅 Data últim canvi màx: {dades.DataUltimCanviMaxProcessada:dd/MM/yyyy HH:mm:ss}");
+                                }
+                                else
+                                {
+                                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Data últim canvi màx: NO DISPONIBLE (NULL)");
                                 }
 
                                 return dades;

@@ -29,7 +29,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells .Comprovacio)}🔎 Comprovant / creant mostra_microorganisme {diagnosticId} {mostraDiagnosticId}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Comprovant / creant mostra_microorganisme {diagnosticId} {mostraDiagnosticId}");
 
                     conn.Open();
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -147,7 +147,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🔄 Actualitzant data_diagnostic (pacients_diagnostics) per al pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Actualitzant data_diagnostic (pacients_diagnostics) per al pacient {pacientSap}");
 
                     conn.Open();
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -233,7 +233,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🔄 Actualitzant data_diagnostic (pacients_diagnostics_mostra) per al pacient {pacientSap}");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Actualitzant data_diagnostic (pacients_diagnostics_mostra) per al pacient {pacientSap}");
 
                     conn.Open();
                     using (var cmd = new MySqlCommand(sql, conn))
