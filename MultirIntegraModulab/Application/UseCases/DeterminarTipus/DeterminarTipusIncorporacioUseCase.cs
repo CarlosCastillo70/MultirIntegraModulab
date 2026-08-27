@@ -44,8 +44,9 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                 // Obtenir les dates de la mostra de Modulab (Oracle)
                 var dataResultatOracle = ObtenirDataResultatMaxima(mostra);
                 var dataValidacioOracle = ObtenirDataValidacioMaxima(mostra);
+                var dataResultLastChangeOracle = ObtenirDataResultLastChangeMaxima(mostra);
 
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Data Resultat = {dataResultatOracle:dd/MM/yyyy HH:mm}, Data Validacio = {dataValidacioOracle?.ToString("dd/MM/yyyy HH:mm") ?? "null"}");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Data Resultat = {dataResultatOracle:dd/MM/yyyy HH:mm}, Data Validacio = {(dataValidacioOracle.HasValue ? dataValidacioOracle.Value.ToString("dd/MM/yyyy HH:mm") : "NO")}, Data Ultim Canvi = {(dataResultLastChangeOracle.HasValue ? dataResultLastChangeOracle.Value.ToString("dd/MM/yyyy HH:mm:ss") : "NO")}");
 
                 // Classificar tipus incorporació comparant mostra amb una possible mostra de MultiR (MySQL)
                 var tipusEstat = _multiRRepository.ClassificarEstatResultat(
@@ -91,13 +92,33 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
             }
 
             var resultatsValidats = mostra.Resultats.Where(r => r.DataValidacio.HasValue);
-            
+
             if (!resultatsValidats.Any())
             {
                 return null;
             }
 
             return resultatsValidats.Max(r => r.DataValidacio.Value);
+        }
+
+        /// <summary>
+        /// Obté la data de l'últim canvi (ResultLastChange) màxima de la mostra
+        /// </summary>
+        private DateTime? ObtenirDataResultLastChangeMaxima(Mostra mostra)
+        {
+            if (mostra.Resultats == null || !mostra.Resultats.Any())
+            {
+                return null;
+            }
+
+            var resultatsAmbLastChange = mostra.Resultats.Where(r => r.ResultLastChange.HasValue);
+
+            if (!resultatsAmbLastChange.Any())
+            {
+                return null;
+            }
+
+            return resultatsAmbLastChange.Max(r => r.ResultLastChange.Value);
         }
 
         /// <summary>
