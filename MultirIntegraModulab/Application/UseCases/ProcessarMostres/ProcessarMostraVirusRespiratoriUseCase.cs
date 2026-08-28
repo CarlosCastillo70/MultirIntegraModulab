@@ -223,12 +223,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 if (existeix)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✓ Pacient {mostra.PacientSap} ja existeix a MultiR");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✔️ Pacient {mostra.PacientSap} ja existeix a MultiR");
                     return true;
                 }
 
                 // Si no existeix, intentar recuperar-lo del WebService
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Pacient {mostra.PacientSap} no existeix - consultant WebService...");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ Pacient {mostra.PacientSap} no existeix a MultiR. Consultant WebService de SAP");
 
                 if (_pacientWebService == null)
                 {
@@ -255,12 +255,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 if (inserit)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {mostra.PacientSap} creat a MultiR");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {mostra.PacientSap} processat correctament");
                     return true;
                 }
                 else
                 {
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Error creant pacient");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Error processant el pacient");
                     return false;
                 }
             }

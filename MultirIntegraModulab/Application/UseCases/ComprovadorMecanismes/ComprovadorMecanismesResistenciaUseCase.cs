@@ -309,7 +309,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
             }
             else
             {
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mecanisme : '{mecanisme.id} - {mecanisme.descripcio}' JA existeix");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✓ Mecanisme : '{mecanisme.id} - {mecanisme.descripcio}' JA existeix");
                 resultat.MecanismesExistents[mecanisme.id] = true; // Ja existia
                 
                 // 1.1. Comprovar si incorpora_modulab és 0 (no s'ha d'incorporar)
@@ -359,10 +359,6 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                     
                     // Marcar que és una combinació CNI
                     resultatMecanisme.EsCombinacioCNI = true;
-                }
-                else
-                {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Combinació microorganisme '{resultatMostra.AillamentDescripcio}' i mecanisme '{mecanisme.id} - {mecanisme.descripcio}' NO està marcada com a NO INCORPORAR");
                 }
             }
 

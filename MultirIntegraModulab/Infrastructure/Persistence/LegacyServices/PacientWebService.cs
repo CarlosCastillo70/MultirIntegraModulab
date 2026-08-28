@@ -89,7 +89,7 @@ namespace MultirIntegraModulab
         {
             try
             {
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Processant resposta XML per al pacient {pacientSap}");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Processant resposta del WebService de SAP per al pacient {pacientSap}");
                 
                 var xmlDoc = new XmlDocument();
                 xmlDoc.LoadXml(responseXml);
@@ -176,7 +176,7 @@ namespace MultirIntegraModulab
                     }
                 }
 
-                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Pacient {pacientSap} trobat: {pacient.Nom} {pacient.Cognom1} {pacient.Cognom2} (CIP: {pacient.Cip})");
+                Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Pacient {pacientSap} trobat: {pacient.Nom} {pacient.Cognom1} {pacient.Cognom2} (CIP: {pacient.Cip})");
                 return pacient;
             }
             catch (Exception ex)

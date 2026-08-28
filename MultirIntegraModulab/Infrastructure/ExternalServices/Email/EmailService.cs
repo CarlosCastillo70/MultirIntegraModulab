@@ -249,8 +249,8 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             sb.AppendLine($"• Desvalidades: {resum.MostresDesvalidades}");
             sb.AppendLine($"• Antigues: {resum.MostresAntigues}");
             sb.AppendLine($"-------------------");
-            sb.AppendLine($"• Positius incorporats: {resum.PositiusIncorporats}");
-            sb.AppendLine($"• Positius virus resp.: {resum.PositiusVirusRespiratorisIncorporats}");
+            sb.AppendLine($"• Positius MR incorporats: {resum.PositiusIncorporats}");
+            sb.AppendLine($"• Positius VR incorporats: {resum.PositiusVirusRespiratorisIncorporats}");
             sb.AppendLine($"• Negatius incorporats: {resum.NegatiusIncorporats}");
             sb.AppendLine($"• Negatius contraresta positiu: {resum.NegatiusContrarestaPositiuIncorporats}");
             sb.AppendLine($"-------------------");

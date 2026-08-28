@@ -593,7 +593,7 @@ namespace MultirIntegraModulab
             Console.WriteLine($"   - Mostres valides: {valides.Count}");
             Console.WriteLine($"   - Pendents validació: {pendents.Count}");
 
-            logger.Info($"📊 Estadístiques: {mostres.NombreTotalMostres} mostres, {valides.Count} validades, {pendents.Count} pendents de validació");
+            logger.Info($"📊 Estadístiques: {mostres.NombreTotalMostres} mostres ({pendents.Count} pendents de validar, {valides.Count} validades)");
 
             if (mostres.NombreTotalMostres > 0)
             {

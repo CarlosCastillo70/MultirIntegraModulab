@@ -853,6 +853,7 @@ namespace MultirIntegraModulab
                         dt_create, 
                         data_resultat, 
                         data_validacio, 
+                        data_ultim_canvi,
                         resultat
                     ) VALUES (
                         @etiqueta_id, 
@@ -872,6 +873,7 @@ namespace MultirIntegraModulab
                         NOW(), 
                         @data_resultat, 
                         @data_validacio, 
+                        @data_ultim_canvi,
                         @resultat
                     )";
 
@@ -904,6 +906,9 @@ namespace MultirIntegraModulab
 
                     cmd.Parameters.AddWithValue("@data_validacio",
                         resultatUtilitzar.DataValidacio.HasValue ? (object)resultatUtilitzar.DataValidacio.Value : DBNull.Value);
+
+                    cmd.Parameters.AddWithValue("@data_ultim_canvi",
+                        resultatUtilitzar.ResultLastChange.HasValue ? (object)resultatUtilitzar.ResultLastChange.Value : DBNull.Value);
 
                     cmd.Parameters.AddWithValue("@resultat", codiResultat);
 

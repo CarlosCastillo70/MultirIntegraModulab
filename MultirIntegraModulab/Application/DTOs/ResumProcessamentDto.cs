@@ -141,7 +141,7 @@ namespace MultirIntegraModulab.Application.DTOs
             sb.AppendLine("└─────────────────────────────────────────────────────────────┘");
             sb.AppendLine($"   ⚡ Positives             : {MostresPositives,6}");
             sb.AppendLine($"   🔵 Negatives             : {MostresNegatives,6}");
-            sb.AppendLine($"   🟢🔵 Mixtes              : {MostresMixtes,6}");
+            sb.AppendLine($"   🟢🔵 Mixtes             : {MostresMixtes,6}");
             sb.AppendLine();
             
             // Errors i durada

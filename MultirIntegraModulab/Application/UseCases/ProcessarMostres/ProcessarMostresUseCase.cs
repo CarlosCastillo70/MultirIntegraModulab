@@ -229,7 +229,6 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         if (resultatVR.Exitosa)
                         {
                             resum.MostresPositives++;
-                            resum.PositiusIncorporats += resultatVR.PositiusVirusRespiratorisIncorporats;
                             resum.PositiusVirusRespiratorisIncorporats += resultatVR.PositiusVirusRespiratorisIncorporats;
                             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Mostra VR processada correctament");
                         }
@@ -253,7 +252,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         {
                             resum.MostresMixtes++;
                             resum.MostresPositives++;
-                            resum.PositiusIncorporats += resultatMixt.PositiusMMRIncorporats + resultatMixt.PositiusVRIncorporats;
+                            resum.PositiusIncorporats += resultatMixt.PositiusMMRIncorporats;
                             resum.NegatiusIncorporats += resultatMixt.NegatiusMMRIncorporats;
                             resum.PositiusVirusRespiratorisIncorporats += resultatMixt.PositiusVRIncorporats;
                             resum.NegatiusContrarestaPositiuIncorporats += resultatMixt.NegatiusMMRContrarestaPositiuIncorporats;
@@ -274,7 +273,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         _logger.Info($"🧬 FLUX MULTIRESISTENT activat");
                     
                         // FASE 8: Classificar mostra (un sol positiu, múltiples negatius, mixta, ...)
-                        _logger.Info($"📋 Classificant mostra...");
+                        _logger.Info($"📋 Classificant mostra");
                         var classificacio = _classificarMostraUseCase.Executar(mostra);
                         
                         if (classificacio == null)
