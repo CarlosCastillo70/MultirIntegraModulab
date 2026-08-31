@@ -173,11 +173,11 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
             if (!mecanismes.Any())
             {
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Registre amb microorganisme '{registre.AillamentDescripcio}' SENSE mecanismes de resistència");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Resultat amb microorganisme '{registre.AillamentDescripcio}' SENSE mecanismes de resistència");
                 return;
             }
 
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Registre amb microorganisme '{registre.AillamentDescripcio}' SI que té {mecanismes.Count} mecanisme(s) de resistència");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Resultat amb microorganisme '{registre.AillamentDescripcio}' SI que té {mecanismes.Count} mecanisme(s) de resistència");
 
             // Llista per guardar els mecanismes que s'han d'eliminar del registre
             var mecanismesAEliminar = new List<int>(); // Posicions (1-5) dels mecanismes a eliminar

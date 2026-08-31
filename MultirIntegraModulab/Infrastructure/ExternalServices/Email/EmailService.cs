@@ -216,7 +216,14 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             try
             {
                 var dataExecutio = DateTime.Now;
-                var subject = $"MultiR - Integració Modulab - {dataExecutio:dd/MM/yyyy HH:mm}";
+                bool teIncorporacions = resum.PositiusIncorporats > 0
+                    || resum.PositiusVirusRespiratorisIncorporats > 0
+                    || resum.NegatiusIncorporats > 0
+                    || resum.NegatiusContrarestaPositiuIncorporats > 0;
+
+                var subjectBase = $"MultiR - Integració Modulab - {dataExecutio:dd/MM/yyyy HH:mm}";
+                var subject = teIncorporacions ? $"⚠️ {subjectBase}" : subjectBase;
+
                 var body = GenerarCosEmailResum(resum, dataExecutio);
                 return EnviarEmailAmbLog(subject, body, logFilePath);
             }

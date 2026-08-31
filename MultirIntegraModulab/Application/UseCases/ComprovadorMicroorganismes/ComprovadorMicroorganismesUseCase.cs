@@ -143,7 +143,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
             string microorganisme, 
             ResultatComprovacioMicroorganismes resultat)
         {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Comprovant microorganisme: '{microorganisme}'");
+            //_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Comprovant microorganisme: '{microorganisme}'");
             
             try
             {
@@ -182,18 +182,18 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 {
                     string tipus = esEspecial.Value ? "ESPECIAL" : "normal";
                     string alerta = esEspecial.Value ? "⚡ " : " ";
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}{alerta}Microorganisme {microorganisme}: '{tipus}'");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}{alerta}Microorganisme '{microorganisme}': '{tipus}'");
                     resultat.MicroorganismesEspecials[microorganisme] = esEspecial.Value;
                 }
                 else
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganisme {microorganisme}: desconegut (nou a la base de dades)");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Microorganisme {microorganisme}: desconegut (nou a la base de dades)");
                     resultat.MicroorganismesEspecials[microorganisme] = false;
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Error comprovant microorganisme {microorganisme}", ex);
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Error comprovant microorganisme {microorganisme}", ex);
                 resultat.MicroorganismesNoCreats.Add(microorganisme);
             }
         }

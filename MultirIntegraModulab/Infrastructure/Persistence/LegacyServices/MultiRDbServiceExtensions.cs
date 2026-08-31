@@ -1394,8 +1394,19 @@ namespace MultirIntegraModulab
                     bool esVirusRespiratori = false;
                     if (!string.IsNullOrWhiteSpace(microorganismeMecanismeCaptat))
                     {
-                        var tipusMicroorganisme = ObtenirTipusMicroorganisme(microorganismeMecanismeCaptat);
-                        esVirusRespiratori = (tipusMicroorganisme == TipusMicroorganisme.VirusRespiratori);
+                        string microorganismePerTipus = microorganismeMecanismeCaptat;
+
+                        int separadorMecanisme = microorganismeMecanismeCaptat.IndexOf("-", StringComparison.Ordinal);
+                        if (separadorMecanisme >= 0)
+                        {
+                            microorganismePerTipus = microorganismeMecanismeCaptat.Substring(0, separadorMecanisme).Trim();
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(microorganismePerTipus))
+                        {
+                            var tipusMicroorganisme = ObtenirTipusMicroorganisme(microorganismePerTipus);
+                            esVirusRespiratori = (tipusMicroorganisme == TipusMicroorganisme.VirusRespiratori);
+                        }
                     }
 
                     // Determinar si la mostra és positiva:
