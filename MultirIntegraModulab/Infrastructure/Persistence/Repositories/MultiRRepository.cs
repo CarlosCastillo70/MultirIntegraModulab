@@ -75,6 +75,12 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public bool ActualitzarMicroorganismeMecanismeCaptat(int mostraDiagnosticId, string nouMicroorganismeMecanisme) =>
             _multiRDbService.ActualitzarMicroorganismeMecanismeCaptat(mostraDiagnosticId, nouMicroorganismeMecanisme);
 
+        public List<int> ObtenirIdsMostresDiagnosticPerEtiqueta(string etiqueta) =>
+            _multiRDbService.ObtenirIdsMostresDiagnosticPerEtiqueta(etiqueta);
+
+        public int ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(string etiqueta, string microorganismeMecanismeCaptat) =>
+            _multiRDbService.ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(etiqueta, microorganismeMecanismeCaptat);
+
         public bool EsborrarDadesMostra(string etiquetaId) => 
             _multiRDbService.EsborrarDadesMostra(etiquetaId);
 

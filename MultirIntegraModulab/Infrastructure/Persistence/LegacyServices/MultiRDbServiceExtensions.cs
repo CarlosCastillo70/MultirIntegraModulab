@@ -102,7 +102,7 @@ namespace MultirIntegraModulab
 
                         if (count > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Mecanisme '{mecanismeCodi}' JA existeix");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✓ Mecanisme '{mecanismeCodi}' JA existeix");
                             return true;
                         }
                     }

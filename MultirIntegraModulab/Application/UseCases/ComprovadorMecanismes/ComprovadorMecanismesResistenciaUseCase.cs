@@ -285,7 +285,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
         {
             var resultatMecanisme = new ResultatComprovacioMecanisme();
             
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}Comprovant existencia del mecanisme: '{mecanisme.id} {mecanisme.descripcio}' i combinacions microorganisme / mecanisme, a no incorporar");
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Comprovant existencia del mecanisme: '{mecanisme.id} {mecanisme.descripcio}' i combinacions microorganisme / mecanisme, a no incorporar");
 
             // 1. Comprovar si el mecanisme existeix
             var estatMecanisme = _multiRRepository.ComprovarExistenciaMecanisme(mecanisme.id);
@@ -315,7 +315,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 // 1.1. Comprovar si incorpora_modulab és 0 (no s'ha d'incorporar)
                 if (estatMecanisme.IncorporaModulab.HasValue && !estatMecanisme.IncorporaModulab.Value)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Mecanisme de resistència {mecanisme.id} marcat com NO INCORPORAR ");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Mecanisme de resistència '{mecanisme.id}' marcat com NO INCORPORAR ");
                     
                     // Afegir a la llista de mecanismes no incorporats
                     resultat.MecanismesNoIncorporats.Add(mecanisme.id);
@@ -396,7 +396,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                         break;
                 }
 
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🗑️ Eliminat mecanisme {posicio} del registre (marcat com NO INCORPORAR)");
+                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}🗑️ Eliminat mecanisme '{posicio}'     del registre (marcat com NO INCORPORAR)");
             }
         }
     }

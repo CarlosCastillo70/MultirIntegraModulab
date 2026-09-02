@@ -172,6 +172,21 @@ namespace MultirIntegraModulab.Domain.Interfaces
         bool ActualitzarMicroorganismeMecanismeCaptat(int mostraDiagnosticId, string nouMicroorganismeMecanisme);
 
         /// <summary>
+        /// Obté els IDs de totes les mostres diagnòstiques per una etiqueta específica
+        /// </summary>
+        /// <param name="etiqueta">Etiqueta de les mostres</param>
+        /// <returns>Llista d'IDs de mostres diagnòstiques</returns>
+        List<int> ObtenirIdsMostresDiagnosticPerEtiqueta(string etiqueta);
+
+        /// <summary>
+        /// Actualitza el camp microorganisme_mecanisme_captat per TOTES les mostres diagnòstiques d'una etiqueta.
+        /// </summary>
+        /// <param name="etiqueta">Etiqueta de les mostres</param>
+        /// <param name="microorganismeMecanismeCaptat">Valor complet a assignar</param>
+        /// <returns>Nombre de mostres actualitzades</returns>
+        int ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(string etiqueta, string microorganismeMecanismeCaptat);
+
+        /// <summary>
         /// Obté les dades completes d'una mostra diagnòstic existent
         /// </summary>
         /// <param name="etiquetaId">Etiqueta de la mostra</param>

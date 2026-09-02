@@ -78,7 +78,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                     return resultat;
                 }
 
-                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Trobats {microorganismes.Count} microorganismes únics a comprovar");
+                //_logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Trobats {microorganismes.Count} microorganismes únics a comprovar");
 
                 // Comprovar cada microorganisme
                 foreach (var microorganisme in microorganismes)
@@ -162,7 +162,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
                 var microorganismeBd = _multiRRepository.ObtenirMicroorganisme(microorganisme);
                 if (microorganismeBd != null && !microorganismeBd.IncorporaModulab)
                 {
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Microorganisme {microorganisme} marcat com NO INCORPORAR");
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Microorganisme '{microorganisme}' marcat com NO INCORPORAR");
                     resultat.MicroorganismesNoIncorporats.Add(microorganisme);
 
                     var resultatMostraAssociat = mostra.Resultats.FirstOrDefault(r =>
@@ -180,7 +180,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes
 
                 if (esEspecial.HasValue)
                 {
-                    string tipus = esEspecial.Value ? "ESPECIAL" : "normal";
+                    string tipus = esEspecial.Value ? "ESPECIAL" : "Normal";
                     string alerta = esEspecial.Value ? "⚡ " : " ";
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}{alerta}Microorganisme '{microorganisme}': '{tipus}'");
                     resultat.MicroorganismesEspecials[microorganisme] = esEspecial.Value;

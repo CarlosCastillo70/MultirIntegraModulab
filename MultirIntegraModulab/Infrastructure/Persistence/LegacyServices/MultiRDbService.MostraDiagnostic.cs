@@ -1,6 +1,7 @@
 using MultirIntegraModulab.Application.Helpers;
 using MySql.Data.MySqlClient;
 using System;
+using System.Collections.Generic;
 
 namespace MultirIntegraModulab
 {
@@ -169,6 +170,117 @@ namespace MultirIntegraModulab
             {
                 Logger.Error($"Error actualitzant microorganisme_mecanisme_captat per mostra diagnòstic ID {mostraDiagnosticId}: {ex.Message}", ex);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Obté els IDs de totes les mostres diagnòstiques per una etiqueta específica
+        /// </summary>
+        /// <param name="etiqueta">Etiqueta de les mostres</param>
+        /// <returns>Llista d'IDs de mostres diagnòstiques</returns>
+        public List<int> ObtenirIdsMostresDiagnosticPerEtiqueta(string etiqueta)
+        {
+            if (string.IsNullOrWhiteSpace(etiqueta))
+            {
+                Logger.Warning("ObtenirIdsMostresDiagnosticPerEtiqueta: etiqueta és null o buida");
+                return new List<int>();
+            }
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+
+                    string sql = @"
+                        SELECT id 
+                        FROM pacients_diagnostics_mostra 
+                        WHERE etiqueta = @etiqueta 
+                          AND dt_delete IS NULL
+                        ORDER BY id";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@etiqueta", etiqueta);
+
+                        var ids = new List<int>();
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                ids.Add(Convert.ToInt32(reader["id"]));
+                            }
+                        }
+
+                        return ids;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error obtenint IDs mostres diagnòstiques per etiqueta {etiqueta}: {ex.Message}", ex);
+                return new List<int>();
+            }
+        }
+
+        /// <summary>
+        /// Actualitza el camp microorganisme_mecanisme_captat per TOTES les mostres diagnòstiques d'una etiqueta específica.
+        /// Estableix el valor de forma directa (no concatena) per assegurar que totes les mostres tenguin el mateix valor.
+        /// </summary>
+        /// <param name="etiqueta">Etiqueta de les mostres a actualitzar</param>
+        /// <param name="microorganismeMecanismeCaptat">Valor complet a assignar</param>
+        /// <returns>Nombre de mostres actualitzades, o -1 si hi ha error</returns>
+        public int ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(string etiqueta, string microorganismeMecanismeCaptat)
+        {
+            if (string.IsNullOrWhiteSpace(etiqueta))
+            {
+                Logger.Warning("ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta: etiqueta és null o buida");
+                return -1;
+            }
+
+            if (string.IsNullOrWhiteSpace(microorganismeMecanismeCaptat))
+            {
+                Logger.Warning("ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta: microorganismeMecanismeCaptat és null o buit");
+                return -1;
+            }
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+
+                    string sql = @"
+                        UPDATE pacients_diagnostics_mostra 
+                        SET microorganisme_mecanisme_captat = @microorganismeMecanismeCaptat,
+                            dt_update = NOW()
+                        WHERE etiqueta = @etiqueta 
+                          AND dt_delete IS NULL";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@etiqueta", etiqueta);
+                        cmd.Parameters.AddWithValue("@microorganismeMecanismeCaptat", microorganismeMecanismeCaptat);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                        {
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Actualitzat 'microorganisme_mecanisme_captat' per {rowsAffected} mostra(es) diagnòstic(s) amb etiqueta '{etiqueta}'");
+                            return rowsAffected;
+                        }
+                        else
+                        {
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}ℹ️ No hi ha mostres diagnòstiques amb etiqueta '{etiqueta}' per actualitzar");
+                            return 0;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error actualitzant microorganisme_mecanisme_captat per etiqueta {etiqueta}: {ex.Message}", ex);
+                return -1;
             }
         }
     }

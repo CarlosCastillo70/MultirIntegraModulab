@@ -196,7 +196,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 }
 
                 // Resultat final
-                resultat.Missatge = $"VR processada correctament: {resultat.ResultatsProcessats} resultats";
+                resultat.Missatge = $"✅ VR processada correctament: {resultat.ResultatsProcessats} resultats";
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✔️ Mostra VR {mostra.EtiquetaId} processada: {resultat}");
 
                 return resultat;

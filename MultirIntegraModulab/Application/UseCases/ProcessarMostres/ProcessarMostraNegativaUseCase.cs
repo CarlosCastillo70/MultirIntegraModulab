@@ -139,7 +139,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 if (resultat.Exitosa)
                 {
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Mostra negativa {mostra.EtiquetaId} processada correctament: " +
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✅ Mostra negativa {mostra.EtiquetaId} processada correctament: " +
                         $"{resultat.DiagnosticsCreats} diagnòstics creats, {resultat.DiagnosticsExistents} diagnòstics existents, " +
                         $"{resultat.MostresDiagnosticCreades} mostres creades, {resultat.MostresDiagnosticExistents} mostres existents, " +
                         $"{resultat.RelacionsCreades} relacions creades, {resultat.RelacionsDuplicades} duplicades, " +
@@ -415,7 +415,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                             {
                                 mostraDiagnosticIdFinal = mostraDiagnosticExistent;
                                 mostraDiagnosticCreada = true;
-                                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}Mostra diagnòstic negativa JA existeix (ID: {mostraDiagnosticIdFinal})");
+                                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✓ Mostra diagnòstic negativa JA existeix (ID: {mostraDiagnosticIdFinal})");
                             }
                             else
                             {

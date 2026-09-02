@@ -547,7 +547,7 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
                 
             // Obtenir resum d'etiquetes a processar
             var etiquetesResum = EtiquetesMostresAProcessar.Any() 
-                ? $"{EtiquetesMostresAProcessar.Count} etiqueta(es): {string.Join(", ", EtiquetesMostresAProcessar)}"
+                ? $"{EtiquetesMostresAProcessar.Count} etiqueta(es): {string.Join(", ", EtiquetesMostresAProcessar)} ⚠️"
                 : "Totes les mostres";
 
             // Determinar quin tipus de càrrega s'utilitzarà
