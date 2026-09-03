@@ -911,7 +911,7 @@ RESUM DE LA CÀRREGA PER ÚLTIM CANVI:
                 // Carregues posteriors: combinar REQUESTDATE (per performance/índex) + RESULTLASTCHANGE (per canvis recents)
                 consultaBase += @"
                     r.REQUESTDATE >= TRUNC(SYSDATE) - :diasEnRe AND
-                    rt.RESULTLASTCHANGE >= :dataUltimCanvi";
+                    rt.RESULTLASTCHANGE > :dataUltimCanvi";
             }
             else
             {
