@@ -262,7 +262,8 @@ namespace MultirIntegraModulab.Domain.Enums
         Repetida,
         Desvalidada,
         Validada,
-        Revalidada
+        Revalidada,
+        Canviada
     }
 
     /// <summary>

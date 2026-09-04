@@ -216,7 +216,7 @@ namespace MultirIntegraModulab
             return null;
         }
 
-        public TipusEstatResultat ClassificarEstatResultat(string etiquetaId, DateTime? dataResultatOracle, DateTime? dataValidacioOracle)
+        public TipusEstatResultat ClassificarEstatResultat(string etiquetaId, DateTime? dataResultatOracle, DateTime? dataValidacioOracle, Mostra mostraEntrant = null)
         {
             // Es comprova si la mostra (etiqueta) existeix a MultiR
 
@@ -241,7 +241,15 @@ namespace MultirIntegraModulab
             if (estatMySQL.DataResultat == dataResultatOracle &&
                 estatMySQL.DataValidacio == dataValidacioOracle)
             {
-                return TipusEstatResultat.Repetida;
+                if (mostraEntrant == null)
+                {
+                    return TipusEstatResultat.Repetida;
+                }
+
+                bool hiHaCanvisContingut = HiHaCanvisContingutMostra(etiquetaId, mostraEntrant);
+                return hiHaCanvisContingut
+                    ? TipusEstatResultat.Canviada
+                    : TipusEstatResultat.Repetida;
             }
 
             if (estatMySQL.DataResultat.HasValue && estatMySQL.DataValidacio.HasValue &&
@@ -263,6 +271,35 @@ namespace MultirIntegraModulab
             }
 
             return TipusEstatResultat.Canviada;
+        }
+
+        private bool HiHaCanvisContingutMostra(string etiquetaId, Mostra mostraEntrant)
+        {
+            var mostraExistent = ObtenirMostraDiagnostic(etiquetaId);
+            if (mostraExistent == null)
+            {
+                return false;
+            }
+
+            var tipusMostraEntrant = mostraEntrant.Resultats?.FirstOrDefault()?.MostraDescripcio;
+            if (!string.Equals(mostraExistent.TipusMostra, tipusMostraEntrant, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var tipusProvaEntrant = mostraEntrant.Resultats?.FirstOrDefault()?.ProvaDescripcio;
+            if (!string.Equals(mostraExistent.TipusProva, tipusProvaEntrant, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var combinacionsExistents = ObtenirCombinacionsMicroorganismeMecanisme(etiquetaId) ?? new List<CombinacioMicroorganismeMecanisme>();
+            var combinacionsEntrants = ObtenirCombinacionsMostraEntrant(mostraEntrant) ?? new List<CombinacioMicroorganismeMecanisme>();
+
+            var conjuntExistent = new HashSet<string>(combinacionsExistents.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
+            var conjuntEntrant = new HashSet<string>(combinacionsEntrants.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
+
+            return !conjuntExistent.SetEquals(conjuntEntrant);
         }
 
         public bool ActualitzarResultatAmbNovesDates(string etiquetaId, DateTime? dataResultat, DateTime? dataValidacio)
@@ -1607,6 +1644,8 @@ namespace MultirIntegraModulab
 
             // 2. COMPARAR TIPUS DE MOSTRA
             var tipusMostraEntrant = mostraEntrant.Resultats.FirstOrDefault()?.MostraDescripcio;
+            resultat.TipusMostraAnterior = mostraExistent.TipusMostra;
+            resultat.TipusMostraNou = tipusMostraEntrant;
             if (!string.Equals(mostraExistent.TipusMostra, tipusMostraEntrant, StringComparison.OrdinalIgnoreCase))
             {
                 resultat.HiHaCanvis = true;
@@ -1615,11 +1654,11 @@ namespace MultirIntegraModulab
 
             // 3. COMPARAR TIPUS DE PROVA
             var tipusProvaEntrant = mostraEntrant.Resultats.FirstOrDefault()?.ProvaDescripcio;
+            resultat.TipusProvaAnterior = mostraExistent.TipusProva;
+            resultat.TipusProvaNou = tipusProvaEntrant;
             if (!string.Equals(mostraExistent.TipusProva, tipusProvaEntrant, StringComparison.OrdinalIgnoreCase))
             {
                 resultat.HiHaCanvis = true;
-                resultat.TipusProvaAnterior = mostraExistent.TipusProva;
-                resultat.TipusProvaNou = tipusProvaEntrant;
                 resultat.CanvisDetectats.Add($"Tipus prova: '{mostraExistent.TipusProva}' -> '{tipusProvaEntrant}'");
             }
 

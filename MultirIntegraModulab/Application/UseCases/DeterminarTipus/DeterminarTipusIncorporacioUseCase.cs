@@ -52,7 +52,8 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                 var tipusEstat = _multiRRepository.ClassificarEstatResultat(
                     mostra.EtiquetaId, 
                     dataResultatOracle, 
-                    dataValidacioOracle);
+                    dataValidacioOracle,
+                    mostra);
 
                 // Convertir TipusEstatResultat a TipusIncorporacio
                 var tipusIncorporacio = ConvertirTipusEstat(tipusEstat);
@@ -145,11 +146,13 @@ namespace MultirIntegraModulab.Application.UseCases.DeterminarTipus
                     
                 case TipusEstatResultat.Revalidada:
                     return TipusIncorporacio.Revalidada;
-                    
+
                 case TipusEstatResultat.Canviada:
+                    return TipusIncorporacio.Canviada;
+
                 default:
-                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}TipusEstatResultat.Canviada convertit a TipusIncorporacio.Revalidada");
-                    return TipusIncorporacio.Revalidada; // Tractar canvis generals com revalidació
+                    _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}TipusEstatResultat desconegut '{tipusEstat}', es tractarà com CANVIADA");
+                    return TipusIncorporacio.Canviada;
             }
         }
     }

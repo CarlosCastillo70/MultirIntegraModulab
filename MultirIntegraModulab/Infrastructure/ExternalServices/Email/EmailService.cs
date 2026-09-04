@@ -253,6 +253,7 @@ namespace MultirIntegraModulab.Infrastructure.ExternalServices.Email
             sb.AppendLine($"• Repetides: {resum.MostresRepetides}");
             sb.AppendLine($"• Validades: {resum.MostresValidades}");
             sb.AppendLine($"• Revalidades: {resum.MostresRevalidades}");
+            sb.AppendLine($"• Amb canvis: {resum.MostresAmbCanvis}");
             sb.AppendLine($"• Desvalidades: {resum.MostresDesvalidades}");
             sb.AppendLine($"• Antigues: {resum.MostresAntigues}");
             sb.AppendLine($"-------------------");

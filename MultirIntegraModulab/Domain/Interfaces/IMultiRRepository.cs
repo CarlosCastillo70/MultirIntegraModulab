@@ -250,7 +250,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         // Resultats
         int ComprovarResultatExisteix(string etiquetaId);
         EstatResultat ObtenirEstatResultat(string etiquetaId);
-        TipusEstatResultat ClassificarEstatResultat(string etiquetaId, DateTime? dataResultatOracle, DateTime? dataValidacioOracle);
+        TipusEstatResultat ClassificarEstatResultat(string etiquetaId, DateTime? dataResultatOracle, DateTime? dataValidacioOracle, Mostra mostraEntrant = null);
         bool ActualitzarResultatAmbNovesDates(string etiquetaId, DateTime? dataResultat, DateTime? dataValidacio);
         bool ActualitzarResultatAntic(string etiquetaId, DateTime dataResultat, DateTime? dataValidacio);
         bool ActualitzarDataValidacio(string etiquetaId, DateTime? dataValidacio);
@@ -424,6 +424,8 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <param name="npat">Número de pacient (NPAT)</param>
         /// <param name="tipusProvaAnterior">Tipus de prova anterior (opcional)</param>
         /// <param name="tipusProvaNou">Tipus de prova nou (opcional)</param>
+        /// <param name="tipusMostraAnterior">Tipus de mostra anterior (opcional)</param>
+        /// <param name="tipusMostraNou">Tipus de mostra nou (opcional)</param>
         /// <returns>True si s'ha guardat correctament</returns>
         bool GuardarHistorialMostra(
             string etiquetaId, 
@@ -436,7 +438,9 @@ namespace MultirIntegraModulab.Domain.Interfaces
             DateTime? dataValidacioNova = null,
             string npat = null,
             string tipusProvaAnterior = null,
-            string tipusProvaNou = null);
+            string tipusProvaNou = null,
+            string tipusMostraAnterior = null,
+            string tipusMostraNou = null);
         
         bool GuardarHistorialAutomaticMostra(Mostra mostra, TipusIncorporacio tipusIncorporacio, string observacions = null);
         int NetejarHistorialAntic(int diesRetencio = 90);

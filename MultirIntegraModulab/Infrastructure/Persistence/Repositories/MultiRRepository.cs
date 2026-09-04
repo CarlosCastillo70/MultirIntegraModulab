@@ -135,8 +135,8 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public EstatResultat ObtenirEstatResultat(string etiquetaId) => 
             _multiRDbService.ObtenirEstatResultat(etiquetaId);
 
-        public TipusEstatResultat ClassificarEstatResultat(string etiquetaId, DateTime? dataResultatOracle, DateTime? dataValidacioOracle) => 
-            _multiRDbService.ClassificarEstatResultat(etiquetaId, dataResultatOracle, dataValidacioOracle);
+        public TipusEstatResultat ClassificarEstatResultat(string etiquetaId, DateTime? dataResultatOracle, DateTime? dataValidacioOracle, Mostra mostraEntrant = null) => 
+            _multiRDbService.ClassificarEstatResultat(etiquetaId, dataResultatOracle, dataValidacioOracle, mostraEntrant);
 
         public bool ActualitzarResultatAmbNovesDates(string etiquetaId, DateTime? dataResultat, DateTime? dataValidacio) => 
             _multiRDbService.ActualitzarResultatAmbNovesDates(etiquetaId, dataResultat, dataValidacio);
@@ -266,7 +266,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
             DateTime? dataValidacioNova = null,
             string npat = null,
             string tipusProvaAnterior = null,
-            string tipusProvaNou = null) => 
+            string tipusProvaNou = null,
+            string tipusMostraAnterior = null,
+            string tipusMostraNou = null) => 
             _multiRDbService.GuardarHistorialMostra(
                 etiquetaId, 
                 tipusCanvi, 
@@ -278,7 +280,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
                 dataValidacioNova,
                 npat,
                 tipusProvaAnterior,
-                tipusProvaNou);
+                tipusProvaNou,
+                tipusMostraAnterior,
+                tipusMostraNou);
 
         public bool GuardarHistorialAutomaticMostra(Mostra mostra, TipusIncorporacio tipusIncorporacio, string observacions = null) => 
             _multiRDbService.GuardarHistorialAutomaticMostra(mostra, tipusIncorporacio, observacions);

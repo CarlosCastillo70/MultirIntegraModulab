@@ -157,7 +157,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
                     
-                    // FASE 2: Determinar tipus d'incorporació (nova, validada, re validada, ...)
+                    // FASE 2: Determinar tipus d'incorporació (nova, validada, re validada, repetida, canviada, ...)
                     var tipusIncorporacio = _determinarTipusUseCase.Executar(mostra);
 
                     // Actualitzar resum final segons tipus d'incorporació
@@ -346,6 +346,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 case TipusIncorporacio.Revalidada:
                     resum.MostresRevalidades++;
                     break;
+                case TipusIncorporacio.Canviada:
+                    resum.MostresAmbCanvis++;
+                    break;
             }
         }
 
@@ -497,6 +500,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     return TractarMostraValidada(mostra, tipusIncorporacio);
 
                 case TipusIncorporacio.Revalidada:
+                case TipusIncorporacio.Canviada:
                     return TractarMostraRevalidada(mostra, tipusIncorporacio);
 
                 default:
@@ -689,7 +693,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         mostra.Resultats.FirstOrDefault()?.DataValidacio,
                         mostra.PacientSap,
                         resultatComparacio.TipusProvaAnterior,
-                        resultatComparacio.TipusProvaNou); // Afegir npat del pacient i canvi de tipus prova si existeix
+                        resultatComparacio.TipusProvaNou,
+                        resultatComparacio.TipusMostraAnterior,
+                        resultatComparacio.TipusMostraNou); // Afegir npat del pacient i canvis de tipus prova/mostra si existeixen
 
                     if (historialGuardat)
                     {
@@ -900,7 +906,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         mostra.Resultats.FirstOrDefault()?.DataValidacio,
                         mostra.PacientSap,
                         resultatComparacio.TipusProvaAnterior,
-                        resultatComparacio.TipusProvaNou); // Afegir npat del pacient i canvi de tipus prova si existeix
+                        resultatComparacio.TipusProvaNou,
+                        resultatComparacio.TipusMostraAnterior,
+                        resultatComparacio.TipusMostraNou); // Afegir npat del pacient i canvis de tipus prova/mostra si existeixen
 
                     if (historialGuardat)
                     {
@@ -943,7 +951,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// </summary>
         private bool TractarMostraRevalidada(Mostra mostra, TipusIncorporacio tipusIncorporacio)
         {
-            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Mostra revalidada. Es comprova si hi ha hagut canvis");
+            var descripcioTipus = tipusIncorporacio == TipusIncorporacio.Canviada ? "canviada" : "revalidada";
+            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Mostra {descripcioTipus}. Es comprova si hi ha hagut canvis");
 
             try
             {
@@ -1011,7 +1020,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
                     // Preparar dades per a l'historial
-                    var tipusCanvi = "REVALIDADA_AMB_CANVIS";
+                    var tipusCanvi = tipusIncorporacio == TipusIncorporacio.Canviada
+                        ? "AMB_CANVIS"
+                        : "REVALIDADA_AMB_CANVIS";
 
                     // Obtenir combinacions anteriors i noves en format text
                     var combinacionsAnteriors = ObtenirCombinacionsTextMostraExistent(mostraExistent);
@@ -1029,7 +1040,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         mostra.Resultats.FirstOrDefault()?.DataValidacio,
                         mostra.PacientSap,
                         resultatComparacio.TipusProvaAnterior,
-                        resultatComparacio.TipusProvaNou); // Afegir npat del pacient i canvi de tipus prova si existeix
+                        resultatComparacio.TipusProvaNou,
+                        resultatComparacio.TipusMostraAnterior,
+                        resultatComparacio.TipusMostraNou); // Afegir npat del pacient i canvis de tipus prova/mostra si existeixen
 
                     if (historialGuardat)
                     {

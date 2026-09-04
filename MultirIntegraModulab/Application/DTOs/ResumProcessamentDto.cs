@@ -44,6 +44,11 @@ namespace MultirIntegraModulab.Application.DTOs
         public int MostresValidades { get; set; }
 
         /// <summary>
+        /// Nombre de mostres amb canvis
+        /// </summary>
+        public int MostresAmbCanvis { get; set; }
+
+        /// <summary>
         /// Nombre de mostres amb error
         /// </summary>
         public int MostresAmbError { get; set; }
@@ -131,6 +136,7 @@ namespace MultirIntegraModulab.Application.DTOs
             sb.AppendLine($"   ✅ Validades             : {MostresValidades,6}");
             sb.AppendLine($"   ⬇️ Desvalidades          : {MostresDesvalidades,6}");
             sb.AppendLine($"   🔄 Revalidades           : {MostresRevalidades,6}");
+            sb.AppendLine($"   🧩 Amb canvis            : {MostresAmbCanvis,6}");
             sb.AppendLine($"   🔁 Repetides             : {MostresRepetides,6}");
             sb.AppendLine($"   🕐 Antigues              : {MostresAntigues,6}");
             sb.AppendLine();

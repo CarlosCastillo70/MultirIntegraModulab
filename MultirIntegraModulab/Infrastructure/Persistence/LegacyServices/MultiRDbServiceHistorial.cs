@@ -200,7 +200,7 @@ namespace MultirIntegraModulab
         /// Guarda un registre d'historial per una mostra amb tota la informació
         /// </summary>
         /// <param name="etiquetaId">Identificador de l'etiqueta</param>
-        /// <param name="tipusCanvi">Tipus de canvi realitzat (VALIDADA_AMB_CANVIS, REVALIDADA_AMB_CANVIS, DESVALIDADA_AMB_CANVIS)</param>
+        /// <param name="tipusCanvi">Tipus de canvi realitzat (VALIDADA_AMB_CANVIS, REVALIDADA_AMB_CANVIS, DESVALIDADA_AMB_CANVIS, AMB_CANVIS)</param>
         /// <param name="combinacionsAnteriors">Combinacions microorganisme+mecanisme anteriors (JSON o text)</param>
         /// <param name="dataResultatAnterior">Data resultat anterior</param>
         /// <param name="dataValidacioAnterior">Data validació anterior</param>
@@ -210,6 +210,8 @@ namespace MultirIntegraModulab
         /// <param name="npat">Número de pacient (NPAT)</param>
         /// <param name="tipusProvaAnterior">Tipus de prova anterior (opcional)</param>
         /// <param name="tipusProvaNou">Tipus de prova nou (opcional)</param>
+        /// <param name="tipusMostraAnterior">Tipus de mostra anterior (opcional)</param>
+        /// <param name="tipusMostraNou">Tipus de mostra nou (opcional)</param>
         /// <returns>True si s'ha guardat correctament</returns>
         public bool GuardarHistorialMostra(
             string etiquetaId, 
@@ -222,7 +224,9 @@ namespace MultirIntegraModulab
             DateTime? dataValidacioNova = null,
             string npat = null,
             string tipusProvaAnterior = null,
-            string tipusProvaNou = null)
+            string tipusProvaNou = null,
+            string tipusMostraAnterior = null,
+            string tipusMostraNou = null)
         {
             if (string.IsNullOrWhiteSpace(etiquetaId))
             {
@@ -237,7 +241,7 @@ namespace MultirIntegraModulab
             }
 
             // Validar que tipusCanvi sigui un dels valors permesos
-            var tipusPermesos = new[] { "VALIDADA_AMB_CANVIS", "REVALIDADA_AMB_CANVIS", "DESVALIDADA_AMB_CANVIS" };
+            var tipusPermesos = new[] { "VALIDADA_AMB_CANVIS", "REVALIDADA_AMB_CANVIS", "DESVALIDADA_AMB_CANVIS", "AMB_CANVIS" };
             if (!tipusPermesos.Contains(tipusCanvi))
             {
                 Logger.Error($"GuardarHistorialMostra: tipusCanvi '{tipusCanvi}' no és vàlid. Ha de ser: {string.Join(", ", tipusPermesos)}");
@@ -257,12 +261,14 @@ namespace MultirIntegraModulab
                                   (etiqueta, versio, tipus_canvi, 
                                    combinacions_anteriors, data_resultat_anterior, data_validacio_anterior,
                                    combinacions_noves, data_resultat_nova, data_validacio_nova,
-                                   data_canvi, proces_origen, npat, tipus_prova_anterior, tipus_prova_nou)
+                                   data_canvi, proces_origen, npat, tipus_prova_anterior, tipus_prova_nou,
+                                   tipus_mostra_anterior, tipus_mostra_nou)
                                   VALUES 
                                   (@etiquetaId, @versio, @tipusCanvi,
                                    @combinacionsAnteriors, @dataResultatAnterior, @dataValidacioAnterior,
                                    @combinacionsNoves, @dataResultatNova, @dataValidacioNova,
-                                   NOW(), 'IntegracioModulab', @npat, @tipusProvaAnterior, @tipusProvaNou)";
+                                   NOW(), 'IntegracioModulab', @npat, @tipusProvaAnterior, @tipusProvaNou,
+                                   @tipusMostraAnterior, @tipusMostraNou)";
 
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
@@ -278,6 +284,8 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@npat", npat ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@tipusProvaAnterior", tipusProvaAnterior ?? (object)DBNull.Value);
                         cmd.Parameters.AddWithValue("@tipusProvaNou", tipusProvaNou ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("@tipusMostraAnterior", string.IsNullOrWhiteSpace(tipusMostraAnterior) ? string.Empty : tipusMostraAnterior);
+                        cmd.Parameters.AddWithValue("@tipusMostraNou", tipusMostraNou ?? (object)DBNull.Value);
 
                         int filesAfectades = cmd.ExecuteNonQuery();
 
@@ -346,6 +354,9 @@ namespace MultirIntegraModulab
                     break;
                 case TipusIncorporacio.Revalidada:
                     tipusCanvi = "REVALIDADA_AMB_CANVIS";
+                    break;
+                case TipusIncorporacio.Canviada:
+                    tipusCanvi = "AMB_CANVIS";
                     break;
                 default:
                     // No guardar historial per altres tipus
