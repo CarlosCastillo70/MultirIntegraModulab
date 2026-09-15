@@ -46,13 +46,6 @@ namespace MultirIntegraModulab.Domain.Interfaces
         // Configuració de cache
         int MinutsVigenciaCache { get; }
 
-        // Configuració de manteniment
-        int DiesRetencioHistorial { get; }
-
-        // Configuració de processament
-        bool ProcessarMostresEnParalel { get; }
-        int MaxGrauParalelisme { get; }
-
         void ValidarConfiguracio();
         string ObtenirResumConfiguracio();
     }

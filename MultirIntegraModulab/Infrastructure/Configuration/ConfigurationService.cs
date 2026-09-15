@@ -339,29 +339,6 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
 
         #endregion
 
-        #region Configuració de Manteniment
-
-        public virtual int DiesRetencioHistorial
-        {
-            get { return LlegirIntConfiguracio("DiesRetencioHistorial", 90); }
-        }
-
-        #endregion
-
-        #region Configuració de Processament
-
-        public bool ProcessarMostresEnParalel
-        {
-            get { return LlegirBoolConfiguracio("ProcessarMostresEnParalel", false); }
-        }
-
-        public int MaxGrauParalelisme
-        {
-            get { return LlegirIntConfiguracio("MaxGrauParalelisme", 4); }
-        }
-
-        #endregion
-
         #region Configuració d'Email
 
         public virtual bool EnviarEmailLog
@@ -516,12 +493,6 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
             if (MinutsVigenciaCache < 0)
                 errors.Add("'MinutsVigenciaCache' ha de ser >= 0");
 
-            if (DiesRetencioHistorial < 0)
-                errors.Add("'DiesRetencioHistorial' ha de ser >= 0");
-
-            if (MaxGrauParalelisme < 1)
-                errors.Add("'MaxGrauParalelisme' ha de ser >= 1");
-
             if (WebServiceTimeout < 1)
                 errors.Add("'WebServiceTimeout' ha de ser >= 1");
 
@@ -645,13 +616,6 @@ EMAIL:
 
 CACHE:
   - Vigència: {MinutsVigenciaCache} minuts
-
-MANTENIMENT:
-  - Retenció historial: {DiesRetencioHistorial} dies
-
-PROCESSAMENT:
-  - En paral·lel: {(ProcessarMostresEnParalel ? "SÍ" : "NO")}
-  - Grau paral·lelisme: {MaxGrauParalelisme}
 
 CONNEXIONS PER {Entorn.ToUpper()}:
   - Modulab (Oracle): Configurada

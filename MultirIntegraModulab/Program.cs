@@ -318,6 +318,18 @@ namespace MultirIntegraModulab
                 else
                 {
                     loggerService.Warning("⚠️ No s'han trobat mostres per processar");
+
+                    // Crear un resum per defecte amb valors zero quan no hi ha mostres
+                    resum = new Application.DTOs.ResumProcessamentDto
+                    {
+                        TotalProcessats = 0,
+                        MostresAmbError = 0,
+                        PositiusIncorporats = 0,
+                        NegatiusIncorporats = 0,
+                        PositiusVirusRespiratorisIncorporats = 0,
+                        NegatiusContrarestaPositiuIncorporats = 0,
+                        DataFiProcessament = DateTime.Now
+                    };
                     Console.WriteLine("⚠️ No s'han trobat mostres per processar");
                 }
 

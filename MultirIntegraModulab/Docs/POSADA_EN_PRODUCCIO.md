@@ -894,11 +894,6 @@ Crear un informe amb:
 
 2. Analitzar els logs per identificar colls d'ampolla
 
-3. Considerar activar processament paral·lel (EXPERIMENTAL):
-   ```xml
-   <add key="ProcessarMostresEnParalel" value="true" />
-   <add key="MaxGrauParalelisme" value="4" />
-   ```
 
 4. Reduir `DiesEndarreraCarrega` si es processen massa mostres:
    ```xml

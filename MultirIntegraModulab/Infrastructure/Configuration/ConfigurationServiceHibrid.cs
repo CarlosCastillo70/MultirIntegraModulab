@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
 using MultirIntegraModulab.Domain.Interfaces;
@@ -7,11 +7,10 @@ using MultirIntegraModulab.Application.Helpers;
 namespace MultirIntegraModulab.Infrastructure.Configuration
 {
     /// <summary>
-    /// Servei de configuració híbrid que llegeix paràmetres funcionals de BD
-    /// i paràmetres tècnics d'App.config
+    /// Servei de configuraciÃ³ hÃ­brid que llegeix parÃ metres funcionals de BD
+    /// i parÃ metres tÃ¨cnics d'App.config
     /// 
-    /// PARÀMETRES A BD (CONFIG_GENERAL):
-    /// - DIES_VIGENCIA_POSITIUS_DEFAULT
+    /// PARÃ€METRES A BD (CONFIG_GENERAL):
     /// - EMAIL_FROM
     /// - EMAIL_RESUM_CARREGA
     /// - HABILITAR_NOTIFICACIONS_EMAIL
@@ -29,74 +28,23 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
             _parametresHelper = new ParametresHelper(repository, logger, this);
         }
 
-        #region Configuració de Cache
-
-        /// <summary>
-        /// MIGRAT A BD: Dies de vigència de positius per defecte
-        /// Utilitzat per Comprovació 2 (negatius) quan tipus_mostra no té dies_vigencia_positiu definit
-        /// </summary>
-        public override int MinutsVigenciaCache
-        {
-            get
-            {
-                // Aquest paràmetre es manté a App.config (tècnic)
-                return base.MinutsVigenciaCache;
-            }
-        }
-
-        #endregion
-
-        #region Configuració de Manteniment
-
-        /// <summary>
-        /// MIGRAT A BD: Dies de vigència de positius per defecte
-        /// Criteri epidemiològic/clínic que pot variar segons protocols
-        /// </summary>
-        public override int DiesRetencioHistorial
-        {
-            get
-            {
-                // Guard contra crida durant construcció abans que _parametresHelper s'inicialitzi
-                if (_parametresHelper == null)
-                {
-                    return base.DiesRetencioHistorial;
-                }
-
-                // Llegir de BD primer, si no hi és, utilitzar el valor d'App.config
-                int valorBD = _parametresHelper.ObtenirInt(
-                    "CONFIG_GENERAL", 
-                    "DIES_VIGENCIA_POSITIUS_DEFAULT", 
-                    -1);  // -1 indica que no existeix a BD
-                
-                if (valorBD > 0)
-                {
-                    return valorBD;
-                }
-                
-                // Fallback a App.config
-                return base.DiesRetencioHistorial;
-            }
-        }
-
-        #endregion
-
-        #region Configuració d'Email
+        #region ConfiguraciÃ³ d'Email
 
         /// <summary>
         /// MIGRAT A BD: Email remitent per notificacions del sistema
-        /// Pot variar segons organització/departament
+        /// Pot variar segons organitzaciÃ³/departament
         /// </summary>
         public override string EmailFrom
         {
             get
             {
-                // Guard contra crida durant construcció abans que _parametresHelper s'inicialitzi
+                // Guard contra crida durant construcciÃ³ abans que _parametresHelper s'inicialitzi
                 if (_parametresHelper == null)
                 {
                     return base.EmailFrom;
                 }
 
-                // Llegir de BD primer amb el nou paràmetre EMAIL_FROM
+                // Llegir de BD primer amb el nou parÃ metre EMAIL_FROM
                 string valorBD = _parametresHelper.ObtenirString(
                     "CONFIG_GENERAL", 
                     "EMAIL_FROM", 
@@ -113,21 +61,21 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
         }
 
         /// <summary>
-        /// MIGRAT A BD: Emails destinataris per notificacions de resum de càrrega
-        /// Pot variar segons organització/departament
+        /// MIGRAT A BD: Emails destinataris per notificacions de resum de cÃ rrega
+        /// Pot variar segons organitzaciÃ³/departament
         /// Format a BD: emails separats per punt i coma (;)
         /// </summary>
         public override List<string> EmailsDestinataris
         {
             get
             {
-                // Guard contra crida durant construcció abans que _parametresHelper s'inicialitzi
+                // Guard contra crida durant construcciÃ³ abans que _parametresHelper s'inicialitzi
                 if (_parametresHelper == null)
                 {
                     return base.EmailsDestinataris;
                 }
 
-                // Llegir de BD primer amb el paràmetre EMAIL_RESUM_CARREGA
+                // Llegir de BD primer amb el parÃ metre EMAIL_RESUM_CARREGA
                 string valorBD = _parametresHelper.ObtenirString(
                     "CONFIG_GENERAL", 
                     "EMAIL_RESUM_CARREGA", 
@@ -148,24 +96,24 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
         }
 
         /// <summary>
-        /// MIGRAT A BD: Habilitar enviar emails automàtics
-        /// Decisió organitzativa que pot canviar
+        /// MIGRAT A BD: Habilitar enviar emails automÃ tics
+        /// DecisiÃ³ organitzativa que pot canviar
         /// </summary>
         public override bool EnviarEmailLog
         {
             get
             {
-                // Guard contra crida durant construcció abans que _parametresHelper s'inicialitzi
+                // Guard contra crida durant construcciÃ³ abans que _parametresHelper s'inicialitzi
                 if (_parametresHelper == null)
                 {
                     return base.EnviarEmailLog;
                 }
 
                 // Llegir de BD primer
-                // Utilitzem ObtenirBool directament (ja gestiona la conversió internament)
+                // Utilitzem ObtenirBool directament (ja gestiona la conversiÃ³ internament)
                 try
                 {
-                    // Comprovar primer si el paràmetre existeix a BD
+                    // Comprovar primer si el parÃ metre existeix a BD
                     string valorBD = _parametresHelper.ObtenirString(
                         "CONFIG_GENERAL", 
                         "HABILITAR_NOTIFICACIONS_EMAIL", 
@@ -173,8 +121,8 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
                     
                     if (!string.IsNullOrEmpty(valorBD))
                     {
-                        // El paràmetre existeix, obtenir-lo com a bool
-                        // Això NO generarà log duplicat perquè ParametresHelper té cache
+                        // El parÃ metre existeix, obtenir-lo com a bool
+                        // AixÃ² NO generarÃ  log duplicat perquÃ¨ ParametresHelper tÃ© cache
                         return _parametresHelper.ObtenirBool(
                             "CONFIG_GENERAL", 
                             "HABILITAR_NOTIFICACIONS_EMAIL", 
@@ -192,7 +140,7 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
         }
 
         /// <summary>
-        /// Paràmetres SMTP es mantenen a App.config (credencials sensibles)
+        /// ParÃ metres SMTP es mantenen a App.config (credencials sensibles)
         /// </summary>
         public override string SmtpServer => base.SmtpServer;
         public override int SmtpPort => base.SmtpPort;
@@ -204,14 +152,13 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
         #endregion
 
         /// <summary>
-        /// Obté un resum de la configuració incloent paràmetres de BD
+        /// ObtÃ© un resum de la configuraciÃ³ incloent parÃ metres de BD
         /// </summary>
         public override string ObtenirResumConfiguracio()
         {
             var resum = base.ObtenirResumConfiguracio();
             
-            resum += "\n\n=== PARÀMETRES DE BASE DE DADES ===\n";
-            resum += $"Dies vigència positius (BD):      {DiesRetencioHistorial} dies\n";
+            resum += "\n\n=== PARÃ€METRES DE BASE DE DADES ===\n";
             resum += $"Email remitent (BD):               {EmailFrom}\n";
             resum += $"Emails destinataris (BD):          {string.Join("; ", EmailsDestinataris)}\n";
             resum += $"Habilitar emails (BD):             {(EnviarEmailLog ? "Activat" : "Desactivat")}\n";
@@ -220,3 +167,4 @@ namespace MultirIntegraModulab.Infrastructure.Configuration
         }
     }
 }
+
