@@ -1680,6 +1680,7 @@ namespace MultirIntegraModulab
             if (!conjuntExistent.SetEquals(conjuntEntrant))
             {
                 resultat.HiHaCanvis = true;
+                resultat.CanvisDetectats.Add($"Combinacions existents abans del canvi: [{string.Join(", ", conjuntExistent)}]");
 
                 // Identificar les noves combinacions (estan a la mostra entrant però no a la mostra ja existent)
                 var combinacionsNoves = conjuntEntrant.Except(conjuntExistent).ToList();
@@ -1865,12 +1866,12 @@ namespace MultirIntegraModulab
                 bool esMicroorganismeEspecial = resultat.EsMicroorganismeEspecial ?? false;
                 bool teMecanismes = mecanismes.Any();
 
-                // TODOCC Tinc els mes dubtes
-                // Si no és positiva (ni especial ni té mecanismes), saltar aquest resultat
-                //if (!esMicroorganismeEspecial && !teMecanismes)
-                //{
-                //    continue;
-                //}
+                // Mantenir el mateix criteri que a les combinacions existents de BD:
+                // només considerem diagnòstics positius (amb mecanismes o microorganismes especials)
+                if (!esMicroorganismeEspecial && !teMecanismes)
+                {
+                    continue;
+                }
 
                 // Obtenir el codi del microorganisme (si existeix a la taula microorganismes)
                 string microorganismeCodi = resultat.AillamentDescripcio.Trim();
@@ -1896,14 +1897,9 @@ namespace MultirIntegraModulab
                         combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganismeCodi, mecanisme));
                     }
                 }
-                else if (esMicroorganismeEspecial)
-                {
-                    // Si no té mecanismes però és especial, crear una combinació només amb el microorganisme
-                    combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganismeCodi, ""));
-                }
                 else
                 {
-                    // Si no té mecanismes, crear una combinació només amb el microorganisme (sense NOCOD)
+                    // Si no té mecanismes però és especial, crear una combinació només amb el microorganisme
                     combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganismeCodi, ""));
                 }
             }

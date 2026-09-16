@@ -740,7 +740,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         private string ObtenirCombinacionsTextMostraExistent(MostraDiagnosticExistent mostraExistent)
         {
             if (mostraExistent == null || string.IsNullOrWhiteSpace(mostraExistent.Etiqueta))
-                return null;
+                return string.Empty;
 
             try
             {
@@ -749,7 +749,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 var combinacions = _multiRRepository.ObtenirCombinacionsMicroorganismeMecanisme(mostraExistent.Etiqueta);
 
                 if (combinacions == null || !combinacions.Any())
-                    return null;
+                    return string.Empty;
 
                 // Convertir a format JSON-like
                 var combinacionsText = combinacions.Select(c =>
@@ -780,7 +780,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         private string ObtenirCombinacionsTextMostraEntrant(Mostra mostra)
         {
             if (mostra == null || !mostra.Resultats.Any())
-                return null;
+                return string.Empty;
 
             try
             {
@@ -789,7 +789,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 var combinacions = _multiRRepository.ObtenirCombinacionsMostraEntrant(mostra);
 
                 if (combinacions == null || !combinacions.Any())
-                    return null;
+                    return string.Empty;
 
                 // Convertir a format JSON-like
                 var combinacionsText = combinacions.Select(c =>
