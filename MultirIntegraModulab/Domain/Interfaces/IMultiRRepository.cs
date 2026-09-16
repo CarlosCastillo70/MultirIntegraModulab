@@ -215,6 +215,14 @@ namespace MultirIntegraModulab.Domain.Interfaces
         List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMicroorganismeMecanisme(string etiquetaId);
 
         /// <summary>
+        /// Obté totes les combinacions de microorganisme + mecanismes d'una mostra existent a la BD
+        /// per ús d'historial, incloent també microorganismes sense mecanisme.
+        /// </summary>
+        /// <param name="etiquetaId">Etiqueta de la mostra</param>
+        /// <returns>Llista de combinacions microorganisme + mecanismes per historial</returns>
+        List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsHistorialMostraExistent(string etiquetaId);
+
+        /// <summary>
         /// Obté les combinacions de microorganisme + mecanismes d'una mostraentrant
         /// NOMÉS retorna les combinacions POSITIVES: amb mecanisme de resistència o microorganisme especial
         /// </summary>

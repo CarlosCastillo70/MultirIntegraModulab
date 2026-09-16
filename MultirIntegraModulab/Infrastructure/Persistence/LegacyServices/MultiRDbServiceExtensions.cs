@@ -1800,6 +1800,65 @@ namespace MultirIntegraModulab
             return combinacions;
         }
 
+        public List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsHistorialMostraExistent(string etiquetaId)
+        {
+            var combinacions = new List<CombinacioMicroorganismeMecanisme>();
+
+            if (string.IsNullOrWhiteSpace(etiquetaId))
+            {
+                return combinacions;
+            }
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+
+                    string sql = @"
+                        SELECT DISTINCT
+                            pd.microorganisme,
+                            pd.mecanisme
+                        FROM mostra_microorganisme mm
+                            INNER JOIN pacients_diagnostics_mostra pdm ON mm.pacient_diagnostic_mostra_id = pdm.id
+                            INNER JOIN pacients_diagnostics pd ON mm.pacient_diagnostic_id = pd.id
+                        WHERE pdm.etiqueta = @etiqueta
+                            AND pdm.dt_delete IS NULL
+                            AND pd.dt_delete IS NULL
+                        ORDER BY pd.microorganisme, pd.mecanisme";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@etiqueta", etiquetaId);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var microorganisme = reader["microorganisme"]?.ToString() ?? "";
+                                var mecanisme = reader["mecanisme"]?.ToString() ?? "";
+
+                                if (string.IsNullOrWhiteSpace(microorganisme))
+                                {
+                                    continue;
+                                }
+
+                                combinacions.Add(new CombinacioMicroorganismeMecanisme(
+                                    microorganisme.Trim(),
+                                    string.IsNullOrWhiteSpace(mecanisme) ? "" : mecanisme.Trim()));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error obtenint combinacions d'historial per {etiquetaId}: {ex.Message}", ex);
+            }
+
+            return combinacions;
+        }
+
         /// <summary>
         /// Obté les combinacions de microorganisme + mecanismes d'una mostra entrant
         /// NOMÉS retorna les combinacions POSITIVES: amb mecanisme de resistència o microorganisme especial ???

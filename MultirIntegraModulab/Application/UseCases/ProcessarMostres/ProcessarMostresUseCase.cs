@@ -744,15 +744,35 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             try
             {
-                // Obtenir les combinacions reals de la base de dades
-                // Aquest mètode ja està implementat a MultiRDbServiceExtensions.cs
+                // Obtenir les combinacions comparables de la base de dades
                 var combinacions = _multiRRepository.ObtenirCombinacionsMicroorganismeMecanisme(mostraExistent.Etiqueta);
 
-                if (combinacions == null || !combinacions.Any())
-                    return string.Empty;
+                if (combinacions != null && combinacions.Any())
+                {
+                    var combinacionsText = combinacions.Select(c =>
+                    {
+                        if (!string.IsNullOrWhiteSpace(c.MecanismeResistencia))
+                        {
+                            return $"{c.Microorganisme}+{c.MecanismeResistencia}";
+                        }
+                        else
+                        {
+                            return c.Microorganisme;
+                        }
+                    }).ToList();
 
-                // Convertir a format JSON-like
-                var combinacionsText = combinacions.Select(c =>
+                    return string.Join("; ", combinacionsText);
+                }
+
+                // Si no hi ha combinacions positives/comparables, per historial recuperem
+                // totes les combinacions persistides de la mostra existent.
+                var combinacionsHistorial = _multiRRepository.ObtenirCombinacionsHistorialMostraExistent(mostraExistent.Etiqueta);
+                if (combinacionsHistorial == null || !combinacionsHistorial.Any())
+                {
+                    return string.Empty;
+                }
+
+                var combinacionsHistorialText = combinacionsHistorial.Select(c =>
                 {
                     if (!string.IsNullOrWhiteSpace(c.MecanismeResistencia))
                     {
@@ -762,9 +782,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     {
                         return c.Microorganisme;
                     }
-                }).ToList();
+                }).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
-                return string.Join("; ", combinacionsText);
+                return string.Join("; ", combinacionsHistorialText);
             }
             catch (Exception ex)
             {
@@ -784,27 +804,73 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             try
             {
-                // Obtenir les combinacions reals de la mostra entrant
-                // Aquest mètode ja està implementat a MultiRDbServiceExtensions.cs
+                // Obtenir les combinacions comparables de la mostra entrant
                 var combinacions = _multiRRepository.ObtenirCombinacionsMostraEntrant(mostra);
 
-                if (combinacions == null || !combinacions.Any())
-                    return string.Empty;
-
-                // Convertir a format JSON-like
-                var combinacionsText = combinacions.Select(c =>
+                if (combinacions != null && combinacions.Any())
                 {
-                    if (!string.IsNullOrWhiteSpace(c.MecanismeResistencia))
+                    var combinacionsText = combinacions.Select(c =>
                     {
-                        return $"{c.Microorganisme}+{c.MecanismeResistencia}";
+                        if (!string.IsNullOrWhiteSpace(c.MecanismeResistencia))
+                        {
+                            return $"{c.Microorganisme}+{c.MecanismeResistencia}";
+                        }
+                        else
+                        {
+                            return c.Microorganisme;
+                        }
+                    }).ToList();
+
+                    return string.Join("; ", combinacionsText);
+                }
+
+                // Si no hi ha combinacions positives/comparables, per historial guardem igualment
+                // el detall bàsic dels resultats entrants per no deixar el camp buit.
+                var combinacionsHistorial = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var resultat in mostra.Resultats)
+                {
+                    if (string.IsNullOrWhiteSpace(resultat.AillamentDescripcio))
+                    {
+                        continue;
+                    }
+
+                    var microorganisme = resultat.AillamentDescripcio.Trim();
+                    var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultat.AillamentDescripcio);
+                    if (microorganismeEntitat != null && !string.IsNullOrWhiteSpace(microorganismeEntitat.Codi))
+                    {
+                        microorganisme = microorganismeEntitat.Codi.Trim();
+                    }
+
+                    var mecanismes = new[]
+                    {
+                        resultat.MecanismeResistencia1Id,
+                        resultat.MecanismeResistencia2Id,
+                        resultat.MecanismeResistencia3Id,
+                        resultat.MecanismeResistencia4Id,
+                        resultat.MecanismeResistencia5Id
+                    }
+                    .Where(m => !string.IsNullOrWhiteSpace(m) && !string.Equals(m, "NOCOD", StringComparison.OrdinalIgnoreCase))
+                    .Select(m => m.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                    if (mecanismes.Any())
+                    {
+                        foreach (var mecanisme in mecanismes)
+                        {
+                            combinacionsHistorial.Add($"{microorganisme}+{mecanisme}");
+                        }
                     }
                     else
                     {
-                        return c.Microorganisme;
+                        combinacionsHistorial.Add(microorganisme);
                     }
-                }).ToList();
+                }
 
-                return string.Join("; ", combinacionsText);
+                return combinacionsHistorial.Any()
+                    ? string.Join("; ", combinacionsHistorial)
+                    : string.Empty;
             }
             catch (Exception ex)
             {

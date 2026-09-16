@@ -443,11 +443,31 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                     resultat.MostresDiagnosticCreades++;
                                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra diagnòstic negativa creada per neutralitzar positiu (ID: {mostraDiagnosticIdFinal})");
 
-                                    // Actualitzar data última mostra en seguiments oberts (només per Multiresistent)
+                                    // Actualitzar quantitat de targetes en seguiments oberts (només per Multiresistent)
                                     var tipusMicroorganisme = _multiRRepository.ObtenirTipusMicroorganisme(resultatMostra.AillamentDescripcio);
 
                                     if (tipusMicroorganisme == Domain.Enums.TipusMicroorganisme.Multiresistent)
                                     {
+                                        _logger.Debug($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Actualitzant targetes de seguiment per mostra negativa MultiResistent...");
+
+                                        try
+                                        {
+                                            bool targeteActualitzades = _multiRRepository.ActualitzarQuantitatTargetes(
+                                                mostra.PacientSap,
+                                                resultatMostra.MostraDescripcio);
+
+                                            if (targeteActualitzades)
+                                            {
+                                                _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✅ Targetes de seguiment actualitzades correctament");
+                                            }
+                                        }
+                                        catch (Exception exTargetes)
+                                        {
+                                            // No deixem que un error en actualització de targetes bloquegi el processament
+                                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Error actualitzant targetes: {exTargetes.Message}");
+                                        }
+
+                                        // Actualitzar data última mostra en seguiments oberts
                                         try
                                         {
                                             _multiRRepository.ActualitzarDataUltimaMostra(

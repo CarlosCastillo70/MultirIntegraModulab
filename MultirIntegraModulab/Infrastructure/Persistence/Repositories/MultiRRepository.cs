@@ -93,6 +93,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMicroorganismeMecanisme(string etiquetaId) =>
             _multiRDbService.ObtenirCombinacionsMicroorganismeMecanisme(etiquetaId);
 
+        public List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsHistorialMostraExistent(string etiquetaId) =>
+            _multiRDbService.ObtenirCombinacionsHistorialMostraExistent(etiquetaId);
+
         public List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMostraEntrant(Mostra mostra) =>
             _multiRDbService.ObtenirCombinacionsMostraEntrant(mostra);
 
