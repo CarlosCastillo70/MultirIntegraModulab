@@ -1,18 +1,19 @@
+using MultirIntegraModulab.Application.DTOs;
+using MultirIntegraModulab.Application.Helpers;
+using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
+using MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes;
+using MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes;
+using MultirIntegraModulab.Application.UseCases.DeterminarTipus;
+using MultirIntegraModulab.Domain.Entities;
+using MultirIntegraModulab.Domain.Enums;
+using MultirIntegraModulab.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MultirIntegraModulab.Application.DTOs;
-using MultirIntegraModulab.Application.Helpers;
-using MultirIntegraModulab.Domain.Entities;
-using MultirIntegraModulab.Domain.Interfaces;
-using MultirIntegraModulab.Application.UseCases.ClassificarMostres;
-using MultirIntegraModulab.Application.UseCases.DeterminarTipus;
-using MultirIntegraModulab.Application.UseCases.ComprovadorMicroorganismes;
-using MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes;
 using TipusIncorporacio = MultirIntegraModulab.Domain.Enums.TipusIncorporacio;
-using TipusMostra = MultirIntegraModulab.Domain.Enums.TipusMostra;
 using TipusMicroorganisme = MultirIntegraModulab.Domain.Enums.TipusMicroorganisme;
+using TipusMostra = MultirIntegraModulab.Domain.Enums.TipusMostra;
 
 namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 {
@@ -140,13 +141,6 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     _logger.Info($"▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄");
                     _logger.Info($" Processant mostra {resum.TotalProcessats} de {totesLesMostres.Count} - Pacient: {mostra.PacientSap} - Etiqueta: {mostra.EtiquetaId}");
                     _logger.Info($"▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀");
-
-
-                    if (mostra.PacientSap == "15589479")
-                    {
-                        string aaa = "";
-                    }
-
 
                     // FASE 1: Validar mostra (existència dades bàsiques)
                     if (!_validarMostraUseCase.Executar(mostra))
@@ -735,7 +729,6 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
         /// <summary>
         /// Obté les combinacions microorganisme+mecanisme d'una mostra existent en format text (JSON)
-        /// Utilitza el mètode ObtenirCombinacionsMicroorganismeMecanisme de MultiRDbService
         /// </summary>
         private string ObtenirCombinacionsTextMostraExistent(MostraDiagnosticExistent mostraExistent)
         {
@@ -744,7 +737,33 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             try
             {
-                // Obtenir les combinacions comparables de la base de dades
+                // Recuperar combinacions directament del camp microorganisme_mecanisme_captat
+                if (!string.IsNullOrWhiteSpace(mostraExistent.MicroorganismeMecanismeCaptat))
+                {
+                    var combinacionsSegonsCaptat = _multiRRepository.ParsearCombinacionsDelMicroorganismeMecanismeCaptat(
+                        mostraExistent.MicroorganismeMecanismeCaptat);
+
+                    if (combinacionsSegonsCaptat != null && combinacionsSegonsCaptat.Any())
+                    {
+                        var combinacionsText = combinacionsSegonsCaptat.Select(c =>
+                        {
+                            if (!string.IsNullOrWhiteSpace(c.MecanismeResistencia))
+                            {
+                                return $"{c.Microorganisme}+{c.MecanismeResistencia}";
+                            }
+                            else
+                            {
+                                return c.Microorganisme;
+                            }
+                        }).ToList();
+
+                        return string.Join("; ", combinacionsText);
+                    }
+                }
+
+                // TODO: En una posterior fase, eliminar les cridades antigues a 
+                // ObtenirCombinacionsMicroorganismeMecanisme i ObtenirCombinacionsHistorialMostraExistent
+                // Obtenir les combinacions comparables de la base de dades (mètode antic)
                 var combinacions = _multiRRepository.ObtenirCombinacionsMicroorganismeMecanisme(mostraExistent.Etiqueta);
 
                 if (combinacions != null && combinacions.Any())
@@ -960,6 +979,10 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var combinacionsAnteriors = ObtenirCombinacionsTextMostraExistent(mostraExistent);
                     var combinacionsNoves = ObtenirCombinacionsTextMostraEntrant(mostra);
 
+
+
+
+
                     // Guardar historial abans d'esborrar
                     bool historialGuardat = _multiRRepository.GuardarHistorialMostra(
                         mostra.EtiquetaId,
@@ -1090,7 +1113,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         ? "AMB_CANVIS"
                         : "REVALIDADA_AMB_CANVIS";
 
-                    // Obtenir combinacions anteriors i noves en format text
+                    // Obtenir combinacions anteriors (segons microorganisme mecanisme captat) i noves en format text
                     var combinacionsAnteriors = ObtenirCombinacionsTextMostraExistent(mostraExistent);
                     var combinacionsNoves = ObtenirCombinacionsTextMostraEntrant(mostra);
 

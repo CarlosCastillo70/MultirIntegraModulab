@@ -281,25 +281,31 @@ namespace MultirIntegraModulab
                 return false;
             }
 
+            // Tipus de mostra
             var tipusMostraEntrant = mostraEntrant.Resultats?.FirstOrDefault()?.MostraDescripcio;
             if (!string.Equals(mostraExistent.TipusMostra, tipusMostraEntrant, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
 
+            // Tipus de prova
             var tipusProvaEntrant = mostraEntrant.Resultats?.FirstOrDefault()?.ProvaDescripcio;
             if (!string.Equals(mostraExistent.TipusProva, tipusProvaEntrant, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
 
-            var combinacionsExistents = ObtenirCombinacionsMicroorganismeMecanisme(etiquetaId) ?? new List<CombinacioMicroorganismeMecanisme>();
-            var combinacionsEntrants = ObtenirCombinacionsMostraEntrant(mostraEntrant) ?? new List<CombinacioMicroorganismeMecanisme>();
+            // Combinacions de la mostra entrant vs. existent
 
-            var conjuntExistent = new HashSet<string>(combinacionsExistents.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
+            // Combinacions de la mostra que entra
+            var combinacionsEntrants = ObtenirCombinacionsMostraEntrant(mostraEntrant) ?? new List<CombinacioMicroorganismeMecanisme>();
             var conjuntEntrant = new HashSet<string>(combinacionsEntrants.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
 
-            return !conjuntExistent.SetEquals(conjuntEntrant);
+            // Combinacions de la mostra existent (segons el camp microorganisme_mecanisme_captat)
+            var combinacionsExistentsSegonsCaptat = ParsearCombinacionsDelMicroorganismeMecanismeCaptat(mostraExistent.MicroorganismeMecanismeCaptat) ?? new List<CombinacioMicroorganismeMecanisme>();
+            var conjuntExistentSegonsCaptat = new HashSet<string>(combinacionsExistentsSegonsCaptat.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
+
+            return !conjuntExistentSegonsCaptat.SetEquals(conjuntEntrant);
         }
 
         public bool ActualitzarResultatAmbNovesDates(string etiquetaId, DateTime? dataResultat, DateTime? dataValidacio)
@@ -1553,7 +1559,7 @@ namespace MultirIntegraModulab
 
                     string sql = @"SELECT id, npat, data_mostra, tipus_mostra_m, tipus_prova, 
                                          etiqueta, data_resultat, data_validacio, valoracio, 
-                                         estat_integracio_m, dt_create, dt_update
+                                         estat_integracio_m, microorganisme_mecanisme_captat, dt_create, dt_update
                                   FROM pacients_diagnostics_mostra 
                                   WHERE etiqueta = @etiqueta 
                                   AND dt_delete IS NULL
@@ -1580,6 +1586,7 @@ namespace MultirIntegraModulab
                                     DataValidacio = reader["data_validacio"] as DateTime?,
                                     Valoracio = reader["valoracio"]?.ToString(),
                                     EstatIntegracio = reader["estat_integracio_m"]?.ToString(),
+                                    MicroorganismeMecanismeCaptat = reader["microorganisme_mecanisme_captat"]?.ToString(),
                                     DataCreacio = reader["dt_create"] as DateTime?,
                                     DataActualitzacio = reader["dt_update"] as DateTime?
                                 };
@@ -1663,34 +1670,38 @@ namespace MultirIntegraModulab
             }
 
             // 4. COMPARAR COMBINACIONS MICROORGANISME + MECANISMES DE RESISTÈNCIA
-            // Obtenir les combinacions de la base de dades i de la mostra entrant
-            var combinacionsExistents = ObtenirCombinacionsMicroorganismeMecanisme(mostraExistent.Etiqueta);
+
+            // Combinacions existents (segons pacients_diagnostics)
+            // TODOCC Deprecar !!!!!
+            //var combinacionsExistents = ObtenirCombinacionsMicroorganismeMecanisme(mostraExistent.Etiqueta);
+            //var conjuntExistent = new HashSet<string>(combinacionsExistents.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
+
+
+            // Combinacions de la mostra entrant
             var combinacionsEntrants = ObtenirCombinacionsMostraEntrant(mostraEntrant);
+            var conjuntEntrant = new HashSet<string>(combinacionsEntrants.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
 
-            // Convertir a conjunts (HashSet) per comparar sense tenir en compte l'ordre
-            var conjuntExistent = new HashSet<string>(
-                combinacionsExistents.Select(c => c.ToString()),
-                StringComparer.OrdinalIgnoreCase);
+            // Combinacions existent ssegons el camp microorganisme_mecanisme_captat
+            var combinacionsExistentsSegonsCaptat = ParsearCombinacionsDelMicroorganismeMecanismeCaptat(mostraExistent.MicroorganismeMecanismeCaptat) ?? new List<CombinacioMicroorganismeMecanisme>();
+            var conjuntExistentSegonsCaptat = new HashSet<string>(combinacionsExistentsSegonsCaptat.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
 
-            var conjuntEntrant = new HashSet<string>(
-                combinacionsEntrants.Select(c => c.ToString()),
-                StringComparer.OrdinalIgnoreCase);
+
 
             // Comprovar si hi ha diferències en les combinacions
-            if (!conjuntExistent.SetEquals(conjuntEntrant))
+            if (!conjuntExistentSegonsCaptat.SetEquals(conjuntEntrant))
             {
                 resultat.HiHaCanvis = true;
-                resultat.CanvisDetectats.Add($"Combinacions existents abans del canvi: [{string.Join(", ", conjuntExistent)}]");
+                resultat.CanvisDetectats.Add($"Combinacions existents abans del canvi: [{string.Join(", ", conjuntExistentSegonsCaptat)}]");
 
                 // Identificar les noves combinacions (estan a la mostra entrant però no a la mostra ja existent)
-                var combinacionsNoves = conjuntEntrant.Except(conjuntExistent).ToList();
+                var combinacionsNoves = conjuntEntrant.Except(conjuntExistentSegonsCaptat).ToList();
                 if (combinacionsNoves.Any())
                 {
                     resultat.CanvisDetectats.Add($"Combinacions noves: [{string.Join(", ", combinacionsNoves)}]");
                 }
 
-                // Identificar combinacions eliminades (queestan a l'existent però no a l'entrant)
-                var combinacionsEliminades = conjuntExistent.Except(conjuntEntrant).ToList();
+                // Identificar combinacions eliminades (que estan a l'existent però no a l'entrant)
+                var combinacionsEliminades = conjuntExistentSegonsCaptat.Except(conjuntEntrant).ToList();
                 if (combinacionsEliminades.Any())
                 {
                     resultat.CanvisDetectats.Add($"Combinacions eliminades: [{string.Join(", ", combinacionsEliminades)}]");
@@ -1698,6 +1709,81 @@ namespace MultirIntegraModulab
             }
 
             return resultat;
+        }
+
+        /// <summary>
+        /// Parseja el camp microorganisme_mecanisme_captat i retorna les combinacions de microorganisme+mecanisme
+        /// Format del camp:
+        /// - Amb mecanismes: "Microorganisme - Mecanisme1, Microorganisme - Mecanisme2, ..."
+        /// - Sense mecanismes (especials): "Microorganisme"
+        /// - Negatius: "Microorganisme-"
+        /// - Virus Respiratoris: "Rhinovirus / Enterovirus" (sense "-")
+        /// </summary>
+        public List<CombinacioMicroorganismeMecanisme> ParsearCombinacionsDelMicroorganismeMecanismeCaptat(string microorganismeMecanismeCaptat)
+        {
+            var combinacions = new List<CombinacioMicroorganismeMecanisme>();
+
+            if (string.IsNullOrWhiteSpace(microorganismeMecanismeCaptat))
+            {
+                return combinacions;
+            }
+
+            try
+            {
+                // Separar les combinacions per coma
+                var elements = microorganismeMecanismeCaptat.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var element in elements)
+                {
+                    var elementTrim = element.Trim();
+
+                    if (string.IsNullOrWhiteSpace(elementTrim))
+                    {
+                        continue;
+                    }
+
+                    // Comprovar si contè un mecanisme (format: "Microorganisme - Mecanisme")
+                    // o si és just el microorganisme
+                    if (elementTrim.Contains(" - "))
+                    {
+                        // Format: "Microorganisme - Mecanisme"
+                        var parts = elementTrim.Split(new[] { " - " }, StringSplitOptions.None);
+                        if (parts.Length == 2)
+                        {
+                            var microorganisme = parts[0].Trim();
+                            var mecanisme = parts[1].Trim();
+
+                            if (!string.IsNullOrWhiteSpace(microorganisme))
+                            {
+                                combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganisme, mecanisme));
+                            }
+                        }
+                    }
+                    else if (elementTrim.EndsWith("-"))
+                    {
+                        // Format negatiu: "Microorganisme-"
+                        var microorganisme = elementTrim.Substring(0, elementTrim.Length - 1).Trim();
+                        if (!string.IsNullOrWhiteSpace(microorganisme))
+                        {
+                            combinacions.Add(new CombinacioMicroorganismeMecanisme(microorganisme, ""));
+                        }
+                    }
+                    else
+                    {
+                        // Format sense mecanisme (especial o VR): "Microorganisme"
+                        if (!string.IsNullOrWhiteSpace(elementTrim))
+                        {
+                            combinacions.Add(new CombinacioMicroorganismeMecanisme(elementTrim, ""));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error parseant microorganisme_mecanisme_captat '{microorganismeMecanismeCaptat}': {ex.Message}", ex);
+            }
+
+            return combinacions;
         }
 
         /// <summary>
@@ -1861,7 +1947,8 @@ namespace MultirIntegraModulab
 
         /// <summary>
         /// Obté les combinacions de microorganisme + mecanismes d'una mostra entrant
-        /// NOMÉS retorna les combinacions POSITIVES: amb mecanisme de resistència o microorganisme especial ???
+        /// Retorna TOTES les combinacions: tant positives (amb mecanisme o especials) com negatives (sense mecanisme)
+        /// Per a coherència amb el camp microorganisme_mecanisme_captat que conté tots els resultats
         /// </summary>
         public List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMostraEntrant(Mostra mostra)
         {
@@ -1917,21 +2004,6 @@ namespace MultirIntegraModulab
                     !string.Equals(resultat.MecanismeResistencia5Id, "NOCOD", StringComparison.OrdinalIgnoreCase))
                     mecanismes.Add(resultat.MecanismeResistencia5Id.Trim());
 
-                // FILTRE: només considerem combinacions POSITIVES
-                // Una combinació és positiva si:
-                // 1. Té mecanismes de resistència, o
-                // 2. El microorganisme és especial (encara que no tingui mecanismes)
-
-                bool esMicroorganismeEspecial = resultat.EsMicroorganismeEspecial ?? false;
-                bool teMecanismes = mecanismes.Any();
-
-                // Mantenir el mateix criteri que a les combinacions existents de BD:
-                // només considerem diagnòstics positius (amb mecanismes o microorganismes especials)
-                if (!esMicroorganismeEspecial && !teMecanismes)
-                {
-                    continue;
-                }
-
                 // Obtenir el codi del microorganisme (si existeix a la taula microorganismes)
                 string microorganismeCodi = resultat.AillamentDescripcio.Trim();
                 try
@@ -1949,6 +2021,8 @@ namespace MultirIntegraModulab
 
                 // Si té mecanismes, crear una combinació individual per cada microorganisme + mecanisme
                 // Això permet comparar correctament independentment de l'ordre
+                bool teMecanismes = mecanismes.Any();
+
                 if (teMecanismes)
                 {
                     foreach (var mecanisme in mecanismes)

@@ -123,7 +123,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 // FASE 3: SINCRONITZAR microorganisme_mecanisme_captat per TOTES les mostres de la mateixa etiqueta
                 // Quan s'han processat múltiples mecanismes per la mateixa etiqueta, 
-                // cal que TOTES les mostres diagnòstiques tenguin el MATEIX valor amb TOTS els mecanismes
+                // cal que TOTES les mostres diagnòstiques tinguin el MATEIX valor amb TOTS els mecanismes
                 SincronitzarMicroorganismeMecanismeCaptatPerEtiqueta(mostra, resultat);
 
                 // Resultat final
@@ -1044,12 +1044,14 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// <summary>
         /// Sincronitza el camp microorganisme_mecanisme_captat per TOTES les mostres diagnòstiques de la mateixa etiqueta.
         /// Això assegura que quan hi ha múltiples mecanismes per a un mateix resultat/microorganisme,
-        /// totes les mostres creades tenguin el MATEIX valor amb la concatenació de TOTS els mecanismes.
+        /// totes les mostres creades tinguin el MATEIX valor amb la concatenació de TOTS els mecanismes.
         /// </summary>
         /// <param name="mostra">Mostra amb l'etiqueta</param>
         /// <param name="resultat">Resultat del processament</param>
         private void SincronitzarMicroorganismeMecanismeCaptatPerEtiqueta(Mostra mostra, ResultatProcessamentPositiu resultat)
         {
+            // TODOCC: AQUEST FUNCIONA CORRECTAMENT !!
+            
             if (mostra == null || string.IsNullOrWhiteSpace(mostra.EtiquetaId))
             {
                 _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ SincronitzarMicroorganismeMecanismeCaptatPerEtiqueta: mostra o etiqueta és null");
@@ -1112,7 +1114,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 {
                     string microorganismeMecanismeCaptatComplet = string.Join(", ", todosLosMecanismes.OrderBy(x => x));
 
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Sincronitzant microorganieme captat de les mostres amb etiqueta '{mostra.EtiquetaId}'");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Sincronitzant microorganisme captat de les mostres amb etiqueta '{mostra.EtiquetaId}'");
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganisme captat complet: '{microorganismeMecanismeCaptatComplet}'");
 
                     // Obtenir els IDs de les mostres diagnòstiques que seran actualitzades

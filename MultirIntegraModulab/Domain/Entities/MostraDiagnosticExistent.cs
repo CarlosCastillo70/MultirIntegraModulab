@@ -19,6 +19,7 @@ namespace MultirIntegraModulab.Domain.Entities
         public string EstatIntegracio { get; set; }
         public DateTime? DataCreacio { get; set; }
         public DateTime? DataActualitzacio { get; set; }
+        public string MicroorganismeMecanismeCaptat { get; set; }
 
         public override string ToString()
         {

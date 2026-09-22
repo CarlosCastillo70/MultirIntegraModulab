@@ -6,6 +6,7 @@ using MultirIntegraModulab.Domain.Enums;
 using MultirIntegraModulab.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.ConstrainedExecution;
 using System.Security.Cryptography;
@@ -149,6 +150,12 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         $"{resultat.AuditoriasCreades} auditories");
 
                     resultat.Missatge = "Mostra negativa processada correctament";
+
+                    // FASE 3: SINCRONITZAR microorganisme_mecanisme_captat per TOTES les mostres negatives de la mateixa etiqueta
+                    if (resultat.NegatiusIncorporats > 0)
+                    {
+                        SincronitzarMicroorganismeMecanismeCaptarPerNegatius(mostra);
+                    }
                 }
 
 
@@ -158,7 +165,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             {
                 _logger.Error($"Error processant mostra negativa {mostra.EtiquetaId}", ex);
                 resultat.Exitosa = false;
-                resultat.Missatge = $"Error: {ex.Message}";
+
                 return resultat;
             }
         }
@@ -572,5 +579,75 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             }
 
         }
+
+        /// <summary>
+        /// Sincronitza el camp microorganisme_mecanisme_captat per TOTES les mostres negatives de la mateixa etiqueta.
+        /// Això assegura que quan hi ha múltiples negatius amb la mateixa etiqueta,
+        /// totes les mostres tinguin el MATEIX valor amb la concatenació de TOTS els mecanismes negatius.
+        /// </summary>
+        /// <param name="mostra">Mostra amb l'etiqueta</param>
+        private void SincronitzarMicroorganismeMecanismeCaptarPerNegatius(Mostra mostra)
+        {
+            if (mostra == null || string.IsNullOrWhiteSpace(mostra.EtiquetaId))
+            {
+                _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ SincronitzarMicroorganismeMecanismeCaptarPerNegatius: mostra o etiqueta és null");
+                return;
+            }
+
+            try
+            {
+                // Recopilar TOTS els microorganismes dels negatius (sense mecanismes)
+                var microorganismesNegatius = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var resultatMostra in mostra.Resultats)
+                {
+                    if (string.IsNullOrWhiteSpace(resultatMostra.AillamentDescripcio))
+                        continue;
+
+                    var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultatMostra.AillamentDescripcio);
+                    string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio;
+
+                    // Per negatius, afegir el format: "Microorganisme-"
+                    microorganismesNegatius.Add($"{microorganismeCodi}-");
+                }
+
+                if (microorganismesNegatius.Any())
+                {
+                    // Construir el valor complet ordenat alfabèticament
+                    string microorganismeMecanismeCaptatComplet = string.Join(", ", microorganismesNegatius.OrderBy(x => x));
+
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Sincronitzant microorganismes captat de les mostres negatives amb etiqueta '{mostra.EtiquetaId}'");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganismes captat complet (negatius): '{microorganismeMecanismeCaptatComplet}'");
+
+                    // Obtenir els IDs de les mostres diagnòstiques que seran actualitzades
+                    var idsmostresDiagnostic = _multiRRepository.ObtenirIdsMostresDiagnosticPerEtiqueta(mostra.EtiquetaId);
+
+                    if (idsmostresDiagnostic.Any())
+                    {
+                        string idsFormatats = string.Join(", ", idsmostresDiagnostic);
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}IDs de mostres a actualitzar: [{idsFormatats}]");
+                    }
+
+                    // Actualitzar TOTES les mostres de la mateixa etiqueta
+                    int mostreActualitzades = _multiRRepository.ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(
+                        mostra.EtiquetaId,
+                        microorganismeMecanismeCaptatComplet);
+
+                    if (mostreActualitzades > 0)
+                    {
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Actualitzades {mostreActualitzades} mostra(es) negativa(es) amb etiqueta '{mostra.EtiquetaId}'");
+                    }
+                    else
+                    {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha actualitzat cap mostra negativa amb etiqueta '{mostra.EtiquetaId}'");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}❌ Error sincronitzant microorganisme_mecanisme_captat per negatius de l'etiqueta '{mostra.EtiquetaId}': {ex.Message}", ex);
+            }
+        }
     }
 }
+

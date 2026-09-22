@@ -230,10 +230,22 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>Llista de combinacions microorganisme + mecanismes</returns>
         List<CombinacioMicroorganismeMecanisme> ObtenirCombinacionsMostraEntrant(Mostra mostra);
 
+        /// <summary>
+        /// Parseja el camp microorganisme_mecanisme_captat i retorna les combinacions microorganisme+mecanisme
+        /// Format del camp:
+        /// - Amb mecanismes: "Microorganisme - Mecanisme1, Microorganisme - Mecanisme2, ..."
+        /// - Sense mecanismes (especials): "Microorganisme"
+        /// - Negatius: "Microorganisme-"
+        /// - Virus Respiratoris: "Rhinovirus / Enterovirus" (sense "-")
+        /// </summary>
+        /// <param name="microorganismeMecanismeCaptat">Valor del camp microorganisme_mecanisme_captat</param>
+        /// <returns>Llista de combinacions parseades</returns>
+        List<CombinacioMicroorganismeMecanisme> ParsearCombinacionsDelMicroorganismeMecanismeCaptat(string microorganismeMecanismeCaptat);
+
         // Microorganismes
         bool? EsMicroorganismeEspecial(string microorganismeDescripcio);
         Microorganisme ObtenirMicroorganisme(string descripcio);
-        List<Microorganisme> ObtenirMicroorganismesEspecials();
+
         void CarregarMicroorganismesEspecials();
         void NetejarCacheMicroorganismes();
         string ObtenirEstadistiquesCache();
