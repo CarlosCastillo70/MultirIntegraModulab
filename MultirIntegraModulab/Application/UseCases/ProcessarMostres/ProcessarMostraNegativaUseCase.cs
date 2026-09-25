@@ -133,9 +133,22 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 // FASE 1: PROCESSAR CADA RESULTAT NEGATIU
                 // Nota: En una mostra amb un sol resultat negatiu, processem tots els resultats
+                var microorganismesNegatiusCaptats = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
                 foreach (var resultatMostra in mostra.Resultats)
                 {
-                    ProcessarResultatNegatiu(mostra, resultatMostra, resultat);
+                    bool resultatNegatiuIncorporat = ProcessarResultatNegatiu(mostra, resultatMostra, resultat);
+
+                    if (resultatNegatiuIncorporat)
+                    {
+                        var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultatMostra.AillamentDescripcio);
+                        string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio;
+
+                        if (!string.IsNullOrWhiteSpace(microorganismeCodi))
+                        {
+                            microorganismesNegatiusCaptats.Add($"{microorganismeCodi} - ");
+                        }
+                    }
                 }
 
                 if (resultat.Exitosa)
@@ -151,10 +164,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     resultat.Missatge = "Mostra negativa processada correctament";
 
-                    // FASE 3: SINCRONITZAR microorganisme_mecanisme_captat per TOTES les mostres negatives de la mateixa etiqueta
+                    // FASE 3: SINCRONITZAR microorganisme_mecanisme_captat i microorganisme_mecanisme_captat_tot
+                    // per TOTES les mostres negatives de la mateixa etiqueta
                     if (resultat.NegatiusIncorporats > 0)
                     {
-                        SincronitzarMicroorganismeMecanismeCaptarPerNegatius(mostra);
+                        SincronitzarMicroorganismeMecanismeCaptarPerNegatius(mostra, microorganismesNegatiusCaptats);
                     }
                 }
 
@@ -173,12 +187,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// <summary>
         /// Processa un resultat negatiu individual (ResultatMostra)
         /// </summary>
-        private void ProcessarResultatNegatiu(
+        private bool ProcessarResultatNegatiu(
             Mostra mostra,
             ResultatMostra resultatMostra,
             ResultatProcessamentNegatiu resultat)
         {
             string microorganisme = resultatMostra.AillamentDescripcio ?? "sense microorganisme";
+            bool resultatNegatiuIncorporat = false;
 
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}------------------------------------------------------------------------------");
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}Processant resultat negatiu: '{microorganisme}'");
@@ -203,17 +218,17 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             if (!pacientExisteix)
             {
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Pacient {mostra.PacientSap} NO existeix a la taula de pacients");
-                
+
                 // Inserir auditoria amb codi NMRCMP (No supera la comprovació de mostra amb motiu pacient)
                 bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCMP", resultatMostra);
-                
+
                 if (auditoriaCreada)
                 {
                     resultat.AuditoriasCreades++;
                 }
-                
+
                 resultat.ResultatsNoIncorporats++;
-                return;
+                return false;
             }
             
             _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Pacient {mostra.PacientSap} SI existeix a la taula de pacients");
@@ -315,14 +330,14 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                 // Inserir auditoria amb codi NMRCM (No supera la comprovació de mostra)
                 bool auditoriaCreada = _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "NMRCM", resultatMostra);
-                
+
                 if (auditoriaCreada)
                 {
                     resultat.AuditoriasCreades++;
                 }
-                
+
                 resultat.ResultatsNoIncorporats++;
-                return;
+                return false;
             }
 			
 			
@@ -441,7 +456,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                     resultatMostra.DataValidacio,
                                     "", // sense mecanisme
                                     resultatMostra.EsMicroorganismeEspecial,
-                                    microorganismeCodi + "-"); // Per a negatius, només tenim el microorganisme (sense mecanisme)
+                                    string.Empty, // captat: els negatius no s'inclouen
+                                    microorganismeCodi + " - "); // total: conservar la combinació negativa
 
                                 if (nouMostraDiagnosticId > 0)
                                 {
@@ -543,6 +559,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                 {
                                     resultat.AuditoriasCreades++;
                                     resultat.NegatiusIncorporats++;
+                                    resultatNegatiuIncorporat = true;
                                 }
 
                             }
@@ -576,17 +593,21 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 // Incrementar comptador de resultats processats
                 resultat.ResultatsProcessats++;
 
+                return resultatNegatiuIncorporat;
             }
 
+            return resultatNegatiuIncorporat;
         }
 
         /// <summary>
-        /// Sincronitza el camp microorganisme_mecanisme_captat per TOTES les mostres negatives de la mateixa etiqueta.
-        /// Això assegura que quan hi ha múltiples negatius amb la mateixa etiqueta,
-        /// totes les mostres tinguin el MATEIX valor amb la concatenació de TOTS els mecanismes negatius.
+        /// Sincronitza els camps microorganisme_mecanisme_captat i microorganisme_mecanisme_captat_tot
+        /// per TOTES les mostres negatives de la mateixa etiqueta.
+        /// El camp captat només ha de contenir els negatius realment incorporats.
+        /// El camp total ha de contenir tots els negatius presents a la mostra.
         /// </summary>
         /// <param name="mostra">Mostra amb l'etiqueta</param>
-        private void SincronitzarMicroorganismeMecanismeCaptarPerNegatius(Mostra mostra)
+        /// <param name="microorganismesNegatiusCaptats">Negatius realment incorporats</param>
+        private void SincronitzarMicroorganismeMecanismeCaptarPerNegatius(Mostra mostra, HashSet<string> microorganismesNegatiusCaptats)
         {
             if (mostra == null || string.IsNullOrWhiteSpace(mostra.EtiquetaId))
             {
@@ -608,16 +629,18 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio;
 
                     // Per negatius, afegir el format: "Microorganisme-"
-                    microorganismesNegatius.Add($"{microorganismeCodi}-");
+                    microorganismesNegatius.Add($"{microorganismeCodi} - ");
                 }
 
                 if (microorganismesNegatius.Any())
                 {
-                    // Construir el valor complet ordenat alfabèticament
-                    string microorganismeMecanismeCaptatComplet = string.Join(", ", microorganismesNegatius.OrderBy(x => x));
+                    // Construir els valors ordenats alfabèticament
+                    string microorganismeMecanismeCaptat = string.Join(", ", (microorganismesNegatiusCaptats ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)).OrderBy(x => x));
+                    string microorganismeMecanismeCaptatTot = string.Join(", ", microorganismesNegatius.OrderBy(x => x));
 
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Sincronitzant microorganismes captat de les mostres negatives amb etiqueta '{mostra.EtiquetaId}'");
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganismes captat complet (negatius): '{microorganismeMecanismeCaptatComplet}'");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganismes captat (incorporats): '{microorganismeMecanismeCaptat}'");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganismes captat total (negatius): '{microorganismeMecanismeCaptatTot}'");
 
                     // Obtenir els IDs de les mostres diagnòstiques que seran actualitzades
                     var idsmostresDiagnostic = _multiRRepository.ObtenirIdsMostresDiagnosticPerEtiqueta(mostra.EtiquetaId);
@@ -631,7 +654,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // Actualitzar TOTES les mostres de la mateixa etiqueta
                     int mostreActualitzades = _multiRRepository.ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(
                         mostra.EtiquetaId,
-                        microorganismeMecanismeCaptatComplet);
+                        microorganismeMecanismeCaptat,
+                        microorganismeMecanismeCaptatTot);
 
                     if (mostreActualitzades > 0)
                     {

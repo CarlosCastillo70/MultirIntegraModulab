@@ -160,7 +160,7 @@ namespace MultirIntegraModulab.Domain.Interfaces
         /// <returns>ID de la nova mostra creada, 0 si ha fallat</returns>
         int CrearMostraDiagnostic(string pacientSap, DateTime? dataMostra, string tipusMostra, 
             string tipusProva, string etiqueta, DateTime? dataResultat, DateTime? dataValidacio, 
-            string mecanismeId, bool? esMicroorganismeEspecial, string microorganismeMecanismeCaptat);
+            string mecanismeId, bool? esMicroorganismeEspecial, string microorganismeMecanismeCaptat, string microorganismeMecanismeCaptatTot);
 
         /// <summary>
         /// Actualitza el camp microorganisme_mecanisme_captat d'una mostra diagnòstic existent.
@@ -179,12 +179,14 @@ namespace MultirIntegraModulab.Domain.Interfaces
         List<int> ObtenirIdsMostresDiagnosticPerEtiqueta(string etiqueta);
 
         /// <summary>
-        /// Actualitza el camp microorganisme_mecanisme_captat per TOTES les mostres diagnòstiques d'una etiqueta.
+        /// Actualitza els camps microorganisme_mecanisme_captat i microorganisme_mecanisme_captat_tot
+        /// per TOTES les mostres diagnòstiques d'una etiqueta.
         /// </summary>
         /// <param name="etiqueta">Etiqueta de les mostres</param>
-        /// <param name="microorganismeMecanismeCaptat">Valor complet a assignar</param>
+        /// <param name="microorganismeMecanismeCaptat">Valor captat a assignar</param>
+        /// <param name="microorganismeMecanismeCaptatTot">Valor total a assignar</param>
         /// <returns>Nombre de mostres actualitzades</returns>
-        int ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(string etiqueta, string microorganismeMecanismeCaptat);
+        int ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(string etiqueta, string microorganismeMecanismeCaptat, string microorganismeMecanismeCaptatTot);
 
         /// <summary>
         /// Obté les dades completes d'una mostra diagnòstic existent

@@ -184,6 +184,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
 
+                    // Preservar els mecanismes originals abans que la comprovació pugui eliminar-ne alguns (MNI)
+                    PreservarMecanismesOriginals(mostra);
+
                     // FASE 5: Comprovar mecanismes de resistència
                     var resultatMecanismes = _comprovadorMecanismesUseCase.Executar(mostra);
                     if (!resultatMecanismes.ContinuarProcessament)
@@ -313,6 +316,31 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             _logger.Info($"========================================");
 
             return resum;
+        }
+
+        /// <summary>
+        /// Preserva els mecanismes originals de cada resultat abans d'aplicar filtres que els puguin eliminar.
+        /// </summary>
+        private void PreservarMecanismesOriginals(Mostra mostra)
+        {
+            if (mostra?.Resultats == null)
+            {
+                return;
+            }
+
+            foreach (var resultat in mostra.Resultats)
+            {
+                if (resultat == null)
+                {
+                    continue;
+                }
+
+                resultat.MecanismeResistencia1IdOriginal = resultat.MecanismeResistencia1Id;
+                resultat.MecanismeResistencia2IdOriginal = resultat.MecanismeResistencia2Id;
+                resultat.MecanismeResistencia3IdOriginal = resultat.MecanismeResistencia3Id;
+                resultat.MecanismeResistencia4IdOriginal = resultat.MecanismeResistencia4Id;
+                resultat.MecanismeResistencia5IdOriginal = resultat.MecanismeResistencia5Id;
+            }
         }
 
         /// <summary>
@@ -730,6 +758,10 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// <summary>
         /// Obté les combinacions microorganisme+mecanisme d'una mostra existent en format text (JSON)
         /// </summary>
+        /// <summary>
+        /// Obté les combinacions microorganisme+mecanisme d'una mostra existent en format text
+        /// Intenta obtenir primer MicroorganismeMecanismeCaptatTot, si no té valor s'obté MicroorganismeMecanismeCaptat
+        /// </summary>
         private string ObtenirCombinacionsTextMostraExistent(MostraDiagnosticExistent mostraExistent)
         {
             if (mostraExistent == null || string.IsNullOrWhiteSpace(mostraExistent.Etiqueta))
@@ -737,61 +769,20 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             try
             {
-                // Recuperar combinacions directament del camp microorganisme_mecanisme_captat
-                if (!string.IsNullOrWhiteSpace(mostraExistent.MicroorganismeMecanismeCaptat))
-                {
-                    var combinacionsSegonsCaptat = _multiRRepository.ParsearCombinacionsDelMicroorganismeMecanismeCaptat(
-                        mostraExistent.MicroorganismeMecanismeCaptat);
+                // Primer obtenir MicroorganismeMecanismeCaptatTot, si no té valor obtenir MicroorganismeMecanismeCaptat
+                var campCombinacions = !string.IsNullOrWhiteSpace(mostraExistent.MicroorganismeMecanismeCaptatTot)
+                    ? mostraExistent.MicroorganismeMecanismeCaptatTot
+                    : mostraExistent.MicroorganismeMecanismeCaptat;
 
-                    if (combinacionsSegonsCaptat != null && combinacionsSegonsCaptat.Any())
-                    {
-                        var combinacionsText = combinacionsSegonsCaptat.Select(c =>
-                        {
-                            if (!string.IsNullOrWhiteSpace(c.MecanismeResistencia))
-                            {
-                                return $"{c.Microorganisme}+{c.MecanismeResistencia}";
-                            }
-                            else
-                            {
-                                return c.Microorganisme;
-                            }
-                        }).ToList();
-
-                        return string.Join("; ", combinacionsText);
-                    }
-                }
-
-                // TODO: En una posterior fase, eliminar les cridades antigues a 
-                // ObtenirCombinacionsMicroorganismeMecanisme i ObtenirCombinacionsHistorialMostraExistent
-                // Obtenir les combinacions comparables de la base de dades (mètode antic)
-                var combinacions = _multiRRepository.ObtenirCombinacionsMicroorganismeMecanisme(mostraExistent.Etiqueta);
-
-                if (combinacions != null && combinacions.Any())
-                {
-                    var combinacionsText = combinacions.Select(c =>
-                    {
-                        if (!string.IsNullOrWhiteSpace(c.MecanismeResistencia))
-                        {
-                            return $"{c.Microorganisme}+{c.MecanismeResistencia}";
-                        }
-                        else
-                        {
-                            return c.Microorganisme;
-                        }
-                    }).ToList();
-
-                    return string.Join("; ", combinacionsText);
-                }
-
-                // Si no hi ha combinacions positives/comparables, per historial recuperem
-                // totes les combinacions persistides de la mostra existent.
-                var combinacionsHistorial = _multiRRepository.ObtenirCombinacionsHistorialMostraExistent(mostraExistent.Etiqueta);
-                if (combinacionsHistorial == null || !combinacionsHistorial.Any())
-                {
+                if (string.IsNullOrWhiteSpace(campCombinacions))
                     return string.Empty;
-                }
 
-                var combinacionsHistorialText = combinacionsHistorial.Select(c =>
+                var combinacionsSegonsCaptat = _multiRRepository.ParsearCombinacionsDelMicroorganismeMecanismeCaptat(campCombinacions);
+
+                if (combinacionsSegonsCaptat == null || !combinacionsSegonsCaptat.Any())
+                    return string.Empty;
+
+                var combinacionsText = combinacionsSegonsCaptat.Select(c =>
                 {
                     if (!string.IsNullOrWhiteSpace(c.MecanismeResistencia))
                     {
@@ -801,9 +792,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     {
                         return c.Microorganisme;
                     }
-                }).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                }).ToList();
 
-                return string.Join("; ", combinacionsHistorialText);
+                return string.Join("; ", combinacionsText);
             }
             catch (Exception ex)
             {
@@ -813,8 +804,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         }
 
         /// <summary>
-        /// Obté les combinacions microorganisme+mecanisme d'una mostra entrant en format text (JSON)
-        /// Utilitza el mètode ObtenirCombinacionsMostraEntrant de MultiRDbService
+        /// Obté les combinacions microorganisme+mecanisme d'una mostra entrant en format text
+        /// Retorna el mateix format que MicroorganismeMecanismeCaptatTot: totes les combinacions separades per ", "
         /// </summary>
         private string ObtenirCombinacionsTextMostraEntrant(Mostra mostra)
         {
@@ -823,29 +814,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             try
             {
-                // Obtenir les combinacions comparables de la mostra entrant
-                var combinacions = _multiRRepository.ObtenirCombinacionsMostraEntrant(mostra);
-
-                if (combinacions != null && combinacions.Any())
-                {
-                    var combinacionsText = combinacions.Select(c =>
-                    {
-                        if (!string.IsNullOrWhiteSpace(c.MecanismeResistencia))
-                        {
-                            return $"{c.Microorganisme}+{c.MecanismeResistencia}";
-                        }
-                        else
-                        {
-                            return c.Microorganisme;
-                        }
-                    }).ToList();
-
-                    return string.Join("; ", combinacionsText);
-                }
-
-                // Si no hi ha combinacions positives/comparables, per historial guardem igualment
-                // el detall bàsic dels resultats entrants per no deixar el camp buit.
-                var combinacionsHistorial = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var combinacionsTotal = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var resultat in mostra.Resultats)
                 {
@@ -878,17 +847,17 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     {
                         foreach (var mecanisme in mecanismes)
                         {
-                            combinacionsHistorial.Add($"{microorganisme}+{mecanisme}");
+                            combinacionsTotal.Add($"{microorganisme}+{mecanisme}");
                         }
                     }
                     else
                     {
-                        combinacionsHistorial.Add(microorganisme);
+                        combinacionsTotal.Add(microorganisme);
                     }
                 }
 
-                return combinacionsHistorial.Any()
-                    ? string.Join("; ", combinacionsHistorial)
+                return combinacionsTotal.Any()
+                    ? string.Join(", ", combinacionsTotal.OrderBy(x => x))
                     : string.Empty;
             }
             catch (Exception ex)

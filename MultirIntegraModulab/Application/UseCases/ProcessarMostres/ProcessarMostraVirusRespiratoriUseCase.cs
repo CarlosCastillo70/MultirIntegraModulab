@@ -183,6 +183,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 }
 
                 // FASE 2: PROCESSAR CADA RESULTAT VR (TOTS SÓN POSITIUS)
+                var microorganismesVrCaptats = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
                 foreach (var resultatMostra in mostra.Resultats)
                 {
                     // Saltar resultats sense microorganisme
@@ -192,7 +194,19 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         continue;
                     }
 
-                    await ProcessarResultatVirusRespiratoriAsync(mostra, resultatMostra, resultat);
+                    bool resultatVrIncorporat = await ProcessarResultatVirusRespiratoriAsync(mostra, resultatMostra, resultat);
+
+                    if (resultatVrIncorporat)
+                    {
+                        var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultatMostra.AillamentDescripcio);
+                        string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio;
+
+                        if (!string.IsNullOrWhiteSpace(microorganismeCodi))
+                        {
+                            microorganismesVrCaptats.Add(microorganismeCodi);
+                        }
+                    }
+
                     resultat.ResultatsProcessats++;
                 }
 
@@ -200,10 +214,10 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 resultat.Missatge = $"✅ VR processada correctament: {resultat.ResultatsProcessats} resultats";
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}✔️ Mostra VR {mostra.EtiquetaId} processada: {resultat}");
 
-                // FASE 3: SINCRONITZAR microorganisme_mecanisme_captat per TOTES les mostres VR de la mateixa etiqueta
+                // FASE 3: SINCRONITZAR microorganisme_mecanisme_captat (i el total) per TOTES les mostres VR de la mateixa etiqueta
                 if (resultat.PositiusVirusRespiratorisIncorporats > 0)
                 {
-                    SincronitzarMicroorganismeMecanismeCaptarPerVirusRespiratori(mostra);
+                    SincronitzarMicroorganismeMecanismeCaptarPerVirusRespiratori(mostra, microorganismesVrCaptats);
                 }
 
                 return resultat;
@@ -382,7 +396,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// Processa un resultat individual de Virus Respiratori
         /// IMPORTANT: Els VR NO tenen mecanismes de resistència (sempre null)
         /// </summary>
-        private async Task ProcessarResultatVirusRespiratoriAsync(
+        private async Task<bool> ProcessarResultatVirusRespiratoriAsync(
             Mostra mostra,
             ResultatMostra resultatMostra,
             ResultatProcessamentVirusRespiratori resultat)
@@ -403,7 +417,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 if (!microorganismeExisteix)
                 {
                     _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}⚠️ No s'ha pogut crear microorganisme VR");
-                    return;
+                    return false;
                 }
 
                 // 2. COMPROVAR/CREAR DIAGNÒSTIC (mecanisme = null per VR)
@@ -435,7 +449,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     else
                     {
                         _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Error creant diagnòstic VR");
-                        return;
+                        return false;
                     }
                 }
                 else
@@ -469,7 +483,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         resultatMostra.DataValidacio,
                         mecanismeId: null,  // ⚠️ VR NO tenen mecanisme
                         esMicroorganismeEspecial: false,  // No aplica per VR
-                        microorganismeMecanismeCaptat: microorganisme);  // Només microorganisme
+                        microorganismeMecanismeCaptat: microorganisme,
+                        microorganismeMecanismeCaptatTot: microorganisme);  // Només microorganisme
 
                     if (mostraDiagnosticId > 0)
                     {
@@ -480,7 +495,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     else
                     {
                         _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Error creant mostra diagnòstic VR");
-                        return;
+                        return false;
                     }
                 }
                 else
@@ -533,19 +548,24 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                 }
 
                 _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ VR '{microorganisme}' processat correctament");
+                return auditoriaCreada;
             }
             catch (Exception ex)
             {
                 _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}❌ Error processant VR '{microorganisme}'", ex);
+                return false;
             }
         }
 
         /// <summary>
-        /// Sincronitza el camp microorganisme_mecanisme_captat per TOTES les mostres VR de la mateixa etiqueta.
-        /// Per VR, el format és: "Microorganisme" o "Microorganisme, Microorganisme2, ..." (sense mecanismes)
+        /// Sincronitza els camps microorganisme_mecanisme_captat i microorganisme_mecanisme_captat_tot per TOTES les mostres VR de la mateixa etiqueta.
+        /// Per VR, el format és: "Microorganisme" o "Microorganisme, Microorganisme2, ..." (sense mecanismes).
+        /// El camp captat només ha de contenir els VR realment incorporats.
+        /// El camp total ha de contenir tots els VR presents a la mostra.
         /// </summary>
         /// <param name="mostra">Mostra amb l'etiqueta</param>
-        private void SincronitzarMicroorganismeMecanismeCaptarPerVirusRespiratori(Mostra mostra)
+        /// <param name="microorganismesVrCaptats">VR realment incorporats</param>
+        private void SincronitzarMicroorganismeMecanismeCaptarPerVirusRespiratori(Mostra mostra, HashSet<string> microorganismesVrCaptats)
         {
             if (mostra == null || string.IsNullOrWhiteSpace(mostra.EtiquetaId))
             {
@@ -555,8 +575,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             try
             {
-                // Recopilar TOTS els virus respiratoris de la mostra
-                var virusRespiratoris = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var combinacionsTotals = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var resultatMostra in mostra.Resultats)
                 {
@@ -566,17 +585,20 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultatMostra.AillamentDescripcio);
                     string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio;
 
-                    // Per VR, afegir només el microorganisme (sense mecanisme i sense "-")
-                    virusRespiratoris.Add(microorganismeCodi);
+                    if (!string.IsNullOrWhiteSpace(microorganismeCodi))
+                    {
+                        combinacionsTotals.Add(microorganismeCodi);
+                    }
                 }
 
-                if (virusRespiratoris.Any())
+                if (combinacionsTotals.Any() || (microorganismesVrCaptats != null && microorganismesVrCaptats.Any()))
                 {
-                    // Construir el valor complet ordenat alfabèticament
-                    string microorganismeMecanismeCaptatComplet = string.Join(", ", virusRespiratoris.OrderBy(x => x));
+                    string microorganismeMecanismeCaptat = string.Join(", ", (microorganismesVrCaptats ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)).OrderBy(x => x));
+                    string microorganismeMecanismeCaptatTot = string.Join(", ", combinacionsTotals.OrderBy(x => x));
 
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Sincronitzant microorganismes captat de les mostres VR amb etiqueta '{mostra.EtiquetaId}'");
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganismes captat complet (VR): '{microorganismeMecanismeCaptatComplet}'");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Sincronitzant camps microorganisme_mecanisme_captat i microorganisme_mecanisme_captat_tot per mostra VIRUS RESPIRATORIS amb etiqueta '{mostra.EtiquetaId}'");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Valor captat: '{microorganismeMecanismeCaptat}'");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Valor total : '{microorganismeMecanismeCaptatTot}'");
 
                     // Obtenir els IDs de les mostres diagnòstiques que seran actualitzades
                     var idsmostresDiagnostic = _multiRRepository.ObtenirIdsMostresDiagnosticPerEtiqueta(mostra.EtiquetaId);
@@ -590,7 +612,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // Actualitzar TOTES les mostres de la mateixa etiqueta
                     int mostreActualitzades = _multiRRepository.ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(
                         mostra.EtiquetaId,
-                        microorganismeMecanismeCaptatComplet);
+                        microorganismeMecanismeCaptat,
+                        microorganismeMecanismeCaptatTot);
 
                     if (mostreActualitzades > 0)
                     {

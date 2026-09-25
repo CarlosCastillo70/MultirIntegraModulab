@@ -133,6 +133,31 @@ namespace MultirIntegraModulab.Domain.Entities
         public string MecanismeResistenciaDescrip5 { get; set; }
 
         /// <summary>
+        /// Primer mecanisme de resistència rebut originalment abans de filtrar mecanismes NO INCORPORAR
+        /// </summary>
+        public string MecanismeResistencia1IdOriginal { get; set; }
+
+        /// <summary>
+        /// Segon mecanisme de resistència rebut originalment abans de filtrar mecanismes NO INCORPORAR
+        /// </summary>
+        public string MecanismeResistencia2IdOriginal { get; set; }
+
+        /// <summary>
+        /// Tercer mecanisme de resistència rebut originalment abans de filtrar mecanismes NO INCORPORAR
+        /// </summary>
+        public string MecanismeResistencia3IdOriginal { get; set; }
+
+        /// <summary>
+        /// Quart mecanisme de resistència rebut originalment abans de filtrar mecanismes NO INCORPORAR
+        /// </summary>
+        public string MecanismeResistencia4IdOriginal { get; set; }
+
+        /// <summary>
+        /// Cinquè mecanisme de resistència rebut originalment abans de filtrar mecanismes NO INCORPORAR
+        /// </summary>
+        public string MecanismeResistencia5IdOriginal { get; set; }
+
+        /// <summary>
         /// Tipus de prova que s'ha fet
         /// </summary>
         public string ProvaDescripcio { get; set; }

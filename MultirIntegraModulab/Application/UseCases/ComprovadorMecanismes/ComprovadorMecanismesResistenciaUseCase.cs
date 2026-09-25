@@ -132,14 +132,21 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 if (resultat.ResultatsADescartar.Any())
                 {
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}⚠️ Descartats {resultat.ResultatsADescartar.Count} resultat(s) amb combinació NO INCORPORAR (CNI)");
-                    
-                    // Eliminar els resultats descartats de la col·lecció (en ordre invers per no afectar els índexs)
+
+                    if (mostra.CombinacionsNoIncorporar == null)
+                    {
+                        mostra.CombinacionsNoIncorporar = new List<string>();
+                    }
+
+                    // Guardar les combinacions CNI per conservar-les al camp total
                     foreach (var index in resultat.ResultatsADescartar.OrderByDescending(x => x))
                     {
+                        var registreDescartat = mostra.Resultats[index];
+                        AfegirCombinacionsDescartadesPerTot(mostra, registreDescartat);
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🗑️ Eliminant resultat {index + 1} de {mostra.Resultats.Count} de la col·lecció (combinació CNI)");
                         mostra.Resultats.RemoveAt(index);
                     }
-                    
+
                     // Marcar que cal reclassificar després d'eliminar resultats
                     resultat.CalReclassificar = true;
                 }
@@ -156,6 +163,50 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 resultat.ContinuarProcessament = false;
                 resultat.Missatge = ex.Message;
                 return resultat;
+            }
+        }
+
+        /// <summary>
+        /// Afegeix a la mostra les combinacions descartades perquè puguin mantenir-se al camp total.
+        /// </summary>
+        private void AfegirCombinacionsDescartadesPerTot(Mostra mostra, ResultatMostra registreDescartat)
+        {
+            if (mostra == null || registreDescartat == null)
+            {
+                return;
+            }
+
+            if (mostra.CombinacionsNoIncorporar == null)
+            {
+                mostra.CombinacionsNoIncorporar = new List<string>();
+            }
+
+            if (string.IsNullOrWhiteSpace(registreDescartat.AillamentDescripcio))
+            {
+                return;
+            }
+
+            var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(registreDescartat.AillamentDescripcio);
+            string microorganismeCodi = microorganismeEntitat?.Codi ?? registreDescartat.AillamentDescripcio;
+
+            var mecanismes = ObtenirMecanismesRegistre(registreDescartat)
+                .Where(m => !string.IsNullOrWhiteSpace(m.Item1))
+                .ToList();
+
+            if (mecanismes.Any())
+            {
+                foreach (var mecanisme in mecanismes)
+                {
+                    mostra.CombinacionsNoIncorporar.Add($"{microorganismeCodi} - {mecanisme.Item1}");
+                }
+            }
+            else if (registreDescartat.EsMicroorganismeEspecial ?? false)
+            {
+                mostra.CombinacionsNoIncorporar.Add(microorganismeCodi);
+            }
+            else
+            {
+                mostra.CombinacionsNoIncorporar.Add($"{microorganismeCodi} - ");
             }
         }
 

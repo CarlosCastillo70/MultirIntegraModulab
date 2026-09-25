@@ -121,9 +121,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     ProcessarResultatPositiu(mostra, resultatMostra, resultat);
                 }
 
-                // FASE 3: SINCRONITZAR microorganisme_mecanisme_captat per TOTES les mostres de la mateixa etiqueta
-                // Quan s'han processat múltiples mecanismes per la mateixa etiqueta, 
-                // cal que TOTES les mostres diagnòstiques tinguin el MATEIX valor amb TOTS els mecanismes
+                // FASE 3: SINCRONITZAR microorganisme_mecanisme_captat (captat) per TOTES les mostres de la mateixa etiqueta
+                // El valor captat només ha de contenir les combinacions incorporades; el total es guarda a microorganisme_mecanisme_captat_tot.
                 SincronitzarMicroorganismeMecanismeCaptatPerEtiqueta(mostra, resultat);
 
                 // Resultat final
@@ -500,6 +499,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                             resultatMostra.DataValidacio,
                             mecanismeId,
                             resultatMostra.EsMicroorganismeEspecial,
+                            microorganismeMecanismeCaptat,
                             microorganismeMecanismeCaptat); // 260113. En Martí confirma que per als positius s´ha de desar microorganisme + mecanisme captat
 
                         if (nouMostraDiagnosticId > 0)
@@ -545,6 +545,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                 }
                             }
                         }
+                        else
+                        {
+                            _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ No s'ha pogut crear la mostra diagnòstic positiva; s'omet la creació de la relació mostra_microorganisme");
+                            resultat.Exitosa = false;
+                            resultat.Missatge = "No s'ha pogut crear la mostra diagnòstic positiva";
+                            continue;
+                        }
                     }
                     else
                     {
@@ -566,6 +573,14 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
                     // Mostra_Microorganisme
                     // ------------------------------------
+                    if (diagnosticIdFinal <= 0 || mostraDiagnosticIdFinal <= 0)
+                    {
+                        _logger.Error($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}❌ IDs invàlids per crear mostra_microorganisme (diagnostic: {diagnosticIdFinal}, mostra: {mostraDiagnosticIdFinal})");
+                        resultat.Exitosa = false;
+                        resultat.Missatge = "IDs invàlids per crear mostra_microorganisme";
+                        continue;
+                    }
+
                     // Comprovar si ja existeix el registre mostra_microorganisme
                     bool existeixMostraMicroorganisme = _multiRRepository.ComprovarMostraMicroorganismeExisteix(
                         diagnosticIdFinal,
@@ -600,6 +615,11 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         if (mostraMicroorganismeCreat)
                         {
                             resultat.RelacionsCreades++;
+                        }
+                        else
+                        {
+                            resultat.Exitosa = false;
+                            resultat.Missatge = "No s'ha pogut crear la relació mostra_microorganisme";
                         }
                     }
 
@@ -1003,7 +1023,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     resultatMostra.DataValidacio,
                     null, // Sense mecanisme (negativa)
                     false, // No és microorganisme especial
-                    microorganismeMecanismeCaptat); // Per a negatius, només el microorganisme (sense mecanisme)
+                    microorganismeMecanismeCaptat, // captat: els negatius no s'inclouen
+                    microorganismeMecanismeCaptat); // total: conservar la combinació negativa per comparar històricament
                                                     // valor anterior microorganismeCodi
 
                 if (mostraDiagnosticIdFinal == 0)
@@ -1050,7 +1071,6 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         /// <param name="resultat">Resultat del processament</param>
         private void SincronitzarMicroorganismeMecanismeCaptatPerEtiqueta(Mostra mostra, ResultatProcessamentPositiu resultat)
         {
-            // TODOCC: AQUEST FUNCIONA CORRECTAMENT !!
             
             if (mostra == null || string.IsNullOrWhiteSpace(mostra.EtiquetaId))
             {
@@ -1060,8 +1080,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
 
             try
             {
-                // Recopilar TOTS els mecanismes de TOTS els resultats de la mostra
-                var mecanismesConsolidats = new Dictionary<string, HashSet<string>>(); // microorganisme -> set de mecanismes
+                var mecanismesCaptats = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var mecanismesTotals = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var resultatMostra in mostra.Resultats)
                 {
@@ -1071,51 +1091,70 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultatMostra.AillamentDescripcio);
                     string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio;
 
-                    if (!mecanismesConsolidats.ContainsKey(microorganismeCodi))
+                    var mecanismesActuals = new[]
                     {
-                        mecanismesConsolidats[microorganismeCodi] = new HashSet<string>();
-                    }
-
-                    // Afegir tots els mecanismes no buits
-                    if (!string.IsNullOrWhiteSpace(resultatMostra.MecanismeResistencia1Id))
-                        mecanismesConsolidats[microorganismeCodi].Add($"{microorganismeCodi} - {resultatMostra.MecanismeResistencia1Id}");
-                    if (!string.IsNullOrWhiteSpace(resultatMostra.MecanismeResistencia2Id))
-                        mecanismesConsolidats[microorganismeCodi].Add($"{microorganismeCodi} - {resultatMostra.MecanismeResistencia2Id}");
-                    if (!string.IsNullOrWhiteSpace(resultatMostra.MecanismeResistencia3Id))
-                        mecanismesConsolidats[microorganismeCodi].Add($"{microorganismeCodi} - {resultatMostra.MecanismeResistencia3Id}");
-                    if (!string.IsNullOrWhiteSpace(resultatMostra.MecanismeResistencia4Id))
-                        mecanismesConsolidats[microorganismeCodi].Add($"{microorganismeCodi} - {resultatMostra.MecanismeResistencia4Id}");
-                    if (!string.IsNullOrWhiteSpace(resultatMostra.MecanismeResistencia5Id))
-                        mecanismesConsolidats[microorganismeCodi].Add($"{microorganismeCodi} - {resultatMostra.MecanismeResistencia5Id}");
-
-                    // Si no hi ha mecanismes però el microorganisme és especial, afegir només el codi
-                    var tesMecanismes = new[] {
                         resultatMostra.MecanismeResistencia1Id,
                         resultatMostra.MecanismeResistencia2Id,
                         resultatMostra.MecanismeResistencia3Id,
                         resultatMostra.MecanismeResistencia4Id,
                         resultatMostra.MecanismeResistencia5Id
-                    }.Any(m => !string.IsNullOrWhiteSpace(m));
+                    }
+                    .Where(m => !string.IsNullOrWhiteSpace(m))
+                    .ToList();
 
-                    if (!tesMecanismes && (resultatMostra.EsMicroorganismeEspecial ?? false))
+                    foreach (var mecanismeActual in mecanismesActuals)
                     {
-                        mecanismesConsolidats[microorganismeCodi].Add(microorganismeCodi);
+                        mecanismesCaptats.Add($"{microorganismeCodi} - {mecanismeActual}");
+                    }
+
+                    var mecanismesOriginals = new[]
+                    {
+                        resultatMostra.MecanismeResistencia1IdOriginal,
+                        resultatMostra.MecanismeResistencia2IdOriginal,
+                        resultatMostra.MecanismeResistencia3IdOriginal,
+                        resultatMostra.MecanismeResistencia4IdOriginal,
+                        resultatMostra.MecanismeResistencia5IdOriginal
+                    }
+                    .Where(m => !string.IsNullOrWhiteSpace(m))
+                    .ToList();
+
+                    if (!mecanismesOriginals.Any())
+                    {
+                        mecanismesOriginals = mecanismesActuals;
+                    }
+
+                    foreach (var mecanismeOriginal in mecanismesOriginals)
+                    {
+                        mecanismesTotals.Add($"{microorganismeCodi} - {mecanismeOriginal}");
+                    }
+
+                    if (!mecanismesActuals.Any() && (resultatMostra.EsMicroorganismeEspecial ?? false))
+                    {
+                        mecanismesCaptats.Add(microorganismeCodi);
+                    }
+
+                    if (!mecanismesOriginals.Any() && (resultatMostra.EsMicroorganismeEspecial ?? false))
+                    {
+                        mecanismesTotals.Add(microorganismeCodi);
                     }
                 }
 
-                // Construir el valor complet de microorganisme_mecanisme_captat
-                var todosLosMecanismes = new List<string>();
-                foreach (var mecanismesDelMicro in mecanismesConsolidats.Values)
+                if (mostra.CombinacionsNoIncorporar != null && mostra.CombinacionsNoIncorporar.Any())
                 {
-                    todosLosMecanismes.AddRange(mecanismesDelMicro);
+                    foreach (var combinacioNoIncorporada in mostra.CombinacionsNoIncorporar.Where(x => !string.IsNullOrWhiteSpace(x)))
+                    {
+                        mecanismesTotals.Add(combinacioNoIncorporada);
+                    }
                 }
 
-                if (todosLosMecanismes.Any())
+                if (mecanismesCaptats.Any() || mecanismesTotals.Any())
                 {
-                    string microorganismeMecanismeCaptatComplet = string.Join(", ", todosLosMecanismes.OrderBy(x => x));
+                    string microorganismeMecanismeCaptatComplet = string.Join(", ", mecanismesCaptats.OrderBy(x => x));
+                    string microorganismeMecanismeCaptatTot = string.Join(", ", mecanismesTotals.OrderBy(x => x));
 
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}🔄 Sincronitzant microorganisme captat de les mostres amb etiqueta '{mostra.EtiquetaId}'");
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganisme captat complet: '{microorganismeMecanismeCaptatComplet}'");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganisme captat incorporat: '{microorganismeMecanismeCaptatComplet}'");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Microorganisme captat total: '{microorganismeMecanismeCaptatTot}'");
 
                     // Obtenir els IDs de les mostres diagnòstiques que seran actualitzades
                     var idsmostresDiagnostic = _multiRRepository.ObtenirIdsMostresDiagnosticPerEtiqueta(mostra.EtiquetaId);
@@ -1127,9 +1166,14 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
 
                     // Actualitzar TOTES les mostres de la mateixa etiqueta
+                    // 1 positiu es OK
+                    // 3 positius es OK
+                    // 1 positiu + 1 negatius contraresta es OK
+
                     int mostreActualitzades = _multiRRepository.ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(
                         mostra.EtiquetaId,
-                        microorganismeMecanismeCaptatComplet);
+                        microorganismeMecanismeCaptatComplet,
+                        microorganismeMecanismeCaptatTot);
 
                     if (mostreActualitzades > 0)
                     {

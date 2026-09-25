@@ -68,9 +68,9 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
 
         public int CrearMostraDiagnostic(string pacientSap, DateTime? dataMostra, string tipusMostra, 
             string tipusProva, string etiqueta, DateTime? dataResultat, DateTime? dataValidacio, 
-            string mecanismeId, bool? esMicroorganismeEspecial, string microorganismeMecanismeCaptat) => 
+            string mecanismeId, bool? esMicroorganismeEspecial, string microorganismeMecanismeCaptat, string microorganismeMecanismeCaptatTot) => 
             _multiRDbService.CrearMostraDiagnostic(pacientSap, dataMostra, tipusMostra, tipusProva, etiqueta, 
-                dataResultat, dataValidacio, mecanismeId, esMicroorganismeEspecial, microorganismeMecanismeCaptat);
+                dataResultat, dataValidacio, mecanismeId, esMicroorganismeEspecial, microorganismeMecanismeCaptat, microorganismeMecanismeCaptatTot);
 
         public bool ActualitzarMicroorganismeMecanismeCaptat(int mostraDiagnosticId, string nouMicroorganismeMecanisme) =>
             _multiRDbService.ActualitzarMicroorganismeMecanismeCaptat(mostraDiagnosticId, nouMicroorganismeMecanisme);
@@ -78,8 +78,8 @@ namespace MultirIntegraModulab.Infrastructure.Persistence.Repositories
         public List<int> ObtenirIdsMostresDiagnosticPerEtiqueta(string etiqueta) =>
             _multiRDbService.ObtenirIdsMostresDiagnosticPerEtiqueta(etiqueta);
 
-        public int ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(string etiqueta, string microorganismeMecanismeCaptat) =>
-            _multiRDbService.ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(etiqueta, microorganismeMecanismeCaptat);
+        public int ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(string etiqueta, string microorganismeMecanismeCaptat, string microorganismeMecanismeCaptatTot) =>
+            _multiRDbService.ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(etiqueta, microorganismeMecanismeCaptat, microorganismeMecanismeCaptatTot);
 
         public bool EsborrarDadesMostra(string etiquetaId) => 
             _multiRDbService.EsborrarDadesMostra(etiquetaId);

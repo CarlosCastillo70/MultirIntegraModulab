@@ -282,6 +282,7 @@ namespace MultirIntegraModulab
             }
 
             // Tipus de mostra
+            // ---------------------
             var tipusMostraEntrant = mostraEntrant.Resultats?.FirstOrDefault()?.MostraDescripcio;
             if (!string.Equals(mostraExistent.TipusMostra, tipusMostraEntrant, StringComparison.OrdinalIgnoreCase))
             {
@@ -289,6 +290,7 @@ namespace MultirIntegraModulab
             }
 
             // Tipus de prova
+            // ---------------------
             var tipusProvaEntrant = mostraEntrant.Resultats?.FirstOrDefault()?.ProvaDescripcio;
             if (!string.Equals(mostraExistent.TipusProva, tipusProvaEntrant, StringComparison.OrdinalIgnoreCase))
             {
@@ -296,16 +298,21 @@ namespace MultirIntegraModulab
             }
 
             // Combinacions de la mostra entrant vs. existent
+            // ---------------------
 
-            // Combinacions de la mostra que entra
+            // Combinacions de la mostra entrant
             var combinacionsEntrants = ObtenirCombinacionsMostraEntrant(mostraEntrant) ?? new List<CombinacioMicroorganismeMecanisme>();
-            var conjuntEntrant = new HashSet<string>(combinacionsEntrants.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
+            var conjuntEntrant = new HashSet<CombinacioMicroorganismeMecanisme>(combinacionsEntrants);
 
-            // Combinacions de la mostra existent (segons el camp microorganisme_mecanisme_captat)
-            var combinacionsExistentsSegonsCaptat = ParsearCombinacionsDelMicroorganismeMecanismeCaptat(mostraExistent.MicroorganismeMecanismeCaptat) ?? new List<CombinacioMicroorganismeMecanisme>();
-            var conjuntExistentSegonsCaptat = new HashSet<string>(combinacionsExistentsSegonsCaptat.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
+            // Combinacions de la mostra existent
+            // Es prioritza si microorganisme_mecanisme_captat_tot té valor i fa fallback a microorganisme_mecanisme_captat
+            var combinacionsExistentsSegonsCaptat = ParsearCombinacionsDelMicroorganismeMecanismeCaptat(
+                    !string.IsNullOrWhiteSpace(mostraExistent.MicroorganismeMecanismeCaptatTot)
+                    ? mostraExistent.MicroorganismeMecanismeCaptatTot
+                    : mostraExistent.MicroorganismeMecanismeCaptat) ?? new List<CombinacioMicroorganismeMecanisme>();
+            var conjuntExistentSegonsCaptatTot = new HashSet<CombinacioMicroorganismeMecanisme>(combinacionsExistentsSegonsCaptat);
 
-            return !conjuntExistentSegonsCaptat.SetEquals(conjuntEntrant);
+            return !conjuntExistentSegonsCaptatTot.SetEquals(conjuntEntrant);
         }
 
         public bool ActualitzarResultatAmbNovesDates(string etiquetaId, DateTime? dataResultat, DateTime? dataValidacio)
@@ -1411,7 +1418,7 @@ namespace MultirIntegraModulab
         /// </summary>
         public int CrearMostraDiagnostic(string pacientSap, DateTime? dataMostra, string tipusMostra,
             string tipusProva, string etiqueta, DateTime? dataResultat, DateTime? dataValidacio,
-            string mecanismeId, bool? esMicroorganismeEspecial, string microorganismeMecanismeCaptat)
+            string mecanismeId, bool? esMicroorganismeEspecial, string microorganismeMecanismeCaptat, string microorganismeMecanismeCaptatTot)
         {
             if (string.IsNullOrWhiteSpace(pacientSap))
             {
@@ -1469,11 +1476,11 @@ namespace MultirIntegraModulab
                     string sql = @"INSERT INTO pacients_diagnostics_mostra 
                                   (npat, data_diagnostic, data_mostra, tipus_mostra_m, usuari, 
                                    dt_create, dt_update, consolidat, valoracio, tipus_prova, 
-                                   etiqueta, data_resultat, data_validacio, estat_integracio_m, microorganisme_mecanisme_captat)
+                                   etiqueta, data_resultat, data_validacio, estat_integracio_m, microorganisme_mecanisme_captat, microorganisme_mecanisme_captat_tot)
                                   VALUES 
                                   (@npat, NULL, @dataMostra, @tipusMostra, 'MODULAB', 
                                    NOW(), NOW(), 'N', @valoracio, @tipusProva, 
-                                   @etiqueta, @dataResultat, @dataValidacio, @estatIntegracio, @microorganismeMecanismeCaptat);
+                                   @etiqueta, @dataResultat, @dataValidacio, @estatIntegracio, @microorganismeMecanismeCaptat, @microorganismeMecanismeCaptatTot);
                                   SELECT LAST_INSERT_ID();";
 
                     using (var cmd = new MySqlCommand(sql, conn))
@@ -1488,6 +1495,7 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@dataValidacio", dataValidacio.HasValue ? (object)dataValidacio.Value : DBNull.Value);
                         cmd.Parameters.AddWithValue("@estatIntegracio", estatIntegracio);
                         cmd.Parameters.AddWithValue("@microorganismeMecanismeCaptat", microorganismeMecanismeCaptat ?? "");
+                        cmd.Parameters.AddWithValue("@microorganismeMecanismeCaptatTot", microorganismeMecanismeCaptatTot ?? "");
 
                         var result = cmd.ExecuteScalar();
                         int nouMostraId = result != null ? Convert.ToInt32(result) : 0;
@@ -1559,7 +1567,7 @@ namespace MultirIntegraModulab
 
                     string sql = @"SELECT id, npat, data_mostra, tipus_mostra_m, tipus_prova, 
                                          etiqueta, data_resultat, data_validacio, valoracio, 
-                                         estat_integracio_m, microorganisme_mecanisme_captat, dt_create, dt_update
+                                         estat_integracio_m, microorganisme_mecanisme_captat, microorganisme_mecanisme_captat_tot, dt_create, dt_update
                                   FROM pacients_diagnostics_mostra 
                                   WHERE etiqueta = @etiqueta 
                                   AND dt_delete IS NULL
@@ -1587,6 +1595,7 @@ namespace MultirIntegraModulab
                                     Valoracio = reader["valoracio"]?.ToString(),
                                     EstatIntegracio = reader["estat_integracio_m"]?.ToString(),
                                     MicroorganismeMecanismeCaptat = reader["microorganisme_mecanisme_captat"]?.ToString(),
+                                    MicroorganismeMecanismeCaptatTot = reader["microorganisme_mecanisme_captat_tot"]?.ToString(),
                                     DataCreacio = reader["dt_create"] as DateTime?,
                                     DataActualitzacio = reader["dt_update"] as DateTime?
                                 };
@@ -1671,37 +1680,33 @@ namespace MultirIntegraModulab
 
             // 4. COMPARAR COMBINACIONS MICROORGANISME + MECANISMES DE RESISTÈNCIA
 
-            // Combinacions existents (segons pacients_diagnostics)
-            // TODOCC Deprecar !!!!!
-            //var combinacionsExistents = ObtenirCombinacionsMicroorganismeMecanisme(mostraExistent.Etiqueta);
-            //var conjuntExistent = new HashSet<string>(combinacionsExistents.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
-
-
             // Combinacions de la mostra entrant
             var combinacionsEntrants = ObtenirCombinacionsMostraEntrant(mostraEntrant);
-            var conjuntEntrant = new HashSet<string>(combinacionsEntrants.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
+            var conjuntEntrant = new HashSet<CombinacioMicroorganismeMecanisme>(combinacionsEntrants);
 
-            // Combinacions existent ssegons el camp microorganisme_mecanisme_captat
-            var combinacionsExistentsSegonsCaptat = ParsearCombinacionsDelMicroorganismeMecanismeCaptat(mostraExistent.MicroorganismeMecanismeCaptat) ?? new List<CombinacioMicroorganismeMecanisme>();
-            var conjuntExistentSegonsCaptat = new HashSet<string>(combinacionsExistentsSegonsCaptat.Select(c => c.ToString()), StringComparer.OrdinalIgnoreCase);
-
-
+            // Combinacions existents segons el camp complet de la mostra captada
+            var combinacionsExistentsSegonsCaptatTot = ParsearCombinacionsDelMicroorganismeMecanismeCaptat(
+                !string.IsNullOrWhiteSpace(mostraExistent.MicroorganismeMecanismeCaptatTot)
+                    ? mostraExistent.MicroorganismeMecanismeCaptatTot
+                    : mostraExistent.MicroorganismeMecanismeCaptat) ?? new List<CombinacioMicroorganismeMecanisme>();
+            var conjuntExistentSegonsCaptatTot = new HashSet<CombinacioMicroorganismeMecanisme>(combinacionsExistentsSegonsCaptatTot);
 
             // Comprovar si hi ha diferències en les combinacions
-            if (!conjuntExistentSegonsCaptat.SetEquals(conjuntEntrant))
+            if (!conjuntExistentSegonsCaptatTot.SetEquals(conjuntEntrant))
             {
                 resultat.HiHaCanvis = true;
-                resultat.CanvisDetectats.Add($"Combinacions existents abans del canvi: [{string.Join(", ", conjuntExistentSegonsCaptat)}]");
+                resultat.CanvisDetectats.Add($"Combinacions existents abans del canvi: [{string.Join(", ", conjuntExistentSegonsCaptatTot.OrderBy(x => x.ToString()))}]");
+                resultat.CanvisDetectats.Add($"Combinacions de la mostra a incorporar: [{string.Join(", ", combinacionsEntrants.OrderBy(x => x.ToString()))}]");
 
                 // Identificar les noves combinacions (estan a la mostra entrant però no a la mostra ja existent)
-                var combinacionsNoves = conjuntEntrant.Except(conjuntExistentSegonsCaptat).ToList();
+                var combinacionsNoves = conjuntEntrant.Except(conjuntExistentSegonsCaptatTot).OrderBy(x => x.ToString()).ToList();
                 if (combinacionsNoves.Any())
                 {
                     resultat.CanvisDetectats.Add($"Combinacions noves: [{string.Join(", ", combinacionsNoves)}]");
                 }
 
                 // Identificar combinacions eliminades (que estan a l'existent però no a l'entrant)
-                var combinacionsEliminades = conjuntExistentSegonsCaptat.Except(conjuntEntrant).ToList();
+                var combinacionsEliminades = conjuntExistentSegonsCaptatTot.Except(conjuntEntrant).OrderBy(x => x.ToString()).ToList();
                 if (combinacionsEliminades.Any())
                 {
                     resultat.CanvisDetectats.Add($"Combinacions eliminades: [{string.Join(", ", combinacionsEliminades)}]");
@@ -2876,3 +2881,4 @@ namespace MultirIntegraModulab
         #endregion
     }
 }
+

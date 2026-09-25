@@ -224,13 +224,15 @@ namespace MultirIntegraModulab
         }
 
         /// <summary>
-        /// Actualitza el camp microorganisme_mecanisme_captat per TOTES les mostres diagnòstiques d'una etiqueta específica.
-        /// Estableix el valor de forma directa (no concatena) per assegurar que totes les mostres tenguin el mateix valor.
+        /// Actualitza els camps microorganisme_mecanisme_captat i microorganisme_mecanisme_captat_tot
+        /// per TOTES les mostres diagnòstiques d'una etiqueta específica.
+        /// Estableix els valors de forma directa (no concatena) per assegurar que totes les mostres tinguin el mateix valor.
         /// </summary>
         /// <param name="etiqueta">Etiqueta de les mostres a actualitzar</param>
-        /// <param name="microorganismeMecanismeCaptat">Valor complet a assignar</param>
+        /// <param name="microorganismeMecanismeCaptat">Valor captat a assignar</param>
+        /// <param name="microorganismeMecanismeCaptatTot">Valor total a assignar</param>
         /// <returns>Nombre de mostres actualitzades, o -1 si hi ha error</returns>
-        public int ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(string etiqueta, string microorganismeMecanismeCaptat)
+        public int ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta(string etiqueta, string microorganismeMecanismeCaptat, string microorganismeMecanismeCaptatTot)
         {
             if (string.IsNullOrWhiteSpace(etiqueta))
             {
@@ -238,9 +240,15 @@ namespace MultirIntegraModulab
                 return -1;
             }
 
-            if (string.IsNullOrWhiteSpace(microorganismeMecanismeCaptat))
+            if (microorganismeMecanismeCaptat == null)
             {
-                Logger.Warning("ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta: microorganismeMecanismeCaptat és null o buit");
+                Logger.Warning("ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta: microorganismeMecanismeCaptat és null");
+                return -1;
+            }
+
+            if (microorganismeMecanismeCaptatTot == null)
+            {
+                Logger.Warning("ActualitzarMicroorganismeMecanismeCaptarPerEtiqueta: microorganismeMecanismeCaptatTot és null");
                 return -1;
             }
 
@@ -253,6 +261,7 @@ namespace MultirIntegraModulab
                     string sql = @"
                         UPDATE pacients_diagnostics_mostra 
                         SET microorganisme_mecanisme_captat = @microorganismeMecanismeCaptat,
+                            microorganisme_mecanisme_captat_tot = @microorganismeMecanismeCaptatTot,
                             dt_update = NOW()
                         WHERE etiqueta = @etiqueta 
                           AND dt_delete IS NULL";
@@ -260,13 +269,14 @@ namespace MultirIntegraModulab
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@etiqueta", etiqueta);
-                        cmd.Parameters.AddWithValue("@microorganismeMecanismeCaptat", microorganismeMecanismeCaptat);
+                        cmd.Parameters.AddWithValue("@microorganismeMecanismeCaptat", microorganismeMecanismeCaptat ?? "");
+                        cmd.Parameters.AddWithValue("@microorganismeMecanismeCaptatTot", microorganismeMecanismeCaptatTot ?? "");
 
                         int rowsAffected = cmd.ExecuteNonQuery();
 
                         if (rowsAffected > 0)
                         {
-                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Actualitzat 'microorganisme_mecanisme_captat' per {rowsAffected} mostra(es) diagnòstic(s) amb etiqueta '{etiqueta}'");
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}✔️ Actualitzats els camps 'microorganisme_mecanisme_captat' i 'microorganisme_mecanisme_captat_tot' per {rowsAffected} mostra(es) diagnòstic(s) amb etiqueta '{etiqueta}'");
                             return rowsAffected;
                         }
                         else
@@ -279,7 +289,7 @@ namespace MultirIntegraModulab
             }
             catch (Exception ex)
             {
-                Logger.Error($"Error actualitzant microorganisme_mecanisme_captat per etiqueta {etiqueta}: {ex.Message}", ex);
+                Logger.Error($"Error actualitzant microorganisme_mecanisme_captat i microorganisme_mecanisme_captat_tot per etiqueta {etiqueta}: {ex.Message}", ex);
                 return -1;
             }
         }

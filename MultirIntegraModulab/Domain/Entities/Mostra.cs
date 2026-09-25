@@ -26,11 +26,17 @@ namespace MultirIntegraModulab.Domain.Entities
         public List<ResultatMostra> Resultats { get; set; }
 
         /// <summary>
+        /// Combinacions descartades per NO INCORPORAR que s'han de conservar al camp total
+        /// </summary>
+        public List<string> CombinacionsNoIncorporar { get; set; }
+
+        /// <summary>
         /// Constructor per defecte
         /// </summary>
         public Mostra()
         {
             Resultats = new List<ResultatMostra>();
+            CombinacionsNoIncorporar = new List<string>();
         }
 
         /// <summary>
@@ -41,6 +47,7 @@ namespace MultirIntegraModulab.Domain.Entities
             EtiquetaId = etiquetaId;
             PacientSap = pacientSap;
             Resultats = new List<ResultatMostra>();
+            CombinacionsNoIncorporar = new List<string>();
         }
 
         /// <summary>
