@@ -400,6 +400,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var diagnosticInfo = _multiRRepository.ObtenirInformDiagnostic(diagnosticId);
                     if (diagnosticInfo != null)
                     {
+                        // Mostrar els detalls del diagnòstic que s'està processant
+                        _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}📋 Gestionant diagnòstic ID: {diagnosticInfo.Id} | Microorganisme: {diagnosticInfo.MicroorganismeCodi} | Mecanisme: {diagnosticInfo.MecanismeId}");
+
                         // COMPROVACIÓ: verificar si el diagnòstic ja té una mostra positiva amb la mateixa etiqueta
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}🔍 Verificant si el diagnòstic {diagnosticId} ja té mostra positiva amb etiqueta '{mostra.EtiquetaId}' i tipus de mostra '{resultatMostra.MostraDescripcio}' ");
                         

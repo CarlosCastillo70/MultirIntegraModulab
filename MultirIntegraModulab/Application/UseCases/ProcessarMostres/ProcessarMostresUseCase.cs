@@ -897,6 +897,18 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // CAS 1: No hi ha canvis - només actualitzar data_validacio amb la nova data
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ La mostra que es vol incorporar és IDÈNTICA a la existent a l´historial. Actualitzant data validació i estat integració");
 
+                    var combinacionsExistents = ObtenirCombinacionsTextMostraExistent(mostraExistent);
+                    var tipusMostraExistent = !string.IsNullOrWhiteSpace(resultatComparacio.TipusMostraAnterior)
+                        ? resultatComparacio.TipusMostraAnterior
+                        : mostraExistent.TipusMostra;
+                    var tipusProvaExistent = !string.IsNullOrWhiteSpace(resultatComparacio.TipusProvaAnterior)
+                        ? resultatComparacio.TipusProvaAnterior
+                        : mostraExistent.TipusProva;
+
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 Combinacions existents: {(string.IsNullOrWhiteSpace(combinacionsExistents) ? "NULL" : combinacionsExistents)}");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 Tipus de mostra existent: {(string.IsNullOrWhiteSpace(tipusMostraExistent) ? "NULL" : tipusMostraExistent)}");
+                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 Tipus de prova existent: {(string.IsNullOrWhiteSpace(tipusProvaExistent) ? "NULL" : tipusProvaExistent)}");
+
                     // Obtenir la nova data de validació
                     var novaDataValidacio = mostra.Resultats.FirstOrDefault()?.DataValidacio;
 

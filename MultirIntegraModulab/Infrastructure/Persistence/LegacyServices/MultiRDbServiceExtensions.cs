@@ -2238,6 +2238,16 @@ namespace MultirIntegraModulab
                     }
 
                     Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Trobats {diagnostics.Count} diagnòstic(s) positiu(s) per pacient {pacientSap}{infoEtiqueta}");
+
+                    // Mostrar detalls de cada diagnòstic
+                    foreach (var diagnosticId in diagnostics)
+                    {
+                        var diagnosticInfo = ObtenirInformDiagnostic(diagnosticId);
+                        if (diagnosticInfo != null)
+                        {
+                            Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}  • Diagnòstic ID: {diagnosticInfo.Id} | Microorganisme: {diagnosticInfo.MicroorganismeCodi} | Mecanisme: {diagnosticInfo.MecanismeId}");
+                        }
+                    }
                 }
             }
             catch (Exception ex)
