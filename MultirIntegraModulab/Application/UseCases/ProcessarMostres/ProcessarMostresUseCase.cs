@@ -868,6 +868,36 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
         }
 
         /// <summary>
+        /// Obté les combinacions microorganisme+mecanisme d'una mostra existent en el mateix format visual que la comparació de canvis
+        /// </summary>
+        private string ObtenirCombinacionsVisualitzacioMostraExistent(MostraDiagnosticExistent mostraExistent)
+        {
+            if (mostraExistent == null || string.IsNullOrWhiteSpace(mostraExistent.Etiqueta))
+                return string.Empty;
+
+            try
+            {
+                var campCombinacions = !string.IsNullOrWhiteSpace(mostraExistent.MicroorganismeMecanismeCaptatTot)
+                    ? mostraExistent.MicroorganismeMecanismeCaptatTot
+                    : mostraExistent.MicroorganismeMecanismeCaptat;
+
+                if (string.IsNullOrWhiteSpace(campCombinacions))
+                    return string.Empty;
+
+                var combinacions = _multiRRepository.ParsearCombinacionsDelMicroorganismeMecanismeCaptat(campCombinacions);
+
+                return combinacions != null && combinacions.Any()
+                    ? string.Join(", ", combinacions.OrderBy(x => x.ToString()).Select(x => x.ToString()))
+                    : string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Error obtenint combinacions per visualització de la mostra existent {mostraExistent.Etiqueta}: {ex.Message}", ex);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
         /// Tracta una mostra validada: compara amb mostra existent i decideix acció
         /// Si són idèntiques: actualitza data_validacio amb nova data i estat, insereix auditoria EMCV
         /// Si són diferents: guarda historial, esborrar dades i continua processament
@@ -897,17 +927,17 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     // CAS 1: No hi ha canvis - només actualitzar data_validacio amb la nova data
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}✅ La mostra que es vol incorporar és IDÈNTICA a la existent a l´historial. Actualitzant data validació i estat integració");
 
-                    var combinacionsExistents = ObtenirCombinacionsTextMostraExistent(mostraExistent);
-                    var tipusMostraExistent = !string.IsNullOrWhiteSpace(resultatComparacio.TipusMostraAnterior)
-                        ? resultatComparacio.TipusMostraAnterior
-                        : mostraExistent.TipusMostra;
-                    var tipusProvaExistent = !string.IsNullOrWhiteSpace(resultatComparacio.TipusProvaAnterior)
-                        ? resultatComparacio.TipusProvaAnterior
-                        : mostraExistent.TipusProva;
+                     var combinacionsExistents = ObtenirCombinacionsVisualitzacioMostraExistent(mostraExistent);
+                     var tipusMostraExistent = !string.IsNullOrWhiteSpace(resultatComparacio.TipusMostraAnterior)
+                         ? resultatComparacio.TipusMostraAnterior
+                         : mostraExistent.TipusMostra;
+                     var tipusProvaExistent = !string.IsNullOrWhiteSpace(resultatComparacio.TipusProvaAnterior)
+                         ? resultatComparacio.TipusProvaAnterior
+                         : mostraExistent.TipusProva;
 
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 Combinacions existents: {(string.IsNullOrWhiteSpace(combinacionsExistents) ? "NULL" : combinacionsExistents)}");
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 Tipus de mostra existent: {(string.IsNullOrWhiteSpace(tipusMostraExistent) ? "NULL" : tipusMostraExistent)}");
-                    _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 Tipus de prova existent: {(string.IsNullOrWhiteSpace(tipusProvaExistent) ? "NULL" : tipusProvaExistent)}");
+                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 Combinacions existents: {combinacionsExistents}");
+                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 Tipus de mostra existent: {(string.IsNullOrWhiteSpace(tipusMostraExistent) ? "NULL" : $"'{tipusMostraExistent}'")}");
+                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}   📝 Tipus de prova existent: {(string.IsNullOrWhiteSpace(tipusProvaExistent) ? "NULL" : $"'{tipusProvaExistent}'")}");
 
                     // Obtenir la nova data de validació
                     var novaDataValidacio = mostra.Resultats.FirstOrDefault()?.DataValidacio;

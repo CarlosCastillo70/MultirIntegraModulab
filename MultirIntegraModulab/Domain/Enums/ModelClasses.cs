@@ -83,7 +83,7 @@ namespace MultirIntegraModulab.Domain.Enums
 
         public override string ToString()
         {
-            return $"{Microorganisme} ? {MecanismeResistencia}";
+            return $"'{Microorganisme}' ? '{MecanismeResistencia}'";
         }
     }
 

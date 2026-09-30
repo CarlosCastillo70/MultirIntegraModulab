@@ -1659,23 +1659,33 @@ namespace MultirIntegraModulab
             }
 
             // 2. COMPARAR TIPUS DE MOSTRA
-            var tipusMostraEntrant = mostraEntrant.Resultats.FirstOrDefault()?.MostraDescripcio;
-            resultat.TipusMostraAnterior = mostraExistent.TipusMostra;
+            var tipusMostraExistent = string.IsNullOrWhiteSpace(mostraExistent.TipusMostra)
+                ? null
+                : mostraExistent.TipusMostra.Trim();
+            var tipusMostraEntrant = string.IsNullOrWhiteSpace(mostraEntrant.Resultats.FirstOrDefault()?.MostraDescripcio)
+                ? null
+                : mostraEntrant.Resultats.FirstOrDefault()?.MostraDescripcio.Trim();
+            resultat.TipusMostraAnterior = tipusMostraExistent;
             resultat.TipusMostraNou = tipusMostraEntrant;
-            if (!string.Equals(mostraExistent.TipusMostra, tipusMostraEntrant, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(tipusMostraExistent, tipusMostraEntrant, StringComparison.OrdinalIgnoreCase))
             {
                 resultat.HiHaCanvis = true;
-                resultat.CanvisDetectats.Add($"Tipus mostra: '{mostraExistent.TipusMostra}' -> '{tipusMostraEntrant}'");
+                resultat.CanvisDetectats.Add($"Tipus mostra: '{tipusMostraExistent}' -> '{tipusMostraEntrant}'");
             }
 
             // 3. COMPARAR TIPUS DE PROVA
-            var tipusProvaEntrant = mostraEntrant.Resultats.FirstOrDefault()?.ProvaDescripcio;
-            resultat.TipusProvaAnterior = mostraExistent.TipusProva;
+            var tipusProvaExistent = string.IsNullOrWhiteSpace(mostraExistent.TipusProva)
+                ? null
+                : mostraExistent.TipusProva.Trim();
+            var tipusProvaEntrant = string.IsNullOrWhiteSpace(mostraEntrant.Resultats.FirstOrDefault()?.ProvaDescripcio)
+                ? null
+                : mostraEntrant.Resultats.FirstOrDefault()?.ProvaDescripcio.Trim();
+            resultat.TipusProvaAnterior = tipusProvaExistent;
             resultat.TipusProvaNou = tipusProvaEntrant;
-            if (!string.Equals(mostraExistent.TipusProva, tipusProvaEntrant, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(tipusProvaExistent, tipusProvaEntrant, StringComparison.OrdinalIgnoreCase))
             {
                 resultat.HiHaCanvis = true;
-                resultat.CanvisDetectats.Add($"Tipus prova: '{mostraExistent.TipusProva}' -> '{tipusProvaEntrant}'");
+                resultat.CanvisDetectats.Add($"Tipus prova: '{tipusProvaExistent}' -> '{tipusProvaEntrant}'");
             }
 
             // 4. COMPARAR COMBINACIONS MICROORGANISME + MECANISMES DE RESISTÈNCIA
@@ -1695,21 +1705,21 @@ namespace MultirIntegraModulab
             if (!conjuntExistentSegonsCaptatTot.SetEquals(conjuntEntrant))
             {
                 resultat.HiHaCanvis = true;
-                resultat.CanvisDetectats.Add($"Combinacions existents abans del canvi: [{string.Join(", ", conjuntExistentSegonsCaptatTot.OrderBy(x => x.ToString()))}]");
-                resultat.CanvisDetectats.Add($"Combinacions de la mostra a incorporar: [{string.Join(", ", combinacionsEntrants.OrderBy(x => x.ToString()))}]");
+                resultat.CanvisDetectats.Add($"Combinacions existents abans del canvi: {string.Join(", ", conjuntExistentSegonsCaptatTot.OrderBy(x => x.ToString()))}");
+                resultat.CanvisDetectats.Add($"Combinacions de la mostra a incorporar: {string.Join(", ", combinacionsEntrants.OrderBy(x => x.ToString()))}");
 
                 // Identificar les noves combinacions (estan a la mostra entrant però no a la mostra ja existent)
                 var combinacionsNoves = conjuntEntrant.Except(conjuntExistentSegonsCaptatTot).OrderBy(x => x.ToString()).ToList();
                 if (combinacionsNoves.Any())
                 {
-                    resultat.CanvisDetectats.Add($"Combinacions noves: [{string.Join(", ", combinacionsNoves)}]");
+                    resultat.CanvisDetectats.Add($"Combinacions noves: {string.Join(", ", combinacionsNoves)}");
                 }
 
                 // Identificar combinacions eliminades (que estan a l'existent però no a l'entrant)
                 var combinacionsEliminades = conjuntExistentSegonsCaptatTot.Except(conjuntEntrant).OrderBy(x => x.ToString()).ToList();
                 if (combinacionsEliminades.Any())
                 {
-                    resultat.CanvisDetectats.Add($"Combinacions eliminades: [{string.Join(", ", combinacionsEliminades)}]");
+                    resultat.CanvisDetectats.Add($"Combinacions eliminades: {string.Join(", ", combinacionsEliminades)}");
                 }
             }
 
