@@ -463,14 +463,35 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                             combinacionsTotals.Add($"{microorganismeCodi} - {mecanisme}");
                         }
                     }
-                    else if (esEspecial)
-                    {
-                        combinacionsCaptades.Add(microorganismeCodi);
-                        combinacionsTotals.Add(microorganismeCodi);
-                    }
                     else
                     {
-                        combinacionsTotals.Add($"{microorganismeCodi} - ");
+                        var mecanismesOriginals = new[]
+                        {
+                            resultatMostra.MecanismeResistencia1IdOriginal,
+                            resultatMostra.MecanismeResistencia2IdOriginal,
+                            resultatMostra.MecanismeResistencia3IdOriginal,
+                            resultatMostra.MecanismeResistencia4IdOriginal,
+                            resultatMostra.MecanismeResistencia5IdOriginal
+                        }
+                        .Where(m => !string.IsNullOrWhiteSpace(m))
+                        .ToList();
+
+                        if (mecanismesOriginals.Any())
+                        {
+                            foreach (var mecanismeOriginal in mecanismesOriginals)
+                            {
+                                combinacionsTotals.Add($"{microorganismeCodi} - {mecanismeOriginal}");
+                            }
+                        }
+                        else if (esEspecial)
+                        {
+                            combinacionsCaptades.Add(microorganismeCodi);
+                            combinacionsTotals.Add(microorganismeCodi);
+                        }
+                        else
+                        {
+                            combinacionsTotals.Add($"{microorganismeCodi} - ");
+                        }
                     }
                 }
 

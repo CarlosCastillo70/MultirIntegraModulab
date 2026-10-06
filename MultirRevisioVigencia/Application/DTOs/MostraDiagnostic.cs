@@ -10,8 +10,9 @@ namespace MultirRevisioVigencia.Application.DTOs
         public int Id { get; set; }
         public string TipusMostraM { get; set; }
         public DateTime DataMostra { get; set; }
-        public string Valoracio { get; set; }  // '2' = Positiu, altres = Negatiu
+        public string Valoracio { get; set; }  // '1' = Negatiu, '2' = Positiu, altres valors no computen
 
+        public bool EsNegativa => Valoracio == "1";
         public bool EsPositiva => Valoracio == "2";
     }
 }

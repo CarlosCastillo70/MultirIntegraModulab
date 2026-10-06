@@ -367,7 +367,7 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
                 if (estatMecanisme.IncorporaModulab.HasValue && !estatMecanisme.IncorporaModulab.Value)
                 {
                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ Mecanisme de resistència '{mecanisme.id}' marcat com NO INCORPORAR ");
-                    
+
                     // Afegir a la llista de mecanismes no incorporats
                     resultat.MecanismesNoIncorporats.Add(mecanisme.id);
 
@@ -380,6 +380,16 @@ namespace MultirIntegraModulab.Application.UseCases.ComprovadorMecanismes
 
                     // Guardar auditoria
                     _multiRRepository.InserirAuditoriaIntegracioModulab(mostra, "MNI", resultatMostra, mecanismeInfo);
+
+                    // Guardar la combinació microorganisme + mecanisme MNI per mantenir-la al camp total
+                    if (mostra.CombinacionsNoIncorporar == null)
+                    {
+                        mostra.CombinacionsNoIncorporar = new List<string>();
+                    }
+
+                    var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultatMostra.AillamentDescripcio);
+                    string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio;
+                    mostra.CombinacionsNoIncorporar.Add($"{microorganismeCodi} - {mecanisme.id}");
 
                     // Marcar que s'ha d'eliminar aquest mecanisme del registre
                     // No s'atura el processament global: els altres resultats de la mostra es continuaran comprovant

@@ -631,8 +631,36 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var microorganismeEntitat = _multiRRepository.ObtenirMicroorganisme(resultatMostra.AillamentDescripcio);
                     string microorganismeCodi = microorganismeEntitat?.Codi ?? resultatMostra.AillamentDescripcio;
 
-                    // Per negatius, afegir el format: "Microorganisme-"
-                    microorganismesNegatius.Add($"{microorganismeCodi} - ");
+                    var mecanismesOriginals = new[]
+                    {
+                        resultatMostra.MecanismeResistencia1IdOriginal,
+                        resultatMostra.MecanismeResistencia2IdOriginal,
+                        resultatMostra.MecanismeResistencia3IdOriginal,
+                        resultatMostra.MecanismeResistencia4IdOriginal,
+                        resultatMostra.MecanismeResistencia5IdOriginal
+                    }
+                    .Where(m => !string.IsNullOrWhiteSpace(m))
+                    .ToList();
+
+                    if (!mecanismesOriginals.Any())
+                    {
+                        microorganismesNegatius.Add($"{microorganismeCodi} - ");
+                        continue;
+                    }
+
+                    foreach (var mecanismeOriginal in mecanismesOriginals)
+                    {
+                        microorganismesNegatius.Add($"{microorganismeCodi} - {mecanismeOriginal}");
+                    }
+                }
+
+                // Afegir les combinacions descartades (CNI) que es conserven per al camp total
+                if (mostra.CombinacionsNoIncorporar != null && mostra.CombinacionsNoIncorporar.Any())
+                {
+                    foreach (var combinacioNoIncorporada in mostra.CombinacionsNoIncorporar.Where(x => !string.IsNullOrWhiteSpace(x)))
+                    {
+                        microorganismesNegatius.Add(combinacioNoIncorporada);
+                    }
                 }
 
                 if (microorganismesNegatius.Any())

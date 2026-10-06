@@ -591,6 +591,15 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
                 }
 
+                // Afegir les combinacions descartades (CNI) que es conserven per al camp total
+                if (mostra.CombinacionsNoIncorporar != null && mostra.CombinacionsNoIncorporar.Any())
+                {
+                    foreach (var combinacioNoIncorporada in mostra.CombinacionsNoIncorporar.Where(x => !string.IsNullOrWhiteSpace(x)))
+                    {
+                        combinacionsTotals.Add(combinacioNoIncorporada);
+                    }
+                }
+
                 if (combinacionsTotals.Any() || (microorganismesVrCaptats != null && microorganismesVrCaptats.Any()))
                 {
                     string microorganismeMecanismeCaptat = string.Join(", ", (microorganismesVrCaptats ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase)).OrderBy(x => x));

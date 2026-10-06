@@ -152,8 +152,8 @@ namespace MultirRevisioVigencia.Application.Services
                     // Comptar negatives consecutives des de l'últim positiu (o des del principi)
                     int negativesConsecutives = ComptarNegativesConsecutives(mostresAquestTipus);
 
-                    // Generar seqüència de mostres per debug (N=negatiu, P=positiu)
-                    string sequencia = string.Join("", mostresAquestTipus.Select(m => m.EsPositiva ? "P" : "N"));
+                    // Generar seqüència de mostres per debug (N=negatiu, P=positiu, ?=no computable)
+                    string sequencia = string.Join("", mostresAquestTipus.Select(m => m.EsPositiva ? "P" : m.EsNegativa ? "N" : "?"));
 
                     // Comprovar si hi ha algun positiu
                     bool hiHaPositius = mostresAquestTipus.Any(m => m.EsPositiva);
@@ -252,6 +252,7 @@ namespace MultirRevisioVigencia.Application.Services
         /// <summary>
         /// Compta les mostres negatives consecutives des de l'últim positiu
         /// Recorre les mostres des de la més recent cap enrere i para quan troba un positiu
+        /// Només computa valoracions 1=negatiu i 2=positiu; la resta s'ignoren
         /// </summary>
         private int ComptarNegativesConsecutives(List<MostraDiagnostic> mostresOrdenades)
         {
@@ -266,7 +267,8 @@ namespace MultirRevisioVigencia.Application.Services
                     // Només comptem les negatives DESPRÉS d'aquest positiu
                     break;
                 }
-                else
+
+                if (mostresOrdenades[i].EsNegativa)
                 {
                     // Negatiu, incrementar comptador
                     comptador++;
