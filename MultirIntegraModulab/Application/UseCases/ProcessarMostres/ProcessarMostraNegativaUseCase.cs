@@ -400,6 +400,13 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     var diagnosticInfo = _multiRRepository.ObtenirInformDiagnostic(diagnosticId);
                     if (diagnosticInfo != null)
                     {
+                        var tipusMicroorganisme = _multiRRepository.ObtenirTipusMicroorganisme(diagnosticInfo.MicroorganismeCodi);
+                        if (tipusMicroorganisme == TipusMicroorganisme.VirusRespiratori)
+                        {
+                            _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}↪️ El diagnòstic {diagnosticInfo.Id} és un Virus Respiratori. Es descarta del flux de neutralització de positius MR.");
+                            continue;
+                        }
+
                         // Mostrar els detalls del diagnòstic que s'està processant
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}📋 Gestionant diagnòstic ID: {diagnosticInfo.Id} | Microorganisme: {diagnosticInfo.MicroorganismeCodi} | Mecanisme: {diagnosticInfo.MecanismeId}");
 
@@ -470,9 +477,9 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                                     _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra diagnòstic negativa creada per neutralitzar positiu (ID: {mostraDiagnosticIdFinal})");
 
                                     // Actualitzar quantitat de targetes en seguiments oberts (només per Multiresistent)
-                                    var tipusMicroorganisme = _multiRRepository.ObtenirTipusMicroorganisme(resultatMostra.AillamentDescripcio);
+                                    var tipusMicroorganismeSeguiment = _multiRRepository.ObtenirTipusMicroorganisme(resultatMostra.AillamentDescripcio);
 
-                                    if (tipusMicroorganisme == Domain.Enums.TipusMicroorganisme.Multiresistent)
+                                    if (tipusMicroorganismeSeguiment == Domain.Enums.TipusMicroorganisme.Multiresistent)
                                     {
                                         _logger.Debug($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Actualitzant targetes de seguiment per mostra negativa MultiResistent...");
 

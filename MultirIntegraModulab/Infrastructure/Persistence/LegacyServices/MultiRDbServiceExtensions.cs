@@ -2213,11 +2213,15 @@ namespace MultirIntegraModulab
                             INNER JOIN mostra_microorganisme mm ON pdm.id = mm.pacient_diagnostic_mostra_id
                             INNER JOIN pacients_diagnostics pd ON mm.pacient_diagnostic_id = pd.id
                             INNER JOIN tipusmostra_m tm ON pdm.tipus_mostra_m = tm.codi
+                            LEFT JOIN microorganismes m ON pd.microorganisme = m.descripcio 
+                                AND m.dt_delete IS NULL 
+                                AND m.actiu = 1
                         WHERE pdm.npat = @pacientSap 
                             AND pdm.valoracio = '2'
                             AND pdm.dt_delete IS NULL
                             AND pd.dt_delete IS NULL  
-                            AND tm.dt_delete IS NULL";
+                            AND tm.dt_delete IS NULL
+                            AND (m.tipus IS NULL OR m.tipus != 'R')";
 
                     // Afegir condició per excloure etiqueta si s'ha proporcionat
                     if (!string.IsNullOrWhiteSpace(etiqueta))
