@@ -139,6 +139,38 @@ namespace MultirIntegraModulab
             }
         }
 
+        /// <summary>
+        /// Resol el tipus de mecanisme a partir del codi de la taula mecanismes.
+        /// Si no es troba, retorna el valor de fallback rebut.
+        /// </summary>
+        private string ResoldreTipusMecanisme(MySqlConnection conn, string mecanismeCodi, string tipusMecanismeFallback)
+        {
+            if (string.IsNullOrWhiteSpace(mecanismeCodi))
+            {
+                return tipusMecanismeFallback ?? "";
+            }
+
+            string sql = @"SELECT tipus_mecanisme
+                           FROM mecanismes
+                           WHERE codi = @mecanismeCodi
+                           AND dt_delete IS NULL
+                           LIMIT 1";
+
+            using (var cmd = new MySqlCommand(sql, conn))
+            {
+                cmd.Parameters.AddWithValue("@mecanismeCodi", mecanismeCodi.Trim());
+                var result = cmd.ExecuteScalar();
+                var tipusMecanisme = result?.ToString();
+
+                if (!string.IsNullOrWhiteSpace(tipusMecanisme))
+                {
+                    return tipusMecanisme;
+                }
+            }
+
+            return tipusMecanismeFallback ?? "";
+        }
+
         #endregion
 
         #region Classificació i actualització de resultats
@@ -1163,7 +1195,7 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Comprovant / creant diagnostic '{microorganisme}' ['{mecanisme}' - '{tipusMecanisme}']");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔎 Comprovant / creant diagnostic '{microorganisme}' ['{mecanisme}']");
 
                     conn.Open();
 
@@ -1209,9 +1241,11 @@ namespace MultirIntegraModulab
             {
                 using (var conn = new MySqlConnection(_connectionString))
                 {
-                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Es procedeix a crear el diagnòstic '{microorganisme}' + '{mecanisme}'");
+                    Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}Es procedeix a crear el diagnòstic '{microorganisme}' + '{mecanisme}' + '{tipusMecanisme}'  ");
 
                     conn.Open();
+
+                    string tipusMecanismeNormalitzat = ResoldreTipusMecanisme(conn, mecanisme, tipusMecanisme);
 
                     string sql = @"INSERT INTO pacients_diagnostics 
                                   (npat, data_diagnostic, usuari, bitxo, dt_create, dt_update, 
@@ -1228,7 +1262,7 @@ namespace MultirIntegraModulab
                         cmd.Parameters.AddWithValue("@npat", pacientSap);
                         cmd.Parameters.AddWithValue("@microorganisme", microorganisme ?? "");
                         cmd.Parameters.AddWithValue("@mecanisme", mecanisme ?? "");
-                        cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanisme ?? "");
+                        cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanismeNormalitzat ?? "");
 
                         var result = cmd.ExecuteScalar();
                         int nouDiagnosticId = result != null ? Convert.ToInt32(result) : 0;

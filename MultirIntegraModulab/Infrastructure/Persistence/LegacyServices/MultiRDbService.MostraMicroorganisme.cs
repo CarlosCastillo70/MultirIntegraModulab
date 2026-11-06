@@ -127,7 +127,6 @@ namespace MultirIntegraModulab
             // Determinar si hem de comparar amb NULL o amb valor
             // Si mecanismeId o tipusMecanisme són null, a la BD estan emmagatzemats com a ''
             bool mecanismeEsNullOBuit = string.IsNullOrWhiteSpace(mecanismeId);
-            bool tipusMecanismeEsNullOBuit = string.IsNullOrWhiteSpace(tipusMecanisme);
 
             string sql = @"
                 UPDATE pacients_diagnostics  
@@ -150,12 +149,16 @@ namespace MultirIntegraModulab
                     Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Actualitzant data_diagnostic (pacients_diagnostics) per al pacient {pacientSap}");
 
                     conn.Open();
+
+                    string tipusMecanismeNormalitzat = ResoldreTipusMecanisme(conn, mecanismeId, tipusMecanisme);
+                    bool tipusMecanismeEsNullOBuit = string.IsNullOrWhiteSpace(tipusMecanismeNormalitzat);
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
                         cmd.Parameters.AddWithValue("@microorganismeCodi", microorganismeCodi);
                         cmd.Parameters.AddWithValue("@mecanismeId", mecanismeEsNullOBuit ? "" : mecanismeId);
-                        cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanismeEsNullOBuit ? "" : tipusMecanisme);
+                        cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanismeEsNullOBuit ? "" : tipusMecanismeNormalitzat);
                         cmd.Parameters.AddWithValue("@mecanismeEsNullOBuit", mecanismeEsNullOBuit ? 1 : 0);
                         cmd.Parameters.AddWithValue("@tipusMecanismeEsNullOBuit", tipusMecanismeEsNullOBuit ? 1 : 0);
 
@@ -196,7 +199,6 @@ namespace MultirIntegraModulab
             // Determinar si hem de comparar amb NULL o amb valor
             // Si mecanismeId o tipusMecanisme són null, a la BD estan emmagatzemats com a ''
             bool mecanismeEsNullOBuit = string.IsNullOrWhiteSpace(mecanismeId);
-            bool tipusMecanismeEsNullOBuit = string.IsNullOrWhiteSpace(tipusMecanisme);
 
             string sql = @"
                 UPDATE pacients_diagnostics_mostra pdm  
@@ -236,21 +238,25 @@ namespace MultirIntegraModulab
                     Logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Fase)}🔄 Actualitzant data_diagnostic (pacients_diagnostics_mostra) per al pacient {pacientSap}");
 
                     conn.Open();
+
+                    string tipusMecanismeNormalitzat = ResoldreTipusMecanisme(conn, mecanismeId, tipusMecanisme);
+                    bool tipusMecanismeEsNullOBuit = string.IsNullOrWhiteSpace(tipusMecanismeNormalitzat);
+
                     using (var cmd = new MySqlCommand(sql, conn))
                     {
                         // Paràmetres per la subconsulta del SET
                         cmd.Parameters.AddWithValue("@pacientSap", pacientSap);
                         cmd.Parameters.AddWithValue("@microorganismeCodi", microorganismeCodi);
                         cmd.Parameters.AddWithValue("@mecanismeId", mecanismeEsNullOBuit ? "" : mecanismeId);
-                        cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanismeEsNullOBuit ? "" : tipusMecanisme);
+                        cmd.Parameters.AddWithValue("@tipusMecanisme", tipusMecanismeEsNullOBuit ? "" : tipusMecanismeNormalitzat);
                         cmd.Parameters.AddWithValue("@mecanismeEsNullOBuit", mecanismeEsNullOBuit ? 1 : 0);
                         cmd.Parameters.AddWithValue("@tipusMecanismeEsNullOBuit", tipusMecanismeEsNullOBuit ? 1 : 0);
-                        
+
                         // Paràmetres per la subconsulta del WHERE (MySQL no permet reutilitzar paràmetres)
                         cmd.Parameters.AddWithValue("@pacientSap2", pacientSap);
                         cmd.Parameters.AddWithValue("@microorganismeCodi2", microorganismeCodi);
                         cmd.Parameters.AddWithValue("@mecanismeId2", mecanismeEsNullOBuit ? "" : mecanismeId);
-                        cmd.Parameters.AddWithValue("@tipusMecanisme2", tipusMecanismeEsNullOBuit ? "" : tipusMecanisme);
+                        cmd.Parameters.AddWithValue("@tipusMecanisme2", tipusMecanismeEsNullOBuit ? "" : tipusMecanismeNormalitzat);
                         cmd.Parameters.AddWithValue("@mecanismeEsNullOBuit2", mecanismeEsNullOBuit ? 1 : 0);
                         cmd.Parameters.AddWithValue("@tipusMecanismeEsNullOBuit2", tipusMecanismeEsNullOBuit ? 1 : 0);
 

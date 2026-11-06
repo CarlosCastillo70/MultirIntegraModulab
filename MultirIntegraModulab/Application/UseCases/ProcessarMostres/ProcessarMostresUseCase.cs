@@ -111,7 +111,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
             var totesLesMostres = mostres.ObtenirTotesLesMostres();
 
             // Filtrar mostres si hi ha etiquetes configurades
-            if (etiquetesAProcessar.Any())
+                if (etiquetesAProcessar.Any())
             {
                 totesLesMostres = totesLesMostres
                     .Where(m => etiquetesAProcessar.Contains(m.EtiquetaId))
