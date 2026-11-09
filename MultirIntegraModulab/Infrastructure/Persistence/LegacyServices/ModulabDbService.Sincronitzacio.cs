@@ -220,6 +220,7 @@ namespace MultirIntegraModulab
                     REPLACE(sam2.sampledescription, '''', '´') AS MOSTRA_DESCRIPCIO,
                     rt.RESULTDATE AS DATA_RESULTAT,
                     rt.FVDATE AS DATA_VALIDACIO,
+                    rt.RESULTLASTCHANGE AS RESULT_LAST_CHANGE,
                     rcvf.SHORTDESCRIPTION AS SHORTDESCRIPTION1
                 FROM
                     MG.CULTUREISOLATION ci

@@ -231,8 +231,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         }
                         else
                         {
+                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Error processant mostra VR {mostra.EtiquetaId}. Motiu: {(string.IsNullOrWhiteSpace(resultatVR.Missatge) ? "Sense detall retornat pel processament VR" : resultatVR.Missatge)}");
                             resum.MostresAmbError++;
-                            // _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Error processant mostra VR");
                         }
                     }
                     else if (tipusMicroorganisme == TipusMicroorganisme.Mixt)
@@ -257,8 +257,8 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         }
                         else
                         {
+                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Error processant mostra mixta (MMR+VR) {mostra.EtiquetaId}. Motiu: {(string.IsNullOrWhiteSpace(resultatMixt.Missatge) ? "Sense detall retornat pel processament mixt" : resultatMixt.Missatge)}");
                             resum.MostresAmbError++;
-                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Error processant mostra mixta (MMR+VR)");
                         }
                     }
                     else
@@ -405,6 +405,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
                     else
                     {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra {mostra.EtiquetaId} no processada com a resultat positiu. Motiu: {(string.IsNullOrWhiteSpace(resultatPositiu.Missatge) ? "Sense detall retornat pel processament positiu" : resultatPositiu.Missatge)}");
                         resum.MostresAmbError++;
                     }
                     break;
@@ -422,6 +423,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
                     else
                     {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra {mostra.EtiquetaId} no processada com a múltiples positius. Motiu: {(string.IsNullOrWhiteSpace(resultatPositives.Missatge) ? "Sense detall retornat pel processament de múltiples positius" : resultatPositives.Missatge)}");
                         resum.MostresAmbError++;
                     }
                     break;
@@ -436,6 +438,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
                     else
                     {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra {mostra.EtiquetaId} no processada com a resultat negatiu. Motiu: {(string.IsNullOrWhiteSpace(resultatNegatiu.Missatge) ? "Sense detall retornat pel processament negatiu" : resultatNegatiu.Missatge)}");
                         resum.MostresAmbError++;
                     }
                     break;
@@ -451,6 +454,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
                     else
                     {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra {mostra.EtiquetaId} no processada com a múltiples negatius. Motiu: {(string.IsNullOrWhiteSpace(resultatNegatives.Missatge) ? "Sense detall retornat pel processament de múltiples negatius" : resultatNegatives.Missatge)}");
                         resum.MostresAmbError++;
                     }
                     break;
@@ -472,6 +476,7 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                     }
                     else
                     {
+                        _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.UseCase)}⚠️ Mostra {mostra.EtiquetaId} no processada com a mixta (positius i negatius). Motiu: {(string.IsNullOrWhiteSpace(resultatMixta.Missatge) ? "Sense detall retornat pel processament mixt" : resultatMixta.Missatge)}");
                         resum.MostresAmbError++;
                     }
                     break;
