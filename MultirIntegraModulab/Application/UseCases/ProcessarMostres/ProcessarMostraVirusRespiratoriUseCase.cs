@@ -491,6 +491,15 @@ namespace MultirIntegraModulab.Application.UseCases.ProcessarMostres
                         mostraDiagnosticNova = true;
                         resultat.MostresCreades++;
                         _logger.Info($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Operacio)}✔️ Mostra diagnòstic VR creada (ID: {mostraDiagnosticId})");
+
+                        bool tipusMostraPersistit = _multiRRepository.ActualitzarTipusMostraMostraDiagnostic(
+                            mostraDiagnosticId,
+                            resultatMostra.MostraDescripcio);
+
+                        if (!tipusMostraPersistit)
+                        {
+                            _logger.Warning($"{LogIndentHelper.Indent(LogIndentHelper.Nivells.Comprovacio)}⚠️ No s'ha pogut confirmar la persistència del tipus de mostra VR a la BD");
+                        }
                     }
                     else
                     {

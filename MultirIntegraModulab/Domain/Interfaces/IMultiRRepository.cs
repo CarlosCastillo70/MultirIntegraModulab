@@ -163,6 +163,14 @@ namespace MultirIntegraModulab.Domain.Interfaces
             string mecanismeId, bool? esMicroorganismeEspecial, string microorganismeMecanismeCaptat, string microorganismeMecanismeCaptatTot);
 
         /// <summary>
+        /// Força l'actualització del tipus de mostra en una mostra diagnòstic concreta.
+        /// </summary>
+        /// <param name="mostraDiagnosticId">ID de la mostra diagnòstic</param>
+        /// <param name="tipusMostra">Tipus de mostra a persistir</param>
+        /// <returns>True si la mostra queda amb el tipus indicat o ja el tenia</returns>
+        bool ActualitzarTipusMostraMostraDiagnostic(int mostraDiagnosticId, string tipusMostra);
+
+        /// <summary>
         /// Actualitza el camp microorganisme_mecanisme_captat d'una mostra diagnòstic existent.
         /// Si el camp ja té valor, concatena el nou valor amb una coma.
         /// </summary>

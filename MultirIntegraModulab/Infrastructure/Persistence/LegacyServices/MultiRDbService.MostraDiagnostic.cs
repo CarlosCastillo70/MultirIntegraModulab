@@ -293,5 +293,52 @@ namespace MultirIntegraModulab
                 return -1;
             }
         }
+
+        /// <summary>
+        /// Força el valor del camp tipus_mostra_m per a una mostra diagnòstic concreta.
+        /// </summary>
+        public bool ActualitzarTipusMostraMostraDiagnostic(int mostraDiagnosticId, string tipusMostra)
+        {
+            if (mostraDiagnosticId <= 0)
+            {
+                Logger.Warning($"ActualitzarTipusMostraMostraDiagnostic: mostraDiagnosticId invàlid ({mostraDiagnosticId})");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(tipusMostra))
+            {
+                Logger.Warning("ActualitzarTipusMostraMostraDiagnostic: tipusMostra és null o buit");
+                return false;
+            }
+
+            try
+            {
+                using (var conn = new MySqlConnection(_connectionString))
+                {
+                    conn.Open();
+
+                    string sql = @"
+                        UPDATE pacients_diagnostics_mostra
+                        SET tipus_mostra_m = @tipusMostra,
+                            dt_update = NOW()
+                        WHERE id = @id
+                          AND dt_delete IS NULL";
+
+                    using (var cmd = new MySqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", mostraDiagnosticId);
+                        cmd.Parameters.AddWithValue("@tipusMostra", tipusMostra.Trim());
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error forçant el tipus de mostra a la mostra diagnòstic {mostraDiagnosticId}: {ex.Message}", ex);
+                return false;
+            }
+        }
     }
 }
